@@ -1,0 +1,7 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka5:8761/eureka/, http://eureka6:8762/eureka/
+logging:
+  level:
+    org.springframework.cloud.netflix.feign: error

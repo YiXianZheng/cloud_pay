@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: sysuser
+  profiles:
+    active: dev
+
+  jwt:
+    express: 1800000
+    _express: 604800000
+    id: championHK2ss018
+mybatis:
+  mapper-locations: classpath:mybatis/*.xml  #注意：一定要对应mapper映射xml文件的所在路径
+  type-aliases-package: com.cloud.sysuser.po  # 注意：对应实体类的路径
+
+server:
+  port: 8100
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: sysuser
+feign:
+  hystrix:
+    enabled: true
+  httpclient:
+    enabled: true
+
+ribbon:
+  ReadTimeout: 60000
+  SocketTimeout: 60000
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+      fallback:
+        enabled: true
+
+

@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.finance.dao.ShopRechargeDao">
+
+	<resultMap type="ShopRecharge" id="shopRechargeMap">
+		<id column="id" property="id"/>
+		<result column="user_id" property="userId"/>
+		<result column="user_name" property="userName"/>
+		<result column="agent_user" property="agentUser"/>
+		<result column="merchant_user" property="merchantUser"/>
+		<result column="recharge_no" property="rechargeNo"/>
+		<result column="recharge_money" property="rechargeMoney"/>
+		<result column="recharge_rate_type" property="rechargeRateType"/>
+		<result column="recharge_rate" property="rechargeRate"/>
+		<result column="recharge_rate_money" property="rechargeRateMoney"/>
+		<result column="bank_account" property="bankAccount"/>
+		<result column="bank_code" property="bankCode"/>
+		<result column="bank_no" property="bankNo"/>
+		<result column="bank_subbranch" property="bankSubbranch"/>
+		<result column="bank_bin" property="bankBin"/>
+		<result column="province" property="province"/>
+		<result column="city" property="city"/>
+		<result column="recharge_status" property="rechargeStatus"/>
+		<result column="complete_time" property="completeTime"/>
+		<result column="third_channel_id" property="thirdChannelId"/>
+		<result column="third_channel_type" property="thirdChannelType"/>
+		<result column="third_channel_cost_rate" property="thirdChannelCostRate"/>
+		<result column="third_channel_cost_money" property="thirdChannelCostMoney"/>
+		<result column="third_channel_order_no" property="thirdChannelOrderNo"/>
+		<result column="third_channel_resp_msg" property="thirdChannelRespMsg"/>
+		<result column="third_channel_notify_flag" property="thirdChannelNotifyFlag"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getById" resultMap="shopRechargeMap">
+		SELECT * FROM shop_recharge t WHERE t.id = #{id}
+	</select>
+
+	<select id="getByRechargeNo" resultMap="shopRechargeMap">
+		SELECT * FROM shop_recharge t WHERE t.recharge_no = #{rechargeNo}
+	</select>
+
+    <select id="checkExist" resultType="int">
+        SELECT count(1) FROM shop_recharge t WHERE t.recharge_no = #{rechargeNo}
+    </select>
+
+	<select id="countTotalRecharge" resultType="com.cloud.finance.common.dto.AccountDto">
+		SELECT
+			(SELECT IFNULL(SUM(t.recharge_money), 0) FROM shop_recharge t WHERE t.recharge_status = 1
+				AND t.complete_time IS NOT NULL AND t.user_id = #{sysUserId}) amount,
+		  	(SELECT IFNULL(SUM(t.recharge_money), 0) FROM shop_recharge t WHERE (t.recharge_status = 0 OR t.recharge_status = 2)
+				AND t.user_id = #{sysUserId}) frozenAmount
+		FROM DUAL
+	</select>
+
+
+    <select id="listPage" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+            t.recharge_no AS rechargeNo,		#代付单号
+            t.recharge_money AS rechargeMoney,	#代付金额
+            t.recharge_rate_money AS rechargeRateMoney,	#代付手续费
+			t.bank_code AS bankCode,			#收款银行编码
+            (SELECT sb.bank_name FROM sys_bank sb WHERE sb.bank_code = t.bank_code) AS bankName,	#收款银行
+            t.bank_account AS bankAccount,		#收款人账户
+            t.bank_no AS bankNo,				#银行卡号
+			t.bank_subbranch AS bankSubbranch,	#支行名称
+			t.bank_bin AS bankBin,				#联行号
+			t.province AS province,				#所在省
+			t.city AS city,						#所在城市
+            t.recharge_status AS rechargeStatus,#代付状态
+            t.third_channel_id AS thirdChannelId,#通道ID
+			t.third_channel_order_no AS thirdChanelOrderNo, #通道交易流水号
+			t.remarks AS remarks,				#驳回就是驳回的原因
+            t.create_date AS createDate,		#创建时间
+            t.complete_time AS completeTime	#代付完成时间
+        FROM shop_recharge t
+        WHERE t.del_flag= 0
+        <if test="sysUserId != null and sysUserId !=''">
+            AND t.user_id = #{sysUserId}
+        </if>
+        <if test="rechargeNo != null and rechargeNo !=''">
+            AND t.recharge_no = #{rechargeNo}
+        </if>
+        <if test="thirdChannelId != null and thirdChannelId !=''">
+            AND t.third_channel_id = #{thirdChannelId}
+        </if>
+        <if test="rechargeStatus != null and rechargeStatus >=0">
+            AND t.recharge_status = #{rechargeStatus}
+        </if>
+        <if test="beginTime != null and beginTime !='' and endTime != null and endTime !=''">
+            AND t.create_date BETWEEN #{beginTime} AND #{endTime}
+        </if>
+
+        ORDER BY t.create_date DESC
+        LIMIT ${pageStart},${pageSize}
+    </select>
+
+    <select id="count" parameterType="java.util.Map" resultType="int">
+        SELECT COUNT(1) FROM shop_recharge t
+        WHERE t.del_flag= 0
+        <if test="sysUserId != null and sysUserId !=''">
+            AND t.user_id = #{sysUserId}
+        </if>
+        <if test="rechargeNo != null and rechargeNo !=''">
+            AND t.recharge_no = #{rechargeNo}
+        </if>
+        <if test="thirdChannelId != null and thirdChannelId !=''">
+            AND t.third_channel_id = #{thirdChannelId}
+        </if>
+        <if test="rechargeStatus != null and rechargeStatus >=0">
+            AND t.recharge_status = #{rechargeStatus}
+        </if>
+        <if test="beginTime != null and beginTime !='' and endTime != null and endTime !=''">
+            AND t.create_date BETWEEN #{beginTime} AND #{endTime}
+        </if>
+    </select>
+
+    <insert id="add" parameterType="ShopRecharge">
+		<selectKey keyProperty="id" resultType="String" order="BEFORE">
+			SELECT UUID()
+		</selectKey>
+		INSERT INTO shop_recharge (
+			id,
+			user_id,
+			user_name,
+			agent_user,
+			merchant_user,
+			recharge_no,
+			recharge_money,
+			recharge_rate_type,
+			recharge_rate,
+			recharge_rate_money,
+			recharge_status,
+			complete_time,
+            bank_account,
+            bank_code,
+            bank_no,
+			bank_bin,
+			bank_subbranch,
+			province,
+			city,
+			third_channel_id,
+			third_channel_type,
+			third_channel_cost_rate,
+			third_channel_cost_money,
+			third_channel_order_no,
+			third_channel_resp_msg,
+			third_channel_notify_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{id},
+				#{userId},
+				#{userName},
+				#{agentUser},
+				#{merchantUser},
+				#{rechargeNo},
+				#{rechargeMoney},
+				#{rechargeRateType},
+				#{rechargeRate},
+				#{rechargeRateMoney},
+				#{rechargeStatus},
+                #{completeTime},
+                #{bankAccount},
+                #{bankCode},
+                #{bankNo},
+				#{bankBin},
+				#{bankSubbranch},
+				#{province},
+				#{city},
+				#{thirdChannelId},
+       	 		#{thirdChannelType},
+				#{thirdChannelCostRate},
+				#{thirdChannelCostMoney},
+				#{thirdChannelOrderNo},
+				#{thirdChannelRespMsg},
+				#{thirdChannelNotifyFlag},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				NOW(),
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+
+	<update id="rechargeSuccess" parameterType="ShopRecharge">
+		UPDATE shop_recharge
+		SET
+			recharge_status = #{rechargeStatus},
+			complete_time = #{completeTime},
+			third_channel_id = #{thirdChannelId},
+			third_channel_resp_msg = #{thirdChannelRespMsg},
+			third_channel_notify_flag = #{thirdChannelNotifyFlag},
+			third_channel_order_no = #{thirdChannelOrderNo},
+			third_channel_cost_money = #{thirdChannelCostMoney},
+			update_date = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="rechargeFail" parameterType="ShopRecharge">
+		UPDATE shop_recharge
+		SET
+			third_channel_id = #{thirdChannelId},
+			recharge_status = #{rechargeStatus},
+			third_channel_resp_msg = #{thirdChannelRespMsg},
+			third_channel_notify_flag = #{thirdChannelNotifyFlag},
+			update_date = NOW()
+        WHERE id = #{id}
+    </update>
+
+	<update id="updateThirdInfo" parameterType="ShopRecharge">
+		UPDATE shop_recharge
+		SET
+			third_channel_id = #{thirdChannelId},
+			third_channel_type = #{thirdChannelType},
+			third_channel_cost_rate = #{thirdChannelCostRate},
+			third_channel_cost_money = #{thirdChannelCostMoney},
+			update_date = NOW()
+        WHERE id = #{id}
+    </update>
+
+	<update id="updateRechargeStatus" parameterType="ShopRecharge">
+		UPDATE shop_recharge
+		SET
+			recharge_status = #{rechargeStatus},
+			remarks = #{remarks},
+			update_by = #{updateBy},
+			update_date = #{updateDate}
+        WHERE id = #{id}
+    </update>
+
+	<update id="updateBankInfo" parameterType="ShopRecharge">
+		UPDATE shop_recharge
+		SET
+		<if test="bankAccount != null and bankAccount !=''">
+			bank_account = #{bankAccount},
+		</if>
+		<if test="bankCode != null and bankCode !=''">
+            bank_code = #{bankCode},
+		</if>
+		<if test="bankNo != null and bankNo !=''">
+            bank_no = #{bankNo},
+		</if>
+		<if test="bankBin != null and bankBin !=''">
+			bank_bin = #{bankBin},
+		</if>
+		<if test="bankSubbranch != null and bankSubbranch !=''">
+			bank_subbranch = #{bankSubbranch},
+		</if>
+		<if test="province != null and province !=''">
+			province = #{province},
+		</if>
+		<if test="city != null and city !=''">
+			city = #{city},
+		</if>
+		<if test="rechargeRateMoney != null and rechargeRateMoney !=''">
+			recharge_rate_type = 1,
+			recharge_rate = #{rechargeRate},
+			recharge_rate_money = #{rechargeRateMoney},
+		</if>
+			update_by = #{updateBy},
+			update_date = #{updateDate}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

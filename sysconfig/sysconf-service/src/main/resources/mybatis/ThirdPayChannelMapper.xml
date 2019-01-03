@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.sysconf.dao.ThirdPayChannelDao">
+
+	<resultMap type="ThirdPayChannel" id="thirdPayChannelMap">
+		<id column="third_channel" property="thirdChannel"/>
+		<id column="channel_code" property="channelCode"/>
+		<result column="pan_id" property="panId"/>
+		<result column="channel_rate" property="channelRate"/>
+		<result column="usable" property="usable"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remark" property="remark"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getByThirdChannel" resultMap="thirdPayChannelMap">
+		SELECT * FROM third_pay_channel t
+			WHERE t.del_flag = 0 AND t.usable = 1 AND t.third_channel = #{thirdChannel}
+	</select>
+
+</mapper>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>finance-service</artifactId>
+
+    <parent>
+        <groupId>com.cloud</groupId>
+        <artifactId>finance</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>sysconf-common</artifactId>
+            <version>${sysconf-common.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>sysconf-provider</artifactId>
+            <version>${sysconf-provider.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>finance-common</artifactId>
+            <version>${finance-common.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>sysuser-provider</artifactId>
+            <version>${sysuser-provider.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+        </dependency>
+
+
+        <!--JWT-->
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>3.2.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                    <groupId>org.bouncycastle</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-openfeign-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>merchant-common</artifactId>
+            <version>${merchant-common.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>merchant-provider</artifactId>
+            <version>${merchant-provider.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>agent-common</artifactId>
+            <version>${agent-common.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>agent-provider</artifactId>
+            <version>${agent-provider.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.agapsys.archetypes</groupId>
+            <artifactId>agreste-app-archetype</artifactId>
+            <version>6.0.0</version>
+        </dependency>
+
+        <!--第三方jar包-->
+        <!--现代支付Jar包  begin -->
+        <dependency>
+            <groupId>com.rrtx</groupId>
+            <artifactId>api</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/libs/xiandai/license-api-1.0.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.rrtx</groupId>
+            <artifactId>rrtx</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/libs/xiandai/PKIBaseRRTX-1.0.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+        </dependency>
+        <!--现代支付Jar包  end-->
+
+        <!--双乾代付Jar包  begin -->
+        <dependency>
+            <groupId>com.shuangqian</groupId>
+            <artifactId>toolkit</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/libs/shuangqian/ra-toolkit-3.6.2.9.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.shuangqian</groupId>
+            <artifactId>sadk</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/libs/shuangqian/SADK-3.2.5.2.jar</systemPath>
+        </dependency>
+        <!--双乾代付Jar包  end-->
+
+        <!-- 物流验签包 begin -->
+        <dependency>
+            <groupId>com.netpay</groupId>
+            <artifactId>wuliu</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/libs/wuliu/netpay.jar</systemPath>
+        </dependency>
+        <!-- end -->
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+
+
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <includeSystemScope>true</includeSystemScope>
+                </configuration>
+            </plugin>
+        </plugins>
+
+        <!--<resources>-->
+            <!--<resource>-->
+                <!--&lt;!&ndash; 自己(非Maven引入)导入jar包的目录 &ndash;&gt;-->
+                <!--<directory>src/main/resources/libs</directory>-->
+                <!--&lt;!&ndash; Spring-Boot项目打包后存放的目录 &ndash;&gt;-->
+                <!--<targetPath>BOOT-INF/lib/</targetPath>-->
+                <!--<includes>-->
+                    <!--<include>**/*.jar</include>-->
+                <!--</includes>-->
+            <!--</resource>-->
+            <!--<resource>-->
+                <!--&lt;!&ndash; 是否替换@xx@表示的maven properties属性值 &ndash;&gt;-->
+                <!--<filtering>true</filtering>-->
+                <!--&lt;!&ndash; 源文件存放目录 &ndash;&gt;-->
+                <!--<directory>src/main/resources</directory>-->
+                <!--&lt;!&ndash; 打包后存放目录 &ndash;&gt;-->
+                <!--<targetPath>BOOT-INF/classes/</targetPath>-->
+            <!--</resource>-->
+        <!--</resources>-->
+    </build>
+
+</project>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.sysconf.dao.SysRoleDao">
+
+	<resultMap type="SysRole" id="sysRoleMap">
+		<id column="id" property="id"/>
+		<result column="pan_id" property="panId"/>
+		<result column="office_id" property="officeId"/>
+		<result column="name" property="name"/>
+		<result column="enname" property="enname"/>
+		<result column="role_type" property="roleType"/>
+		<result column="usable" property="usable"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+
+	</resultMap>
+
+	<select id="getById" resultMap="sysRoleMap">
+		SELECT t.* FROM sys_role t WHERE t.id = #{id}
+	</select>
+
+	<select id="getByOfficeId" resultType="java.util.Map">
+		SELECT t.id, t.office_id AS officeId, t.name AS name FROM sys_role t WHERE t.del_flag = 0 AND t.office_id = #{officeId}
+	</select>
+
+	<select id="getByRoleType" resultMap="sysRoleMap">
+		SELECT t.id, t.office_id, t.name FROM sys_role t WHERE t.del_flag = 0 AND t.role_type = #{roleType} LIMIT 1
+	</select>
+
+	<select id="listPage" parameterType="java.util.Map" resultMap="sysRoleMap">
+		SELECT * FROM sys_role
+		WHERE del_flag = 0 AND edit_able = 1
+		<if test="name != null and name != ''">
+			AND name = #{name}
+		</if>
+		<if test="roleType != null and roleType > -1">
+			AND role_type = #{roleType}
+		</if>
+		<if test="usable != null and usable > -1">
+			AND usable = #{usable}
+		</if>
+		<if test="officeId != null and officeId != ''">
+			AND office_id = #{officeId}
+		</if>
+		LIMIT ${pageStart},${pageSize}
+	</select>
+
+	<select id="count" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(1) FROM sys_role
+		WHERE del_flag = 0 AND edit_able = 1
+        <if test="name != null and name != ''">
+            AND name = #{name}
+        </if>
+        <if test="roleType != null and roleType > -1">
+            AND role_type = #{roleType}
+        </if>
+        <if test="usable != null and usable > -1">
+            AND usable = #{usable}
+        </if>
+        <if test="officeId != null and officeId != ''">
+            AND office_id = #{officeId}
+        </if>
+	</select>
+
+	<!-- 获取角色的组织结构 -->
+	<select id="loadOrigInfo" resultType="java.util.Map">
+		SELECT t.name role, IFNULL(oo.name, '') company, IFNULL(o.name, '') department FROM sys_role t
+		LEFT JOIN sys_office o ON o.id = t.office_id
+		LEFT JOIN sys_office oo ON oo.id = o.parent_id
+		WHERE t.id = #{roleId}
+	</select>
+
+	<insert id="add" parameterType="SysRole">
+		<selectKey keyProperty="id" resultType="String" order="BEFORE">
+			SELECT UUID()
+		</selectKey>
+		INSERT INTO sys_role (
+			id,
+			pan_id,
+			office_id,
+			name,
+			enname,
+			role_type,
+			usable,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+			)
+		VALUES
+		(
+			#{id},
+			#{panId},
+			#{officeId},
+			#{name},
+			#{enname},
+			#{roleType},
+			#{usable},
+			#{createBy},
+			#{createDate},
+			#{updateBy},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		);
+
+	</insert>
+
+	<update id="update" parameterType="SysRole">
+        UPDATE sys_role
+		SET
+		 office_id = #{officeId},
+		 name = #{name},
+		 enname = #{enname},
+		 role_type = #{roleType},
+		 usable = #{usable},
+         update_by = #{updateBy},
+         update_date = #{updateDate},
+         remarks = #{remarks},
+         del_flag = #{delFlag}
+        WHERE id = #{id} AND edit_able = 1
+
+    </update>
+	
+</mapper>

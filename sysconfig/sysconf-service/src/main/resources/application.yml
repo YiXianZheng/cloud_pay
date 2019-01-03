@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: sysconfig
+  profiles:
+    active: dev
+
+  jwt:
+    express: 1800000
+    _express: 604800000
+    id: championHK2ss018
+mybatis:
+  mapper-locations: classpath:mybatis/*.xml  #注意：一定要对应mapper映射xml文件的所在路径
+  type-aliases-package: com.cloud.sysconf.po  # 注意：对应实体类的路径
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: sysconfig
+
+server:
+  port: 8082
+
+ribbon:
+  ReadTimeout: 50000
+  SocketTimeout: 50000
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+      fallback:
+        enabled: true

@@ -1,0 +1,9 @@
+sys:
+  default:
+    password: 123456
+
+spring:
+  profiles:
+    active: dev
+
+ignore-unresolvable: true

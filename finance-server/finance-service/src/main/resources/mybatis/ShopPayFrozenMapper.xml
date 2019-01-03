@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.finance.dao.ShopPayFrozenDao">
+
+	<resultMap type="ShopPayFrozen" id="shopPayFrozenMap">
+		<id column="id" property="id"/>
+		<result column="sys_pay_order_no" property="sysPayOrderNo"/>
+		<result column="order_create_date" property="orderCreateDate"/>
+		<result column="merchant_user" property="merchantUser"/>
+		<result column="merchant_money" property="merchantMoney"/>
+		<result column="agent_user" property="agentUser"/>
+		<result column="agent_money" property="agentMoney"/>
+		<result column="channel_id" property="channelId"/>
+		<result column="status" property="status"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+	</resultMap>
+
+	<select id="countFrozen" resultType="java.lang.Double">
+		SELECT
+			<if test="merchantUser != null and merchantUser != ''">
+				IFNULL(SUM(t.merchant_money), 0)
+			</if>
+			<if test="agentUser != null and agentUser != ''">
+				IFNULL(SUM(t.agent_money), 0)
+			</if>
+		FROM shop_pay_frozen t
+		WHERE t.status = 1 AND DATE(t.order_create_date) != DATE(NOW())
+		<if test="merchantUser != null and merchantUser != ''">
+		  AND t.merchant_user = #{merchantUser}
+		</if>
+		<if test="agentUser != null and agentUser != ''">
+		  AND t.agent_user = #{agentUser}
+		</if>
+	</select>
+
+
+	<update id="updateStatus" parameterType="ShopPayFrozen">
+		UPDATE shop_pay_frozen
+		SET status = #{status},
+			update_by = #{updateBy},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+    <insert id="add" parameterType="ShopPayFrozen">
+		INSERT INTO shop_pay_frozen (
+			id,
+			sys_pay_order_no,
+			order_create_date,
+			agent_money,
+			agent_user,
+			merchant_user,
+			merchant_money,
+			channel_id,
+			status,
+			create_date,
+			update_date,
+			create_by,
+			update_by,
+			remarks
+			)
+		VALUES
+			(
+				#{id},
+				#{sysPayOrderNo},
+				#{orderCreateDate},
+				#{agentMoney},
+				#{agentUser},
+				#{merchantUser},
+				#{merchantMoney},
+				#{channelId},
+				#{status},
+				#{createDate},
+				#{updateDate},
+				#{createBy},
+				#{updateBy},
+				#{remarks}
+			);
+	</insert>
+
+</mapper>

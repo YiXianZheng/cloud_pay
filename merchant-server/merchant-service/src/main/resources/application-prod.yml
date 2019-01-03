@@ -1,0 +1,18 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka1:8761/eureka/, http://eureka2:8762/eureka/
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password: HcWl@8888
+    url: jdbc:mysql://rm-wz9zg6v9m177q69xh.mysql.rds.aliyuncs.com:3306/cloud_pay?characterEncoding=utf-8&useSSL=false&autoReconnect=true
+feign:
+  hystrix:
+    enabled: true
+
+logging:
+  level:
+    com.cloud.merchant.dao: error
+    org.springframework.cloud.netflix.feign: error

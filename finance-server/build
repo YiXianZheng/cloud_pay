@@ -1,0 +1,6 @@
+
+mvn clean package -Dmaven.test.skip
+echo 120.79.130.147/hcwl/finance-service:$1
+docker build -t 120.79.130.147/hcwl/finance-service:$1 .
+docker push 120.79.130.147/hcwl/finance-service:$1
+echo 120.79.130.147/hcwl/finance-service:$1

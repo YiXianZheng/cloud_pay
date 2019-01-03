@@ -1,0 +1,12 @@
+sys:
+  panid: 000001
+
+jedis:
+  pool:
+    host: 47.105.59.110
+    port: 6379
+    password: Xmgj@8888
+    config:
+      maxTotal: 1000
+      maxIdle: 10
+      maxWaitMillis: 100000

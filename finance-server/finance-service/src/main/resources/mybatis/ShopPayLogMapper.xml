@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.finance.dao.ShopPayLogDao">
+
+	<resultMap type="ShopPayLog" id="shopPayLogMap">
+		<id column="id" property="id"/>
+		<result column="sys_pay_order_no" property="sysPayOrderNo"/>
+		<result column="pay_status" property="payStatus"/>
+		<result column="channel_type_code" property="channelTypeCode"/>
+		<result column="pay_complete_time" property="payCompleteTime"/>
+		<result column="merchant_code" property="merchantCode"/>
+		<result column="merchant_user" property="merchantUser"/>
+		<result column="merchant_order_no" property="merchantOrderNo"/>
+		<result column="merchant_goods_title" property="merchantGoodsTitle"/>
+		<result column="merchant_goods_desc" property="merchantGoodsDesc"/>
+		<result column="merchant_pay_money" property="merchantPayMoney"/>
+		<result column="merchant_pay_message" property="merchantPayMessage"/>
+		<result column="merchant_notify_url" property="merchantNotifyUrl"/>
+		<result column="merchant_return_url" property="merchantReturnUrl"/>
+		<result column="merchant_cancel_url" property="merchantCancelUrl"/>
+		<result column="agent_user" property="agentUser"/>
+		<result column="agent_code" property="agentCode"/>
+		<result column="merchant_cost_rate" property="merchantCostRate"/>
+		<result column="merchant_cost_money" property="merchantCostMoney"/>
+		<result column="agent_cost_rate" property="agentCostRate"/>
+		<result column="agent_cost_money" property="agentCostMoney"/>
+		<result column="third_channel_cost_rate" property="thirdChannelCostRate"/>
+		<result column="third_channel_cost_money" property="thirdChannelCostRate"/>
+		<result column="success_flag" property="successFlag"/>
+		<result column="sys_channel" property="sysChannel"/>
+		<result column="step" property="step"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getByMerchantCodeAndOrderNo" resultMap="shopPayLogMap">
+		SELECT * FROM shop_pay_log t WHERE t.merchant_code = #{merchantCode} AND t.merchant_order_no = #{merchantOrderNo}
+	</select>
+
+	<!-- 获取平台的统计数据 -->
+	<select id="getOverViewInfo" resultType="com.cloud.finance.common.dto.FinanceOverviewDto">
+        SELECT
+        	"000000" userCode, '1' userType,
+			(SELECT IFNULL(SUM(t.merchant_pay_money), 0) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1) totalMoney,
+			(SELECT COUNT(1) FROM shop_pay_log t
+				WHERE t.del_flag = 0) totalOrder,
+			(SELECT COUNT(1) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1) totalSuccessOrder,
+			(SELECT IFNULL(SUM(t.merchant_cost_money), 0) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1) totalCharge,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 ) AS totalPaid,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.recharge_status = 1
+					AND t.complete_time IS NOT NULL) AS totalSuccessPaid,
+			(SELECT COUNT(1) FROM shop_pay_frozen t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime})) AS totalRiskControlOrder
+		FROM DUAL
+    </select>
+
+	<!-- 获取代理的统计数据 -->
+	<select id="getAgentOverViewInfo" resultType="com.cloud.finance.common.dto.FinanceOverviewDto">
+		SELECT
+			#{agentCode} userCode, '2' userType,
+			(SELECT IFNULL(SUM(t.merchant_pay_money), 0) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.agent_code = #{agentCode}) totalMoney,
+			(SELECT COUNT(1) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.agent_code = #{agentCode} ) totalOrder,
+			(SELECT COUNT(1) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.agent_code = #{agentCode}) totalSuccessOrder,
+			(SELECT IFNULL(SUM(t.merchant_cost_money - t.agent_cost_money), 0) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.agent_code = #{agentCode}) totalCharge,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0
+					 AND t.agent_user = (SELECT au.id FROM agent_user au WHERE au.agent_code = #{agentCode})) AS totalPaid,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.recharge_status = 1
+					AND t.complete_time IS NOT NULL AND t.agent_user = (SELECT au.id FROM agent_user au WHERE au.agent_code = #{agentCode})) AS totalSuccessPaid,
+			(SELECT COUNT(1) FROM shop_pay_frozen t WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime})
+				AND t.agent_user = (SELECT au.id FROM agent_user au WHERE au.agent_code = #{agentCode})) AS totalRiskControlOrder
+		FROM DUAL
+    </select>
+
+	<!-- 获取商户的统计数据 -->
+    <select id="getMerchantOverViewInfo" resultType="com.cloud.finance.common.dto.FinanceOverviewDto">
+		SELECT
+			#{merchantCode} userCode, '3' userType,
+			(SELECT IFNULL(SUM(t.merchant_pay_money), 0) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.merchant_code = #{merchantCode}) totalMoney,
+			(SELECT COUNT(1) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.merchant_code = #{merchantCode}) totalOrder,
+			(SELECT COUNT(1) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.merchant_code = #{merchantCode}) totalSuccessOrder,
+			(SELECT IFNULL(SUM(t.merchant_pay_money - t.merchant_cost_money), 0) FROM shop_pay_log t
+				WHERE t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.merchant_code = #{merchantCode}) totalCharge,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0
+					 AND t.merchant_user = (SELECT mu.id FROM merchant_user mu WHERE mu.merchant_code = #{merchantCode})) AS totalPaid,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.recharge_status = 1
+					AND t.complete_time IS NOT NULL AND t.merchant_user = (SELECT mu.id FROM merchant_user mu WHERE mu.merchant_code = #{merchantCode})) AS totalSuccessPaid,
+			(SELECT COUNT(1) FROM shop_pay_frozen t WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime})
+				AND t.merchant_user = (SELECT mu.id FROM merchant_user mu WHERE mu.merchant_code = #{merchantCode})) AS totalRiskControlOrder
+		FROM DUAL
+    </select>
+
+</mapper>

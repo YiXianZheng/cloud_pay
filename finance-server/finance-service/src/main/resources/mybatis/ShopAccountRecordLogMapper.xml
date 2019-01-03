@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.finance.dao.ShopAccountRecordLogDao">
+
+	<resultMap type="ShopAccountRecordLog" id="shopAccountRecordLogMap">
+		<id column="id" property="id"/>
+		<result column="move_date" property="moveDate"/>
+		<result column="sys_user_id" property="sysUserId"/>
+		<result column="type" property="type"/>
+		<result column="union_order_no" property="unionOrderNo"/>
+		<result column="channel_id" property="channelId"/>
+		<result column="total_amount" property="totalAmount"/>
+		<result column="poundage" property="poundage"/>
+		<result column="own_amount" property="ownAmount"/>
+		<result column="status" property="status"/>
+		<result column="complete_date" property="completeDate"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getById" resultMap="shopAccountRecordLogMap">
+		SELECT * FROM shop_account_record_log t WHERE t.id = #{id}
+	</select>
+
+	<select id="getByUnionOrderNo" resultMap="shopAccountRecordLogMap">
+		SELECT * FROM shop_account_record_log t WHERE t.union_order_no = #{unionOrderNo}
+	</select>
+
+    <insert id="add" parameterType="ShopAccountRecordLog">
+		<selectKey keyProperty="id" resultType="String" order="BEFORE">
+			SELECT UUID()
+		</selectKey>
+		INSERT INTO shop_account_record_log (
+			id,
+			sys_user_id,
+			type,
+			union_order_no,
+			channel_id,
+			total_amount,
+			poundage,
+			own_amount,
+			status,
+			complete_date,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{id},
+				#{sysUserId},
+				#{type},
+				#{unionOrderNo},
+				#{channelId},
+				#{totalAmount},
+				#{poundage},
+				#{ownAmount},
+				#{status},
+				#{completeDate},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+
+</mapper>

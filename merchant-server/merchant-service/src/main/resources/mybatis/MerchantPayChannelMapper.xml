@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.merchant.dao.MerchantPayChannelDao">
+
+	<resultMap type="MerchantPayChannel" id="merchantPayChannelMap">
+		<id column="merchant_user" property="merchantUser"/>
+		<id column="channel_code" property="channelCode"/>
+		<result column="pan_id" property="panId"/>
+		<result column="agent_rate" property="agentRate"/>
+		<result column="usable" property="usable"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remark" property="remark"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getChannelsToStr" resultType="string">
+		SELECT group_concat(t.channel_code) FROM merchant_pay_channel t
+			WHERE del_flag = 0 AND t.merchant_user = #{merchantUser} AND t.usable = 1
+	</select>
+
+	<!-- 获取商户某一通道的费率 -->
+	<select id="channelRate" resultMap="merchantPayChannelMap">
+		SELECT * FROM merchant_pay_channel t
+			WHERE del_flag = 0 AND t.merchant_user = #{merchantUser} AND t.channel_code = #{channelCode}
+	</select>
+
+	<!-- 获取商户的可用通道费率集合 -->
+	<select id="channelRates" resultMap="merchantPayChannelMap">
+		SELECT * FROM merchant_pay_channel t
+			WHERE del_flag = 0
+			 <if test="usable != null and usable >= 0">
+                 AND usable = 1
+             </if>
+			 AND t.merchant_user = #{merchantUser}
+	</select>
+
+	<insert id="add" parameterType="MerchantPayChannel">
+		INSERT INTO merchant_pay_channel (
+			merchant_user,
+			channel_code,
+			pan_id,
+			agent_rate,
+			usable,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{merchantUser},
+				#{channelCode},
+				#{panId},
+				#{agentRate},
+				#{usable},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+
+	<update id="updateChannelRate" parameterType="MerchantPayChannel">
+		UPDATE merchant_pay_channel
+		SET
+		update_by = #{updateBy},
+		<if test="agentRate != null and agentRate != ''">
+			agent_rate = #{agentRate},
+		</if>
+		<if test="usable != null and usable >= 0">
+			usable = #{usable},
+		</if>
+		update_date = #{updateDate}
+		WHERE merchant_user = #{merchantUser}
+		and channel_code = #{channelCode}
+	</update>
+</mapper>

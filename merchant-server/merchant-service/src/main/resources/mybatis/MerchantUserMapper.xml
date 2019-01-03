@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.merchant.dao.MerchantUserDao">
+
+	<resultMap type="MerchantUser" id="merchantUserMap">
+		<id column="id" property="id"/>
+		<result column="pan_id" property="panId"/>
+		<result column="agent_id" property="agentId"/>
+		<result column="merchant_code" property="merchantCode"/>
+		<result column="md5_key" property="md5Key"/>
+		<result column="md5_source" property="md5Source"/>
+		<result column="merchant_name" property="merchantName"/>
+		<result column="merchant_type" property="merchantType"/>
+		<result column="sys_user_id" property="sysUserId"/>
+		<result column="phone" property="phone"/>
+		<result column="email" property="email"/>
+		<result column="opt_status" property="optStatus"/>
+		<result column="pay_status" property="payStatus"/>
+		<result column="cash_status" property="cashStatus"/>
+		<result column="daily_limit" property="dailyLimit"/>
+        <result column="commission_type" property="commissionType"/>
+        <result column="commission_charge" property="commissionCharge"/>
+		<result column="bank_code" property="bankCode"/>
+		<result column="bank_name" property="bankName"/>
+		<result column="bank_branch_name" property="bankBranchName"/>
+		<result column="bank_card_holder" property="bankCardHolder"/>
+		<result column="bank_card_no" property="bankCardNo"/>
+		<result column="bank_province" property="bankProvince"/>
+		<result column="bank_city" property="bankCity"/>
+		<result column="third_channels" property="thirdChannels"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remark" property="remark"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+    <select id="getById" resultMap="merchantUserMap">
+        SELECT * FROM merchant_user WHERE id = #{id}
+    </select>
+
+    <select id="getByCode" resultMap="merchantUserMap">
+        SELECT * FROM merchant_user WHERE merchant_code = #{merchantCode}
+    </select>
+
+    <select id="listPage" parameterType="java.util.Map" resultMap="merchantUserMap">
+        SELECT * FROM merchant_user
+        WHERE del_flag = 0
+		<if test="agentUser != null and agentUser != ''">
+			AND agent_id = (select au.id FROM agent_user au WHERE au.sys_user_id = #{agentUser})
+		</if>
+		<if test="agentCode != null and agentCode != ''">
+			AND agent_id = (select au.id FROM agent_user au WHERE au.agent_code = #{agentCode})
+		</if>
+        <if test="merchantCode != null and merchant != ''">
+            AND merchant_code = #{merchantCode}
+        </if>
+        <if test="merchantName != null and merchantName != ''">
+            AND merchant_name = #{merchantName}
+        </if>
+        <if test="merchantType != null and merchantType != ''">
+            AND merchant_type = #{merchantType}
+        </if>
+        <if test="phone != null and phone != ''">
+            AND phone = #{phone}
+        </if>
+        <if test="optStatus != null and optStatus > -1">
+            AND opt_status = #{optStatus}
+        </if>
+        <if test="cashStatus != null and cashStatus > -1">
+            AND cash_status = #{cashStatus}
+        </if>
+		<if test="payStatus != null and payStatus > -1">
+			AND pay_status = #{payStatus}
+		</if>
+        LIMIT ${pageStart},${pageSize}
+    </select>
+
+    <select id="count" parameterType="java.util.Map" resultType="int">
+        SELECT COUNT(1) FROM merchant_user
+        WHERE del_flag = 0
+		<if test="agentUser != null and agentUser != ''">
+			AND agent_id = (select au.id FROM agent_user au WHERE au.sys_user_id = #{agentUser})
+		</if>
+		<if test="agentCode != null and agentCode != ''">
+			AND agent_id = (select au.id FROM agent_user au WHERE au.agent_code = #{agentCode})
+		</if>
+        <if test="merchantCode != null and merchant != ''">
+            AND merchant_code = #{merchantCode}
+        </if>
+        <if test="merchantName != null and merchantName != ''">
+            AND merchant_name = #{merchantName}
+        </if>
+        <if test="merchantType != null and merchantType != ''">
+            AND merchant_type = #{merchantType}
+        </if>
+        <if test="phone != null and phone != ''">
+            AND phone = #{phone}
+        </if>
+        <if test="optStatus != null and optStatus > -1">
+            AND opt_status = #{optStatus}
+        </if>
+        <if test="cashStatus != null and cashStatus > -1">
+            AND cash_status = #{cashStatus}
+        </if>
+		<if test="payStatus != null and payStatus > -1">
+			AND pay_status = #{payStatus}
+		</if>
+    </select>
+
+    <!-- 更新代理状态，包括  审核，冻结以及操作 -->
+	<update id="updateStatus" parameterType="MerchantUser">
+		UPDATE merchant_user
+		   SET
+           <if test="optStatus != null and optStatus > -1">
+               opt_status = #{optStatus},
+           </if>
+			<if test="payStatus != null and payStatus > -1">
+				pay_status = #{payStatus},
+			</if>
+			<if test="cashStatus != null and cashStatus > -1">
+				cash_status = #{cashStatus},
+			</if>
+			   update_by = #{updateBy},
+			   update_date = #{updateDate}
+		 WHERE id = #{id}
+	</update>
+
+    <update id="delMerchant" parameterType="MerchantUser">
+		UPDATE merchant_user
+		   SET del_flag = #{delFlag},
+			   update_by = #{updateBy},
+			   update_date = #{updateDate}
+		 WHERE id = #{id}
+	</update>
+
+	<insert id="add" parameterType="MerchantUser">
+        <selectKey keyProperty="id" resultType="String" order="BEFORE">
+            SELECT UUID()
+        </selectKey>
+
+		INSERT INTO merchant_user (
+			id,
+			agent_id,
+			pan_id,
+			merchant_code,
+			md5_key,
+			md5_source,
+			merchant_name,
+			merchant_type,
+			sys_user_id,
+			phone,
+			email,
+			opt_status,
+			cash_status,
+			daily_limit,
+            commission_type,
+            commission_charge,
+			bank_code,
+			bank_name,
+			bank_branch_name,
+			bank_card_holder,
+			bank_card_no,
+			bank_province,
+			bank_city,
+			third_channels,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+			)
+			VALUES
+			(
+				#{id},
+				#{agentId},
+				#{panId},
+				#{merchantCode},
+				#{md5Key},
+				#{md5Source},
+				#{merchantName},
+				#{merchantType},
+				#{sysUserId},
+				#{phone},
+				#{email},
+				#{optStatus},
+				#{cashStatus},
+				#{dailyLimit},
+                #{commissionType},
+                #{commissionCharge},
+                #{bankCode},
+				#{bankName},
+				#{bankBranchName},
+				#{bankCardHolder},
+				#{bankCardNo},
+				#{bankProvince},
+				#{bankCity},
+				#{thirdChannels},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+
+
+	<update id="update" parameterType="MerchantUser">
+		UPDATE merchant_user
+		SET
+		<if test="merchantName != null and merchantName != ''">
+			merchant_name = #{merchantName},
+		</if>
+		<if test="merchantType != null and merchantType != ''">
+			merchant_type = #{merchantType},
+		</if>
+		<if test="commissionCharge != null and commissionCharge != ''">
+			commission_charge = #{commissionCharge},
+		</if>
+		<if test="commissionType != null and commissionType > -1">
+			commission_type = #{commissionType},
+		</if>
+		<if test="optStatus != null and optStatus >= 0">
+			opt_status = #{optStatus},
+		</if>
+		<if test="cashStatus != null and cashStatus >= 0">
+			cash_status = #{cashStatus},
+		</if>
+		<if test="payStatus != null and payStatus >= 0">
+			pay_status = #{payStatus},
+		</if>
+		<if test="bankName != null and bankName != ''">
+			bank_name = #{bankName},
+		</if>
+		<if test="bankBranchName != null and bankBranchName != ''">
+			bank_branch_name = #{bankBranchName},
+		</if>
+		<if test="bankCardNo != null and bankCardNo != ''">
+			bank_card_no = #{bankCardNo},
+		</if>
+		<if test="bankCardHolder != null and bankCardHolder != ''">
+			bank_card_holder = #{bankCardHolder},
+		</if>
+		<if test="bankProvince != null and bankProvince != ''">
+			bank_province = #{bankProvince},
+		</if>
+		<if test="bankCity != null and bankCity != ''">
+			bank_city = #{bankCity},
+		</if>
+		<if test="dailyLimit != null and dailyLimit != ''">
+			daily_limit = #{dailyLimit},
+		</if>
+		<if test="thirdChannels != null and thirdChannels != ''">
+			third_channels = #{thirdChannels},
+		</if>
+		update_by = #{updateBy},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

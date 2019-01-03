@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.sysconf.dao.ThirdChannelDao">
+
+	<resultMap type="ThirdChannel" id="thirdChannelMap">
+		<id column="id" property="id"/>
+		<result column="channel_name" property="channelName"/>
+		<result column="external_channel_name" property="externalChannelName"/>
+		<result column="channel_code" property="channelCode"/>
+		<result column="channel_group_code" property="channelGroupCode"/>
+		<result column="channel_type" property="channelType"/>
+		<result column="pay_url" property="payUrl"/>
+		<result column="query_url" property="queryUrl"/>
+		<result column="notify_url" property="notifyUrl"/>
+		<result column="merchant_id" property="merchantId"/>
+		<result column="admin_url" property="adminUrl"/>
+		<result column="admin_user_name" property="adminUserName"/>
+		<result column="admin_login_password" property="adminLoginPassword"/>
+		<result column="admin_cash_password" property="adminCashPassword"/>
+		<result column="app_id" property="appId"/>
+		<result column="app_key" property="appKey"/>
+		<result column="pay_md5_key" property="payMd5Key"/>
+		<result column="cash_md5_key" property="cashMd5Key"/>
+		<result column="cash_rate" property="cashRate"/>
+		<result column="rsa_channel_public_key_id" property="rsaChannelPublicKeyId"/>
+		<result column="rsa_self_private_key_id" property="rsaSelfPrivateKeyId"/>
+		<result column="rsa_self_public_key_id" property="rsaSelfPublicKeyId"/>
+		<result column="sign_type" property="signType"/>
+		<result column="pay_day_max" property="payDayMax"/>
+		<result column="pay_per_max" property="payPerMax"/>
+		<result column="pay_per_min" property="payPerMin"/>
+		<result column="route_weight" property="routeWeight"/>
+		<result column="route_pay_status" property="routePayStatus"/>
+		<result column="route_cash_status" property="routeCashStatus"/>
+		<result column="open_random" property="openRandom"/>
+		<result column="random_min" property="randomMin"/>
+		<result column="random_max" property="randomMax"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getById" resultMap="thirdChannelMap">
+		SELECT * FROM third_channel t WHERE t.id = #{id}
+	</select>
+
+	<select id="getThirdChannel" resultMap="thirdChannelMap">
+		SELECT * FROM third_channel t WHERE t.del_flag = 0
+	</select>
+
+	<select id="getByType" resultType="java.util.Map">
+		SELECT t.id AS id, t.channel_name AS channelName FROM third_channel t WHERE t.del_flag = 0 AND t.channel_type = #{channelType}
+	</select>
+
+	<update id="update" parameterType="ThirdChannel">
+        UPDATE third_channel
+		SET
+		 pay_day_max = #{payDayMax},
+		 pay_per_max= #{payPerMax},
+		 pay_per_min= #{payPerMin},
+		 route_weight= #{routeWeight},
+		 route_pay_status= #{routePayStatus},
+		 route_cash_status= #{routeCashStatus},
+		 open_random= #{openRandom},
+         random_min= #{randomMin},
+         random_max= #{randomMax},
+         update_by = #{updateBy},
+         update_date = #{updateDate}
+        WHERE id = #{id}
+
+    </update>
+
+</mapper>

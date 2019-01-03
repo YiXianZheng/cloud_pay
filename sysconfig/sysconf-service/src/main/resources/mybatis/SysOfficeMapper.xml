@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.sysconf.dao.SysOfficeDao">
+
+	<resultMap type="SysOffice" id="sysOfficeMap">
+		<id column="id" property="id"/>
+		<result column="parent_id" property="parentId"/>
+		<result column="name" property="name"/>
+		<result column="sort" property="sort"/>
+		<result column="type" property="type"/>
+		<result column="address" property="address"/>
+		<result column="master" property="master"/>
+		<result column="phone" property="phone"/>
+		<result column="fax" property="fax"/>
+		<result column="email" property="email"/>
+		<result column="usable" property="usable"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getById" resultMap="sysOfficeMap">
+		SELECT t.* FROM sys_office t WHERE t.id = #{id}
+	</select>
+
+    <select id="checkExist" resultType="int">
+		SELECT IFNULL(count(1), 0) FROM sys_office t WHERE t.name = #{name} and t.type = #{type}
+	</select>
+
+	<select id="querySysOffice" resultMap="sysOfficeMap">
+		SELECT t.* FROM sys_office t
+		WHERE t.del_flag = 0
+		ORDER BY sort ASC
+	</select>
+
+	<insert id="add" parameterType="SysOffice">
+		<selectKey keyProperty="id" resultType="String" order="BEFORE">
+			SELECT UUID()
+		</selectKey>
+		INSERT INTO sys_office (
+			id,
+			parent_id,
+			name,
+			sort,
+			type,
+			address,
+			master,
+			phone,
+			fax,
+			email,
+			usable,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{id},
+				#{parentId},
+				#{name},
+				#{sort},
+				#{type},
+				#{address},
+				#{master},
+				#{phone},
+				#{fax},
+				#{email},
+				#{usable},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+
+	</insert>
+
+	<update id="update" parameterType="SysOffice">
+        UPDATE sys_office
+		SET
+		 parent_id = #{parentId},
+		 name = #{name},
+		 sort = #{sort},
+		 address = #{address},
+		 master = #{master},
+		 phone = #{phone},
+		 fax = #{fax},
+		 email = #{email},
+		 usable = #{usable},
+         update_by = #{updateBy},
+         update_date = #{updateDate},
+         remarks = #{remarks},
+         del_flag = #{delFlag}
+        WHERE id = #{id}
+
+    </update>
+	
+</mapper>

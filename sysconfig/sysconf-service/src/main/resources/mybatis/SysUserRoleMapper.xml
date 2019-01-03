@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.sysconf.dao.SysUserRoleDao">
+
+
+	<insert id="add" parameterType="SysUserRole">
+		INSERT INTO sys_user_role
+			(user_id, role_id)
+		VALUES
+			(#{userId}, #{roleId});
+	</insert>
+
+	<delete id="delRoleUser">
+		DELETE FROM sys_user_role WHERE user_id = #{userId} AND role_id = #{roleId}
+	</delete>
+
+</mapper>

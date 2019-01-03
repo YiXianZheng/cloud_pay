@@ -1,0 +1,6 @@
+
+mvn package
+echo 120.79.130.147/hcwl/eureka:$1
+docker build -t 120.79.130.147/hcwl/eureka:$1 .
+docker push 120.79.130.147/hcwl/eureka:$1
+echo 120.79.130.147/hcwl/eureka:$1

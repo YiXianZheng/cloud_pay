@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.agent.dao.AgentUserDao">
+
+	<resultMap type="AgentUser" id="agentUserMap">
+		<id column="id" property="id"/>
+		<result column="pan_id" property="panId"/>
+		<result column="agent_code" property="agentCode"/>
+		<result column="agent_name" property="agentName"/>
+		<result column="agent_type" property="agentType"/>
+		<result column="sys_user_id" property="sysUserId"/>
+		<result column="phone" property="phone"/>
+		<result column="email" property="email"/>
+		<result column="opt_status" property="optStatus"/>
+		<result column="auth_status" property="authStatus"/>
+		<result column="cash_status" property="cashStatus"/>
+		<result column="bank_code" property="bankCode"/>
+		<result column="bank_name" property="bankName"/>
+		<result column="bank_branch_name" property="bankBranchName"/>
+		<result column="bank_card_holder" property="bankCardHolder"/>
+		<result column="bank_card_no" property="bankCardNo"/>
+		<result column="third_channels" property="thirdChannels"/>
+        <result column="commission_type" property="commissionType"/>
+        <result column="commission_charge" property="commissionCharge"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remark" property="remark"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+    <select id="getById" resultMap="agentUserMap">
+        SELECT * FROM agent_user WHERE id = #{id}
+    </select>
+
+    <select id="getActiveAgent" resultMap="agentUserMap">
+        SELECT * FROM agent_user WHERE del_flag = 0 AND auth_status = 2
+    </select>
+
+	<select id="getByCode" resultMap="agentUserMap">
+        SELECT * FROM agent_user WHERE agent_code = #{agentCode}
+    </select>
+
+    <select id="listPage" parameterType="java.util.Map" resultMap="agentUserMap">
+        SELECT * FROM agent_user
+        WHERE del_flag = 0
+        <if test="agentCode != null and agent != ''">
+            AND agent_code = #{agentCode}
+        </if>
+        <if test="agentName != null and agentName != ''">
+            AND agent_name = #{agentName}
+        </if>
+        <if test="agentType != null and agentType != ''">
+            AND agent_type = #{agentType}
+        </if>
+        <if test="phone != null and phone != ''">
+            AND phone = #{phone}
+        </if>
+        <if test="authStatus != null and authStatus > -1">
+            AND auth_status = #{authStatus}
+        </if>
+        <if test="optStatus != null and optStatus > -1">
+            AND opt_status = #{optStatus}
+        </if>
+        <if test="cashStatus != null and cashStatus > -1">
+            AND cash_status = #{cashStatus}
+        </if>
+        LIMIT ${pageStart},${pageSize}
+    </select>
+
+    <select id="count" parameterType="java.util.Map" resultType="int">
+        SELECT COUNT(1) FROM agent_user
+        WHERE del_flag = 0
+        <if test="agentCode != null and agent != ''">
+            AND agent_code = #{agentCode}
+        </if>
+        <if test="agentName != null and agentName != ''">
+            AND agent_name = #{agentName}
+        </if>
+        <if test="agentType != null and agentType != ''">
+            AND agent_type = #{agentType}
+        </if>
+        <if test="phone != null and phone != ''">
+            AND phone = #{phone}
+        </if>
+        <if test="authStatus != null and authStatus > -1">
+            AND auth_status = #{authStatus}
+        </if>
+        <if test="optStatus != null and optStatus > -1">
+            AND opt_status = #{optStatus}
+        </if>
+        <if test="cashStatus != null and cashStatus > -1">
+            AND cash_status = #{cashStatus}
+        </if>
+    </select>
+
+    <!-- 更新代理状态，包括  审核，冻结以及操作 -->
+	<update id="updateStatus" parameterType="AgentUser">
+		UPDATE agent_user
+		   SET
+		   <if test="authStatus != null and authStatus > -1">
+		       auth_status = #{authStatus},
+           </if>
+           <if test="optStatus != null and optStatus > -1">
+               opt_status = #{optStatus},
+           </if>
+           <if test="cashStatus != null and cashStatus > -1">
+               cash_status = #{cashStatus},
+           </if>
+			   update_by = #{updateBy},
+			   update_date = #{updateDate}
+		 WHERE id = #{id}
+	</update>
+
+    <update id="delAgent" parameterType="AgentUser">
+		UPDATE agent_user
+		   SET del_flag = #{delFlag},
+			   update_by = #{updateBy},
+			   update_date = #{updateDate}
+		 WHERE id = #{id}
+	</update>
+
+	<insert id="add" parameterType="AgentUser">
+        <selectKey keyProperty="id" resultType="String" order="BEFORE">
+            SELECT UUID()
+        </selectKey>
+
+		INSERT INTO agent_user (
+			id,
+			pan_id,
+			agent_code,
+			agent_name,
+			agent_type,
+			sys_user_id,
+			phone,
+			email,
+			opt_status,
+			auth_status,
+			cash_status,
+			bank_code,
+			bank_name,
+			bank_branch_name,
+			bank_card_holder,
+			bank_card_no,
+            commission_type,
+            commission_charge,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+			)
+			VALUES
+			(
+				#{id},
+				#{panId},
+				#{agentCode},
+				#{agentName},
+				#{agentType},
+				#{sysUserId},
+				#{phone},
+				#{email},
+				#{optStatus},
+				#{authStatus},
+				#{cashStatus},
+				#{bankCode},
+				#{bankName},
+				#{bankBranchName},
+				#{bankCardHolder},
+				#{bankCardNo},
+                #{commissionType},
+                #{commissionCharge},
+                #{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+
+</mapper>

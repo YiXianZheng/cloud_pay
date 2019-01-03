@@ -1,0 +1,33 @@
+sys:
+  panid: '000003'
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka3:8761/eureka/, http://eureka4:8762/eureka/
+spring:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password: HcWl@8888
+    url: jdbc:mysql://rm-wz93m6g398fof75c5.mysql.rds.aliyuncs.com:3306/cloud_pay?characterEncoding=utf-8&useSSL=false&autoReconnect=true
+    secondary:
+      max-idle: 10
+      max-wait: 10000
+      min-idle: 5
+      initial-size: 5
+      validation-query: SELECT 1
+      test-on-borrow: false
+      test-while-idle: true
+      time-between-eviction-runs-millis: 18800
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+    show-sql: true
+
+feign:
+  hystrix:
+    enabled: true
+
+logging:
+  level:
+    com.cloud.finance.dao: error
+    org.springframework.cloud.netflix.feign: error

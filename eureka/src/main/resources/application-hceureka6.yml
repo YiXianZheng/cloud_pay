@@ -1,0 +1,22 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka5:8761/eureka/
+    registerWithEureka: false
+    fetchRegistry: false
+    healthcheck:
+      enabled: true
+    eurekaServiceUrlPollIntervalSeconds: 60
+  server:
+    enable-self-preservation: false
+    peerEurekaNodesUpdateIntervalMs: 60000
+  instance:
+    prefer-ip-address: true
+    hostname: eureka6
+    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 30
+spring:
+  application:
+    name: eureka6
+server:
+  port: 8762

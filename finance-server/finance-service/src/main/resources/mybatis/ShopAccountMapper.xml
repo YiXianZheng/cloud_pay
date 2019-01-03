@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.finance.dao.ShopAccountDao">
+
+	<resultMap type="ShopAccount" id="shopAccountMap">
+		<id column="sys_user_id" property="sysUserId"/>
+		<result column="total_money" property="totalMoney"/>
+		<result column="usable_money" property="usableMoney"/>
+		<result column="frozen_money" property="frozenMoney"/>
+		<result column="recharge_money" property="rechargeMoney"/>
+		<result column="status" property="status"/>
+		<result column="security_code" property="securityCode"/>
+	</resultMap>
+
+	<select id="getAccount" resultType="com.cloud.finance.common.dto.AccountInfoDto">
+		SELECT (t.usable_money+t.frozen_money) AS totalMoney,
+			t.usable_money AS usableMoney, t.frozen_money AS frozenMoney,
+			security_code AS securityCode
+		  FROM shop_account t
+		 WHERE t.sys_user_id = #{sysUserId}
+	</select>
+
+		<select id="getAccountByMerchantCode" resultMap="shopAccountMap">
+		SELECT * FROM shop_account t
+		 WHERE t.sys_user_id = (SELECT mu.sys_user_id FROM merchant_user mu WHERE mu.merchant_code = #{merchantCode})
+	</select>
+
+	<select id="getByUserId" resultMap="shopAccountMap">
+		SELECT * FROM shop_account t WHERE t.sys_user_id = #{sysUserId}
+	</select>
+
+	<update id="frozenAccount">
+		UPDATE shop_account
+		SET usable_money = usable_money - #{frozenMoney},
+			frozen_money = frozen_money + #{frozenMoney}
+		WHERE sys_user_id = #{sysUserId}
+	</update>
+
+	<update id="updateRecharge">
+		UPDATE shop_account
+		SET recharge_money = recharge_money + #{rechargeMoney},
+			frozen_money = frozen_money - #{rechargeMoney}
+		WHERE sys_user_id = #{sysUserId}
+	</update>
+
+	<update id="updateAccountInfo">
+		UPDATE shop_account
+		SET total_money = #{totalMoney},
+			usable_money = #{usableMoney},
+			frozen_money = #{frozenMoney},
+			recharge_money = #{rechargeMoney}
+		WHERE sys_user_id = #{sysUserId}
+	</update>
+
+    <insert id="add" parameterType="ShopAccount">
+		INSERT INTO shop_account (
+			sys_user_id,
+			total_money,
+			usable_money,
+			frozen_money,
+			recharge_money,
+			status,
+			security_code
+		)
+		VALUES
+			(
+				#{sysUserId},
+				#{totalMoney},
+				#{usableMoney},
+				#{frozenMoney},
+				#{rechargeMoney},
+				#{status},
+				#{securityCode}
+			);
+	</insert>
+
+</mapper>

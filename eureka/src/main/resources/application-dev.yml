@@ -1,0 +1,19 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    registerWithEureka: false
+    fetchRegistry: false
+    healthcheck:
+      enabled: true
+    eurekaServiceUrlPollIntervalSeconds: 60
+  server:
+    enable-self-preservation: false
+    peerEurekaNodesUpdateIntervalMs: 60000
+  instance:
+    prefer-ip-address: true
+spring:
+  application:
+    name: eureka
+server:
+  port: 8761

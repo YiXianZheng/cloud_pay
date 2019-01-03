@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.cloud</groupId>
+	<artifactId>finance</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <modules>
+        <module>finance-common</module>
+        <module>finance-provider</module>
+        <module>finance-service</module>
+    </modules>
+    <packaging>pom</packaging>
+
+	<name>finance</name>
+	<description>Demo project for Spring Boot</description>
+
+    <!-- parent指明继承关系，给出被继承的父项目的具体信息 -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.0.2.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <spring-cloud.version>Finchley.RELEASE</spring-cloud.version>
+        <finance-common.version>0.0.1-SNAPSHOT</finance-common.version>
+        <sysconf-common.version>0.0.1-SNAPSHOT</sysconf-common.version>
+        <sysconf-provider.version>0.0.1-SNAPSHOT</sysconf-provider.version>
+        <sysuser-provider.version>0.0.1-SNAPSHOT</sysuser-provider.version>
+        <merchant-common.version>0.0.1-SNAPSHOT</merchant-common.version>
+        <merchant-provider.version>0.0.1-SNAPSHOT</merchant-provider.version>
+        <agent-common.version>0.0.1-SNAPSHOT</agent-common.version>
+        <agent-provider.version>0.0.1-SNAPSHOT</agent-provider.version>
+        <lcn.last.version>4.1.0</lcn.last.version>
+    </properties>
+
+    <!-- dependencyManagement用于管理以来版本号 -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>nexus-mycloud</id>
+            <name>test Release Repository</name>
+            <url>http://192.168.10.171:8081/nexus/content/repositories/releases</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>nexus-mycloud</id>
+            <name>test Snapshot Repository</name>
+            <url>http://192.168.10.171:8081/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>

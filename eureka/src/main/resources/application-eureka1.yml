@@ -1,0 +1,22 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka2:8762/eureka/
+    registerWithEureka: false
+    fetchRegistry: false
+    healthcheck:
+      enabled: true
+    eurekaServiceUrlPollIntervalSeconds: 60
+  server:
+    enable-self-preservation: false
+    peerEurekaNodesUpdateIntervalMs: 60000
+  instance:
+    prefer-ip-address: true
+    hostname: eureka1
+    lease-expiration-duration-in-seconds: 30
+    lease-renewal-interval-in-seconds: 30
+spring:
+  application:
+    name: eureka1
+server:
+  port: 8761

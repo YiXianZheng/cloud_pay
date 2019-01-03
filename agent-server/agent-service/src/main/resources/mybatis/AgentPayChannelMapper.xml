@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.agent.dao.AgentPayChannelDao">
+
+	<resultMap type="AgentPayChannel" id="agentPayChannelMap">
+		<id column="agent_user" property="agentUser"/>
+		<id column="channel_code" property="channelCode"/>
+		<result column="pan_id" property="panId"/>
+		<result column="agent_rate" property="agentRate"/>
+		<result column="usable" property="usable"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remark" property="remark"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getChannelsToStr" resultType="string">
+		SELECT group_concat(t.channel_code) FROM agent_pay_channel t
+			WHERE del_flag = 0 AND t.agent_user = #{agentUser} AND t.usable = 1
+	</select>
+
+	<!-- 获取代理某一通道的费率 -->
+	<select id="channelRate" resultMap="agentPayChannelMap">
+		SELECT * FROM agent_pay_channel t
+			WHERE del_flag = 0 AND t.agent_user = #{agentUser} AND t.channel_code = #{channelCode}
+	</select>
+
+	<!-- 获取代理的可用通道费率集合 -->
+	<select id="channelRates" resultMap="agentPayChannelMap">
+		SELECT * FROM agent_pay_channel t
+			WHERE del_flag = 0
+			<if test="usable != null and usable >= 0">
+				AND usable = 1
+			</if>
+			 AND t.agent_user = #{agentUser}
+	</select>
+
+	<insert id="add" parameterType="AgentPayChannel">
+		INSERT INTO agent_pay_channel (
+			agent_user,
+			channel_code,
+			pan_id,
+			agent_rate,
+			usable,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{agentUser},
+				#{channelCode},
+				#{panId},
+				#{agentRate},
+				#{usable},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+	
+</mapper>

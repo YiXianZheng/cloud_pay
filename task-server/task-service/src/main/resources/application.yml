@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: task-server
+  profiles:
+    active: dev
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: task-serverss
+
+feign:
+  hystrix:
+    enabled: true
+  httpclient:
+    enabled: true
+server:
+  port: 9090
+
+ribbon:
+  ReadTimeout: 60000
+  SocketTimeout: 60000
+
+hystrix:
+  command:
+    default:
+      execution:
+         isolation:
+           thread:
+             timeoutInMilliseconds: 60000
+      fallback:
+        enabled: true

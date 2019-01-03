@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.sysuser.dao.SysUserDao">
+
+	<resultMap type="SysUser" id="sysUserMap">
+		<id column="id" property="id"/>
+		<result column="pan_id" property="panId"/>
+		<result column="company" property="company"/>
+		<result column="department" property="department"/>
+		<result column="login_name" property="loginName"/>
+		<result column="password" property="password"/>
+		<result column="no" property="no"/>
+		<result column="name" property="name"/>
+		<result column="email" property="email"/>
+		<result column="phone" property="phone"/>
+		<result column="mobile" property="mobile"/>
+		<result column="photo" property="photo"/>
+		<result column="login_id" property="loginId"/>
+		<result column="login_date" property="loginDate"/>
+		<result column="login_flag" property="loginFlag"/>
+		<result column="token" property="token"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+
+		<result column="roleId" property="roleId"/>
+		<result column="agentUser" property="agentUser"/>
+		<result column="merchantUser" property="merchantUser"/>
+		<result column="optStatus" property="optStatus"/>
+	</resultMap>
+
+	<select id="findByLoginName" resultMap="sysUserMap">
+		SELECT t.*, GROUP_CONCAT(ur.role_id) roleId, au.id agentUser, mu.id merchantUser, IFNULL(au.opt_status, mu.opt_status) optStatus FROM sys_user t
+			LEFT JOIN sys_user_role ur ON ur.user_id = t.id
+			LEFT JOIN agent_user au ON au.sys_user_id = t.id
+			LEFT JOIN merchant_user mu ON mu.sys_user_id = t.id
+		WHERE t.login_name = #{loginName} group by ur.role_id, t.id, au.id, mu.id
+	</select>
+
+	<select id="findByToken" resultMap="sysUserMap">
+		SELECT * FROM sys_user t
+		WHERE t.token = #{token}
+	</select>
+
+    <select id="findById" resultMap="sysUserMap">
+		SELECT * FROM sys_user t
+		WHERE t.id = #{id}
+	</select>
+
+	<select id="getById" resultMap="sysUserMap">
+		SELECT * FROM sys_user t
+		WHERE t.id = #{id}
+	</select>
+
+	<!-- 判断工号是否已存在 -->
+	<select id="checkExistNo" resultType="int">
+		SELECT IFNULL(COUNT(1), 0) FROM sys_user t
+		WHERE t.del_flag = 0 AND t.no = #{no}
+	</select>
+
+	<!-- 获取某一用户下级的商户号 -->
+	<select id="getMerchantCodes" resultType="java.lang.String">
+		SELECT GROUP_CONCAT(tt.merchant_code) FROM (
+			SELECT t.merchant_code FROM merchant_user t
+				LEFT JOIN agent_user au ON au.id = t.agent_id
+			WHERE t.sys_user_id = #{id} OR au.sys_user_id = #{id} GROUP BY t.merchant_code) tt
+	</select>
+
+	<select id="listPage" parameterType="java.util.Map" resultMap="sysUserMap">
+		SELECT
+			t.id,				#id
+			t.login_name,		#登录名
+			t.no,				#工号
+			t.name,				#真实姓名
+			t.email,			#邮箱
+			t.phone,			#电话
+			t.mobile,			#手机
+			t.photo,			#头像
+			t.company,			#公司
+			t.department,		#部门
+			t.login_ip,			#最后登录IP
+			t.login_date		#最后登录时间
+		 FROM sys_user t
+		WHERE t.del_flag = 0
+		<if test="loginName != null and loginName !=''">
+			AND t.login_name = #{loginName}
+		</if>
+		<if test="name != null and name !=''">
+			AND t.name = #{name}
+		</if>
+		<if test="phone != null and phone !=''">
+			AND t.phone = #{phone}
+		</if>
+		<if test="company != null and company !=''">
+			AND t.company = #{company}
+		</if>
+		<if test="department != null and department !=''">
+			AND t.department = #{department}
+		</if>
+		ORDER BY create_date DESC
+		LIMIT ${pageStart},${pageSize}
+	</select>
+
+	<select id="count" parameterType="java.util.Map" resultType="int">
+		SELECT count(1) FROM sys_user t
+		WHERE t.del_flag = 0
+		<if test="loginName != null and loginName !=''">
+			AND t.login_name = #{loginName}
+		</if>
+		<if test="name != null and name !=''">
+			AND t.name = #{name}
+		</if>
+		<if test="phone != null and phone !=''">
+			AND t.phone = #{phone}
+		</if>
+		<if test="company != null and company !=''">
+			AND t.company = #{company}
+		</if>
+		<if test="department != null and department !=''">
+			AND t.department = #{department}
+		</if>
+	</select>
+
+	<insert id="add" parameterType="SysUser">
+        <selectKey keyProperty="id" resultType="String" order="BEFORE">
+            SELECT UUID()
+        </selectKey>
+
+		INSERT INTO sys_user (
+			id,
+			pan_id,
+			company,
+			department,
+			login_name,
+			password,
+			no,
+			name,
+			email,
+			phone,
+			mobile,
+			photo,
+			login_ip,
+			login_date,
+			login_flag,
+			token,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{id},
+				#{panId},
+				#{company},
+				#{department},
+				#{loginName},
+				#{password},
+				#{no},
+				#{name},
+				#{email},
+				#{phone},
+				#{mobile},
+				#{photo},
+				#{loginIp},
+				#{loginDate},
+				#{loginFlag},
+				#{token},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+
+	</insert>
+
+    <update id="update" parameterType="SysUser">
+        UPDATE sys_user
+        SET
+         pan_id = #{panId},
+         company = #{company},
+         department = #{department},
+         login_name = #{loginName},
+         password = #{password},
+         no = #{no},
+         name = #{name},
+         email = #{email},
+         phone = #{phone},
+         mobile = #{mobile},
+         photo = #{photo},
+         login_ip = #{loginIp},
+         login_date = #{loginDate},
+         login_flag = #{loginFlag},
+         update_by = #{updateBy},
+         update_date = #{updateDate},
+         remarks = #{remarks},
+         del_flag = #{delFlag}
+        WHERE id = #{id}
+
+    </update>
+
+	<update id="deleteUser" parameterType="SysUser">
+		UPDATE sys_user
+		   SET del_flag = #{delFlag},
+		   	   update_by = #{updateBy},
+		   	   update_date = #{updateDate}
+		 WHERE id = #{id}
+	</update>
+
+    <delete id="delete" parameterType="SysUser">
+        DELETE FROM sys_user WHERE id = #{id}
+    </delete>
+</mapper>

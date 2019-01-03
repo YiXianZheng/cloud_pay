@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.sysconf.dao.ThirdChannelBankDao">
+
+	<select id="getByChannelAndSysCode" resultType="java.lang.String">
+		SELECT t.channel_bank_code FROM third_channel_bank t
+		WHERE t.sys_bank_code = #{sysBankCode} AND t.third_channel_id = #{thirdChannelId}
+	</select>
+
+</mapper>

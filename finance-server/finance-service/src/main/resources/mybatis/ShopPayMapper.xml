@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.finance.dao.ShopPayDao">
+
+	<resultMap type="ShopPay" id="shopPayMap">
+		<id column="id" property="id"/>
+		<result column="sys_pay_order_no" property="sysPayOrderNo"/>
+		<result column="sys_pay_order_type" property="sysPayOrderType"/>
+		<result column="pay_status" property="payStatus"/>
+		<result column="channel_type_code" property="channelTypeCode"/>
+		<result column="pay_complete_time" property="payCompleteTime"/>
+		<result column="merchant_code" property="merchantCode"/>
+		<result column="merchant_user" property="merchantUser"/>
+		<result column="merchant_order_no" property="merchantOrderNo"/>
+		<result column="merchant_goods_title" property="merchantGoodsTitle"/>
+		<result column="merchant_goods_desc" property="merchantGoodsDesc"/>
+		<result column="merchant_pay_money" property="merchantPayMoney"/>
+		<result column="merchant_pay_message" property="merchantPayMessage"/>
+		<result column="merchant_notify_url" property="merchantNotifyUrl"/>
+		<result column="merchant_return_url" property="merchantReturnUrl"/>
+		<result column="merchant_cancel_url" property="merchantCancelUrl"/>
+		<result column="agent_user" property="agentUser"/>
+		<result column="agent_code" property="agentCode"/>
+		<result column="merchant_cost_rate" property="merchantCostRate"/>
+		<result column="merchant_cost_money" property="merchantCostMoney"/>
+		<result column="agent_cost_rate" property="agentCostRate"/>
+		<result column="agent_cost_money" property="agentCostMoney"/>
+		<result column="third_channel_id" property="thirdChannelId"/>
+		<result column="third_channel_type" property="thirdChannelType"/>
+		<result column="third_channel_cost_rate" property="thirdChannelCostRate"/>
+		<result column="third_channel_cost_money" property="thirdChannelCostMoney"/>
+		<result column="third_channel_order_no" property="thirdChannelOrderNo"/>
+		<result column="third_channel_resp_msg" property="thirdChannelRespMsg"/>
+		<result column="third_channel_notify_flag" property="thirdChannelNotifyFlag"/>
+		<result column="bank_code" property="bankCode"/>
+		<result column="source" property="source"/>
+		<result column="success_flag" property="successFlag"/>
+		<result column="step" property="step"/>
+		<result column="create_by" property="createBy"/>
+		<result column="create_date" property="createDate"/>
+		<result column="update_by" property="updateBy"/>
+		<result column="update_date" property="updateDate"/>
+		<result column="remarks" property="remarks"/>
+		<result column="del_flag" property="delFlag"/>
+	</resultMap>
+
+	<select id="getById" resultMap="shopPayMap">
+		SELECT * FROM shop_pay t WHERE t.id = #{id}
+	</select>
+
+	<select id="getBySysOrderNo" resultMap="shopPayMap">
+		SELECT * FROM shop_pay t WHERE t.sys_pay_order_no = #{sysPayOrderNo}
+	</select>
+
+    <select id="checkExist" resultType="int">
+        SELECT IFNULL(count(1), 0) FROM shop_pay t WHERE t.merchant_code = #{merchantCode} AND t.merchant_order_no = #{merchantOrderNo}
+    </select>
+
+	<select id="getByMerchantCodeAndOrderNo" resultMap="shopPayMap">
+		SELECT * FROM shop_pay t WHERE t.merchant_code = #{merchantCode} AND t.merchant_order_no = #{merchantOrderNo}
+	</select>
+
+	<!-- 获取平台某段时间内的统计数据 -->
+	<select id="getOverViewInfo" resultType="com.cloud.finance.common.dto.FinanceOverviewDto">
+        SELECT
+        	"000000" userCode, '1' userType,
+			(SELECT IFNULL(SUM(t.merchant_pay_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1) totalMoney,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0) totalOrder,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1) totalSuccessOrder,
+			(SELECT IFNULL(SUM(t.merchant_cost_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1) totalCharge,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 ) AS totalPaid,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.recharge_status = 1
+					AND t.complete_time IS NOT NULL) AS totalSuccessPaid,
+			(SELECT COUNT(1) FROM shop_pay_frozen t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime})) AS totalRiskControlOrder
+		FROM DUAL
+    </select>
+
+	<!-- 获取代理某段时间内的统计数据 -->
+	<select id="getAgentOverViewInfo" resultType="com.cloud.finance.common.dto.FinanceOverviewDto">
+		SELECT
+			#{agentCode} userCode, '2' userType,
+			(SELECT IFNULL(SUM(t.merchant_pay_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.agent_code = #{agentCode}) totalMoney,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.agent_code = #{agentCode} ) totalOrder,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.agent_code = #{agentCode}) totalSuccessOrder,
+			(SELECT IFNULL(SUM(t.merchant_cost_money - t.agent_cost_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.agent_code = #{agentCode}) totalCharge,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0
+					 AND t.agent_user = (SELECT au.id FROM agent_user au WHERE au.agent_code = #{agentCode})) AS totalPaid,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.recharge_status = 1
+					AND t.complete_time IS NOT NULL AND t.agent_user = (SELECT au.id FROM agent_user au WHERE au.agent_code = #{agentCode})) AS totalSuccessPaid,
+			(SELECT COUNT(1) FROM shop_pay_frozen t WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime})
+				AND t.agent_user = (SELECT au.id FROM agent_user au WHERE au.agent_code = #{agentCode})) AS totalRiskControlOrder
+		FROM DUAL
+    </select>
+
+	<!-- 获取商户某段时间内的统计数据 -->
+    <select id="getMerchantOverViewInfo" resultType="com.cloud.finance.common.dto.FinanceOverviewDto">
+		SELECT
+			#{merchantCode} userCode, '3' userType,
+			(SELECT IFNULL(SUM(t.merchant_pay_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.merchant_code = #{merchantCode}) totalMoney,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.merchant_code = #{merchantCode}) totalOrder,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.merchant_code = #{merchantCode}) totalSuccessOrder,
+			(SELECT IFNULL(SUM(t.merchant_pay_money - t.merchant_cost_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.merchant_code = #{merchantCode}) totalCharge,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0
+					 AND t.merchant_user = (SELECT mu.id FROM merchant_user mu WHERE mu.merchant_code = #{merchantCode})) AS totalPaid,
+			(SELECT IFNULL(COUNT(1), 0) FROM shop_recharge t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.recharge_status = 1
+					AND t.complete_time IS NOT NULL AND t.merchant_user = (SELECT mu.id FROM merchant_user mu WHERE mu.merchant_code = #{merchantCode})) AS totalSuccessPaid,
+			(SELECT COUNT(1) FROM shop_pay_frozen t WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime})
+				AND t.merchant_user = (SELECT mu.id FROM merchant_user mu WHERE mu.merchant_code = #{merchantCode})) AS totalRiskControlOrder
+		FROM DUAL
+    </select>
+
+	<!-- 获取商户某段时间内某条通道的统计数据 -->
+    <select id="getMerchantOverChannelInfo" resultType="com.cloud.finance.common.dto.FinanceOverviewDto">
+		SELECT
+			#{merchantCode} userCode, '3' userType,
+			(SELECT IFNULL(SUM(t.merchant_pay_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.third_channel_id = #{thirdChannelId} AND t.merchant_code = #{merchantCode}) totalMoney,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.merchant_code = #{merchantCode}) totalOrder,
+			(SELECT COUNT(1) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.third_channel_id = #{thirdChannelId} AND t.merchant_code = #{merchantCode}) totalSuccessOrder,
+			(SELECT IFNULL(SUM(t.merchant_pay_money - t.merchant_cost_money), 0) FROM shop_pay t
+				WHERE DATE(t.create_date) BETWEEN DATE(#{beginTime}) AND DATE(#{endTime}) AND t.del_flag = 0 AND t.success_flag = 1
+					AND t.pay_status = 1 AND t.third_channel_id = #{thirdChannelId} AND t.merchant_code = #{merchantCode}) totalCharge,
+			'100' AS totalPaid,
+			'99' AS totalSuccessPaid,
+			'1' AS totalRiskControlOrder
+		FROM DUAL
+    </select>
+
+    <!-- 每小时汇总 -->
+    <select id="getByHour" resultType="java.util.Map">
+        SELECT count(1) AS orderVal, IFNULL(SUM(t.merchant_pay_money), 0) AS moneyVal, HOUR(t.create_date) AS date FROM shop_pay t
+	     WHERE HOUR(t.create_date) = #{hour} AND TO_DAYS(t.create_date) = TO_DAYS(#{today}) GROUP BY HOUR(t.create_date) ORDER BY HOUR(t.create_date)
+    </select>
+
+    <!-- 每天汇总 -->
+    <select id="getByDay" resultType="java.util.Map">
+        SELECT count(1) AS orderVal, IFNULL(SUM(t.merchant_pay_money), 0) AS moneyVal, DAY(t.create_date) AS date FROM shop_pay t
+	     WHERE date_format(t.create_date, '%Y%m%d') = date_format(#{today}, '%Y%m%d') GROUP BY DAY(t.create_date) ORDER BY DAY(t.create_date)
+    </select>
+
+    <!-- 每个月汇总 -->
+    <select id="getByMonth" resultType="java.util.Map">
+        SELECT count(1) AS orderVal, IFNULL(SUM(t.merchant_pay_money), 0) AS moneyVal, MONTH(t.create_date) AS date FROM shop_pay t
+	     WHERE MONTH(t.create_date) = #{month} AND date_format(t.create_date, '%Y') = date_format(#{today}, '%Y') GROUP BY MONTH(t.create_date) ORDER BY MONTH(t.create_date)
+    </select>
+
+    <!-- 商户排行 -->
+    <select id="getMerchantRanking" resultType="java.util.Map">
+        SELECT m.merchant_name AS merchantName, (
+            SELECT IFNULL(SUM(t.merchant_pay_money), 0) AS totalMoney FROM shop_pay t
+                WHERE t.merchant_code = m.merchant_code AND DATE_FORMAT(t.create_date, '%Y-%m-%d') BETWEEN DATE_FORMAT(#{beginTime}, '%Y-%m-%d') AND DATE_FORMAT(#{endTime}, '%Y-%m-%d')
+                    GROUP BY t.merchant_code ORDER BY  totalMoney
+        ) AS totalMoney
+        FROM merchant_user m LIMIT #{limit}
+    </select>
+
+	<!-- 统计每天商户汇总数据 -->
+	<select id="getDailySummary" resultType="com.cloud.finance.common.dto.SummaryDto">
+        SELECT tt.merchant_code AS merchantCode,
+			sum(tt.merchant_pay_money) AS totalMoney,
+			sum(IF(tt.pay_status=1, tt.merchant_pay_money, 0)) AS totalSuccessMoney,
+			tt.merchant_cost_rate AS merchantCostRate,
+			sum(IF(tt.pay_status=1, tt.merchant_cost_money, 0)) AS merchantCostMoney,
+			tt.time AS summaryTime
+		 FROM
+		(SELECT t.merchant_code, t.merchant_pay_money, t.merchant_cost_rate, t.pay_status, t.merchant_cost_money, DATE(t.create_date) time FROM shop_pay t
+			WHERE DATE(t.create_date) = DATE(#{time})) tt GROUP BY tt.merchant_code
+    </select>
+
+	<!-- 统计每天商户通道汇总数据 -->
+	<select id="getChannelDailySummary" resultType="com.cloud.finance.common.dto.MerchantChannelDto">
+        SELECT tt.merchant_code AS merchantCode,
+        	(SELECT merchant_name FROM merchant_user WHERE merchant_code=tt.merchant_code) AS merchantName,
+			tt.third_channel_id AS channelId,
+			sum(tt.merchant_pay_money) AS channelDailyMoney,
+			sum(IF(tt.pay_status=1, tt.merchant_pay_money, 0)) AS channelSuccessMoney,
+			tt.merchant_cost_rate AS merchantCostRate,
+			sum(IF(tt.pay_status=1, tt.merchant_cost_money, 0)) AS merchantCostMoney,
+			tt.time AS summaryTime
+		 FROM
+		(SELECT t.merchant_code, t.third_channel_id, t.merchant_pay_money, t.merchant_cost_rate, t.pay_status, t.merchant_cost_money, DATE(t.create_date) time FROM shop_pay t
+			WHERE DATE(t.create_date) = DATE(#{time})) tt GROUP BY tt.merchant_code, tt.third_channel_id
+    </select>
+
+	<!-- 统计每天每个小时的汇总数据 -->
+	<select id="getHourSummary" resultType="com.cloud.finance.common.dto.SummaryDto">
+		SELECT tt.merchant_code AS merchantCode,
+			sum(tt.merchant_pay_money) AS totalMoney,
+			sum(IF(tt.pay_status=1, tt.merchant_pay_money, 0)) AS totalSuccessMoney,
+			tt.merchant_cost_rate AS merchantCostRate,
+			sum(IF(tt.pay_status=1, tt.merchant_cost_money, 0)) AS merchantCostMoney,
+			tt.time AS summaryTime
+		 FROM
+		(SELECT t.merchant_code, t.merchant_pay_money, t.merchant_cost_rate, t.pay_status, t.merchant_cost_money,
+			t.merchant_user, t.agent_user, DATE_FORMAT(t.create_date, '%Y-%m-%d %H时') time FROM shop_pay t
+			WHERE DATE(t.create_date) = DATE(#{time})
+			<if test="agentUser != null and agentUser !=''">
+				AND t.agent_user = #{agentUser}
+			</if>
+			<if test="merchantUser != null and merchantUser !=''">
+				AND t.merchant_user = #{merchantUser}
+			</if>
+			) tt GROUP BY tt.time, tt.merchant_code
+	</select>
+
+
+    <select id="listPage" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT 	t.sys_pay_order_no AS sysPayOrderNo,	 	#平台订单号
+				t.sys_pay_order_type AS sysPayOrderType,	#平台订单类型
+				t.merchant_order_no AS merchantOrderNo,     #商户订单号
+				t.third_channel_type AS thirdChannelType,	#支付通道
+				t.channel_type_code AS channelTypeCode,     #支付类型,
+				(SELECT pc.name FROM sys_pay_channel pc
+					WHERE pc.code = t.channel_type_code AND pc.del_flag = 0
+				) AS channelTypeName,	                    #支付类型名称
+				t.merchant_code AS merchantCode,		    #商户号
+				t.pay_status AS payStatus,			        #订单状态
+				t.create_date AS createDate,			    #创建时间
+				t.pay_complete_time AS payCompleteTime,	    #支付时间
+				t.merchant_pay_money AS merchantPayMoney,	#支付金额
+				t.merchant_cost_rate AS merchantCostRate,	#商户手续费率
+				t.merchant_cost_money AS merchantCostMoney,	#商户手续费
+				t.source									#订单来源
+			FROM shop_pay t
+		 WHERE 1=1
+		<if test="sysUserId != null and sysUserId !=''">
+			AND (t.agent_code = (SELECT a.agent_code FROM agent_user a WHERE a.sys_user_id = #{sysUserId})
+			 OR t.merchant_code = (SELECT a.merchant_code FROM merchant_user a WHERE a.sys_user_id = #{sysUserId}))
+		</if>
+		<if test="merchantCode != null and merchantCode !=''">
+			 AND t.merchant_code = #{merchantCode}
+		</if>
+		<if test="merchantOrderNo != null and merchantOrderNo !=''">
+			 AND t.merchant_order_no = #{merchantOrderNo}
+		</if>
+		<if test="sysPayOrderNo != null and sysPayOrderNo !=''">
+			 AND t.sys_pay_order_no = #{sysPayOrderNo}
+		</if>
+		<if test="thirdChnnelOrderNo != null and thirdChnnelOrderNo !=''">
+			 AND t.third_channel_order_no = #{thirdChnnelOrderNo}
+		</if>
+		<if test="payStatus != null and payStatus >=0">
+			 AND t.pay_status = #{payStatus}
+		</if>
+		<if test="channelTypeCode != null and channelTypeCode !=''">
+			 AND t.channel_type_code = #{channelTypeCode}
+		</if>
+		<if test="sysPayOrderType != null and sysPayOrderType !=''">
+			 AND t.sys_pay_order_type = #{sysPayOrderType}
+		</if>
+		<if test="thirdChannelType != null and thirdChannelType !=''">
+			 AND t.third_channel_type = #{thirdChannelType}
+		</if>
+		<if test="beginTime != null and beginTime !='' and endTime != null and endTime !=''">
+			 AND t.create_date BETWEEN #{beginTime} AND #{endTime}
+		</if>
+		<if test="source != null and source >=0">
+			AND t.source = #{source}
+		</if>
+
+		ORDER BY create_date DESC
+        LIMIT ${pageStart},${pageSize}
+    </select>
+
+    <select id="count" parameterType="java.util.Map" resultType="int">
+        SELECT COUNT(1) FROM shop_pay t WHERE 1=1
+		<if test="sysUserId != null and sysUserId !=''">
+			AND (t.agent_code = (SELECT a.agent_code FROM agent_user a WHERE a.sys_user_id = #{sysUserId})
+			OR t.merchant_code = (SELECT a.merchant_code FROM merchant_user a WHERE a.sys_user_id = #{sysUserId}))
+		</if>
+		<if test="merchantCode != null and merchantCode !=''">
+			AND t.merchant_code = #{merchantCode}
+		</if>
+		<if test="merchantOrderNo != null and merchantOrderNo !=''">
+			AND t.merchant_order_no = #{merchantOrderNo}
+		</if>
+		<if test="sysPayOrderNo != null and sysPayOrderNo !=''">
+			AND t.sys_pay_order_no = #{sysPayOrderNo}
+		</if>
+		<if test="thirdChnnelOrderNo != null and thirdChnnelOrderNo !=''">
+			AND t.third_channel_order_no = #{thirdChnnelOrderNo}
+		</if>
+		<if test="payStatus != null and payStatus >=0">
+			AND t.pay_status = #{payStatus}
+		</if>
+		<if test="channelTypeCode != null and channelTypeCode !=''">
+			AND t.channel_type_code = #{channelTypeCode}
+		</if>
+		<if test="sysPayOrderType != null and sysPayOrderType !=''">
+			AND t.sys_pay_order_type = #{sysPayOrderType}
+		</if>
+		<if test="thirdChannelType != null and thirdChannelType !=''">
+			AND t.third_channel_type = #{thirdChannelType}
+		</if>
+		<if test="beginTime != null and beginTime !='' and endTime != null and endTime !=''">
+			AND t.create_date BETWEEN #{beginTime} AND #{endTime}
+		</if>
+		<if test="source != null and source >=0">
+			AND t.source = #{source}
+		</if>
+    </select>
+
+	<!-- 将指定日期之前的数据移动至历史库的存储过程 -->
+	<select id="monthMove">
+		call copy_shop_pay_to_log(#{beginTime});
+	</select>
+
+    <insert id="add" parameterType="ShopPay">
+		<selectKey keyProperty="id" resultType="String" order="BEFORE">
+			SELECT UUID()
+		</selectKey>
+		INSERT INTO shop_pay (
+			id,
+			sys_pay_order_no,
+			sys_pay_order_type,
+			pay_status,
+			channel_type_code,
+			pay_complete_time,
+			merchant_code,
+			merchant_user,
+			merchant_order_no,
+			merchant_goods_title,
+			merchant_goods_desc,
+			merchant_pay_money,
+			merchant_pay_message,
+			merchant_notify_url,
+			merchant_return_url,
+			merchant_cancel_url,
+			agent_user,
+			agent_code,
+			merchant_cost_rate,
+			merchant_cost_money,
+			agent_cost_rate,
+			agent_cost_money,
+			third_channel_type,
+			third_channel_cost_rate,
+			third_channel_cost_money,
+			third_channel_order_no,
+			third_channel_resp_msg,
+			third_channel_notify_flag,
+			success_flag,
+			step,
+			source,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			bank_code,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{id},
+				#{sysPayOrderNo},
+				#{sysPayOrderType},
+				#{payStatus},
+				#{channelTypeCode},
+				#{payCompleteTime},
+				#{merchantCode},
+				#{merchantUser},
+				#{merchantOrderNo},
+				#{merchantGoodsTitle},
+				#{merchantGoodsDesc},
+				#{merchantPayMoney},
+				#{merchantPayMessage},
+				#{merchantNotifyUrl},
+				#{merchantReturnUrl},
+				#{merchantCancelUrl},
+				#{agentUser},
+				#{agentCode},
+				#{merchantCostRate},
+				#{merchantCostMoney},
+				#{agentCostRate},
+				#{agentCostMoney},
+				#{thirdChannelType},
+				#{thirdChannelCostRate},
+				#{thirdChannelCostMoney},
+				#{thirdChannelOrderNo},
+				#{thirdChannelRespMsg},
+				#{thirdChannelNotifyFlag},
+				#{successFlag},
+				1,
+				#{source},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				NOW(),
+				#{bankCode},
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+
+	<update id="update" parameterType="ShopPay">
+		UPDATE shop_pay
+		SET
+		<if test="successFlag != null and successFlag != ''">
+			success_flag = #{successFlag},
+		</if>
+			update_by = #{updateBy},
+			update_date = NOW()
+        WHERE id = #{id}
+    </update>
+
+	<update id="updateStep">
+		UPDATE shop_pay
+		SET step=2,
+		update_date = NOW()
+        WHERE TO_DAYS(create_date) &lt; TO_DAYS(NOW())
+	</update>
+
+	<update id="updateOrderStatus" parameterType="ShopPay">
+		UPDATE shop_pay
+		SET
+			pay_status = #{payStatus},
+			pay_complete_time = #{payCompleteTime},
+			third_channel_resp_msg = #{thirdChannelRespMsg},
+			third_channel_notify_flag = #{thirdChannelNotifyFlag},
+			third_channel_order_no = #{thirdChannelOrderNo},
+			update_by = #{updateBy},
+			update_date = NOW()
+        WHERE id = #{id}
+    </update>
+
+	<update id="updateThirdInfo" parameterType="ShopPay">
+		UPDATE shop_pay
+		SET
+			third_channel_id = #{thirdChannelId},
+			third_channel_type = #{thirdChannelType},
+			third_channel_cost_rate = #{thirdChannelCostRate},
+			third_channel_cost_money = #{thirdChannelCostMoney},
+			update_by = #{updateBy},
+			update_date = NOW()
+        WHERE id = #{id}
+    </update>
+
+
+	<update id="updateStatus" parameterType="ShopPay">
+		UPDATE shop_pay
+		SET
+			pay_status = #{payStatus},
+			update_by = #{updateBy},
+			update_date = NOW()
+		WHERE id = #{id}
+	</update>
+
+</mapper>

@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: finance-service
+  profiles:
+    active: dev
+
+  jwt:
+    express: 1800000
+    _express: 604800000
+    id: championHK2ss018
+
+mybatis:
+  mapper-locations: classpath:mybatis/*.xml  #注意：一定要对应mapper映射xml文件的所在路径
+  type-aliases-package: com.cloud.finance.po  # 注意：对应实体类的路径
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: finance-service
+
+server:
+  port: 8300
+
+ribbon:
+  ReadTimeout: 60000
+  SocketTimeout: 60000
+  MaxAutoRetries: 0
+  MaxAutoRetriesNextServer: 1
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 6000
+        readTimeout: 6000
+        loggerLevel: basic

@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: dev
+  jwt:
+    express: 1800000
+    _express: 604800000
+    id: championHK2ss018
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: api-gateway
+zuul:
+  #全部服务忽略的敏感头，也可以指定某一个具体的routes
+  sensitive-headers: Cookie, Set-Cookie, Authorization, h, t, auth  #看需求取舍要忽略的请求头
+  routes:
+    aaaaaa:
+      path: /sysuser/**
+      serviceId: sysuser
+      sensitiveHeaders:
+  #排除某些路由
+  ignored-patterns:
+    - /sysuser/list
+  host:
+    socket-timeout-millis: 60000
+    connect-timeout-millis: 60000
+
+
+ribbon:
+  ReadTimeout: 30000
+  SocketTimeout: 30000
+  MaxAutoRetries: 0
+  MaxAutoRetriesNextServer: 1
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+      fallback:
+        enabled: true
