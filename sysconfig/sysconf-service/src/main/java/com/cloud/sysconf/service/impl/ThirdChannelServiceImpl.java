@@ -1,6 +1,5 @@
 package com.cloud.sysconf.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisServiceImpl;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
@@ -12,8 +11,9 @@ import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ReturnVo;
 import com.cloud.sysconf.dao.ThirdChannelDao;
 import com.cloud.sysconf.dao.ThirdPayChannelDao;
-import com.cloud.sysconf.po.*;
-import com.cloud.sysconf.service.*;
+import com.cloud.sysconf.po.ThirdChannel;
+import com.cloud.sysconf.po.ThirdPayChannel;
+import com.cloud.sysconf.service.ThirdChannelService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -147,7 +147,7 @@ public class ThirdChannelServiceImpl extends BaseMybatisServiceImpl<ThirdChannel
         if(list != null && list.size()>0){
             return ReturnVo.returnSuccess(list);
         }else{
-            return  ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "当前无可用通道"));
+            return ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "当前无可用通道"));
         }
     }
 }

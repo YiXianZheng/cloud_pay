@@ -124,8 +124,7 @@ public class FinanceTask {
             String [] temp = timesStr.split(",");
             List<Integer> notifyTimes = new ArrayList<>();
             if(temp.length > 0) {
-                for (String str : temp
-                        ) {
+                for (String str : temp) {
                     if(StringUtils.isNotBlank(str)){
                         notifyTimes.add(Integer.parseInt(str));
                     }
@@ -134,9 +133,7 @@ public class FinanceTask {
                 logger.info("==============  retryNotify error: >>> sys_dic data [NOTIFY_TIMES] is empty <<<  ===============");
             }
 
-            int preTime = 1;
-            for (int i=0; i<notifyTimes.size(); i++
-                 ) {
+            for (int i = 0; i < notifyTimes.size(); i++) {
                 int time = notifyTimes.get(i);
                 int redisDb = RedisConfig.UN_RESPONSE_NOTIFY + i;
                 Calendar calendar = Calendar.getInstance();
@@ -152,10 +149,9 @@ public class FinanceTask {
                             continue;
 
                         logger.info("==============  retryNotify: >>> jsonStr ["+jsonStr+"] <<<  ===============");
-                        net.sf.json.JSONObject myJson = net.sf.json.JSONObject.fromObject(jsonStr);
-                        Map params = myJson;
+                        Map<String, String> params = net.sf.json.JSONObject.fromObject(jsonStr);
 
-                        String notifyUrl = params.get("notifyUrl").toString();
+                        String notifyUrl = params.get("notifyUrl");
                         params.remove("notifyUrl");
                         if(params.get("notifyTime") == null){
                             throw  new Exception();

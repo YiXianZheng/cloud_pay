@@ -4,8 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.cloud.apigateway.service.AuthSysuserFilterService;
 import com.cloud.apigateway.utils.JwtUtil;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
-import com.cloud.sysconf.common.redis.RedisClient;
-import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.LanguageEnum;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
@@ -19,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
-
 import java.util.Map;
 
 import static org.springframework.cloud.netflix.zuul.filters.support.FilterConstants.PRE_DECORATION_FILTER_ORDER;

@@ -2,7 +2,6 @@ package com.cloud.apigateway.filter;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.apigateway.service.MerchantApiFilterService;
-//import com.cloud.finance.common.utils.SysPayResultConstants;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
@@ -16,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import static org.springframework.cloud.netflix.zuul.filters.support.FilterConstants.PRE_DECORATION_FILTER_ORDER;
 import static org.springframework.cloud.netflix.zuul.filters.support.FilterConstants.PRE_TYPE;
+
+//import com.cloud.finance.common.utils.SysPayResultConstants;
 
 /**
  * API接口鉴权

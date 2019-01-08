@@ -1,11 +1,9 @@
 package com.cloud.apigateway.config;
 
-import com.cloud.finance.common.utils.PostUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.env.PropertySourceLoader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.converter.HttpMessageConverter;

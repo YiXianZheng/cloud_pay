@@ -7,7 +7,6 @@ import com.cloud.sysconf.common.dto.PayChannelDto;
 import com.cloud.sysconf.common.dto.ThirdChannelInfoDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
-import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.MyBeanUtil;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ReturnVo;

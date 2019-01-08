@@ -152,7 +152,7 @@ public class SysRoleServiceImpl extends BaseMybatisServiceImpl<SysRole, String, 
     public ReturnVo getDetail(String id) {
         try{
             SysRole sysRole = sysRoleDao.getById(id);
-            if(sysRole == null || SysRole.DEL_FLAG_ALREADY == sysRole.getDelFlag())
+            if(sysRole == null || SysRole.DEL_FLAG_ALREADY.equals(sysRole.getDelFlag()))
                 return ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "角色不存在或已删除"));
 
             SysRoleDto sysRoleDto = new SysRoleDto();
@@ -247,6 +247,5 @@ public class SysRoleServiceImpl extends BaseMybatisServiceImpl<SysRole, String, 
     public ReturnVo saveDefaultRoleUser(String userId, String roleType) {
         SysRole role = sysRoleDao.getByRoleType(roleType);
         return this.saveRoleUser(userId, role.getId());
-
     }
 }

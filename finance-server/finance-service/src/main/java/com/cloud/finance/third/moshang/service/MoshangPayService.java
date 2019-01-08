@@ -59,7 +59,7 @@ public class MoshangPayService implements BasePayService {
 
     @Override
     public MidPayCreateResult createH5JumpUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
-        logger.info("[moshang pay create params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
+        logger.info("[moshang " + shopPayDto.getChannelTypeCode() + " create params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
 
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
         payCreateResult.setStatus("false");
@@ -100,19 +100,17 @@ public class MoshangPayService implements BasePayService {
         }
 
         //签名
-
         String sign = MSSignUtil.aiyangpayBankMd5Sign(thirdChannelDto.getMerchantId(),type,value,orderid,callbackurl,thirdChannelDto.getPayMd5Key());//签名
         logger.info("[moshang sign msg]:"+sign);
 
         params.put("sign", sign);
-
-        logger.info("pay post params == > "+ PayUtil.getSignParam(params));
+        logger.info("[pay post params] == > " + PayUtil.getSignParam(params));
 
         try {
             String jsonStr = PostUtils.jsonPostForCharset(thirdChannelDto.getPayUrl(), params, "GB2312");
             if(StringUtils.isEmpty(jsonStr)){
                 logger.error("【通道支付请求请求结果为空】");
-                payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS+"");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
 
                 return payCreateResult;
             }
@@ -134,11 +132,10 @@ public class MoshangPayService implements BasePayService {
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 logger.error("【通道支付请求失败】-------" + jsonStr);
             }
-            return payCreateResult;
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("【通道支付请求异常】-------");
-            payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS+"");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
         }
         return payCreateResult;
     }

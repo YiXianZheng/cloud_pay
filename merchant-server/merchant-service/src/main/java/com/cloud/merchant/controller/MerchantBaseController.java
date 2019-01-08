@@ -4,7 +4,6 @@ import com.cloud.merchant.common.enums.MerchantTypeEnum;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

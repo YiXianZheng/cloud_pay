@@ -1,8 +1,6 @@
 package com.cloud.sysconf.controller;
 
 import com.cloud.sysconf.common.basePDSC.BaseController;
-import com.cloud.sysconf.common.dto.HeaderInfoDto;
-import com.cloud.sysconf.common.dto.SysDictDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.DateUtil;
@@ -10,7 +8,6 @@ import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.common.vo.ReturnVo;
-import com.cloud.sysconf.service.SysDictService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;

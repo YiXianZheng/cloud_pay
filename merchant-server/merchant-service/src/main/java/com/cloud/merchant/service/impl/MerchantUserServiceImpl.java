@@ -2,7 +2,6 @@ package com.cloud.merchant.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.cloud.agent.common.dto.AgentInfoDto;
 import com.cloud.agent.provider.AgentUserProvider;
 import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.merchant.common.dto.*;
@@ -35,7 +34,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -113,7 +115,7 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
                 merchantUserDao.add(merchantUser);
 
                 //3，保存支付通道费率
-                if (merchantFormDto != null && merchantFormDto.getChannelRates() != null) {
+                if (merchantFormDto.getChannelRates() != null) {
 
                     List<PayChannelRateDto> channelRateDtos = merchantFormDto.getChannelRates();
 

@@ -7,7 +7,6 @@ import com.cloud.sysconf.common.vo.ReturnVo;
 import com.cloud.sysconf.dao.SysMenuDao;
 import com.cloud.sysconf.po.SysMenu;
 import com.cloud.sysconf.service.SysMenuService;
-import com.cloud.sysuser.provider.SysUserProvider;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,8 +22,6 @@ import java.util.List;
 @Service
 public class SysMenuServiceImpl extends BaseMybatisServiceImpl<SysMenu, String, SysMenuDao> implements SysMenuService {
 
-    @Autowired
-    private SysUserProvider sysUserProvider;
     @Autowired
     private SysMenuDao sysMenuDao;
 

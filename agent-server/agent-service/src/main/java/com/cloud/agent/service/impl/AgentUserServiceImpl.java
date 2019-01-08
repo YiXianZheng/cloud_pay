@@ -104,11 +104,10 @@ public class AgentUserServiceImpl extends BaseMybatisServiceImpl<AgentUser, Stri
                 agentUserDao.add(agentUser);
 
                 //3，保存支付通道费率
-                if (agentFormDto != null && agentFormDto.getChannelRates() != null) {
+                if (agentFormDto.getChannelRates() != null) {
 
                     List<PayChannelRateDto> channelRateDtos = agentFormDto.getChannelRates();
 
-                    List<AgentPayChannel> list = new ArrayList<>();
                     for (PayChannelRateDto channelRate : channelRateDtos
                             ) {
                         AgentPayChannel agentPayChannel = new AgentPayChannel();

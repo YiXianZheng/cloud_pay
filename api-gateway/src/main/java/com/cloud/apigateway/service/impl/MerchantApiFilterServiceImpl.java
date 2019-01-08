@@ -1,6 +1,5 @@
 package com.cloud.apigateway.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.apigateway.service.MerchantApiFilterService;
 import com.cloud.finance.common.utils.SafeComputeUtils;
@@ -91,7 +90,7 @@ public class MerchantApiFilterServiceImpl implements MerchantApiFilterService {
         String jsonStr = redisClient.Gethget(RedisConfig.MERCHANT_DAILY_PAY_COUNT_DB, merchantCode,
                 DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_11));
 
-        Double dailyTotal = 0D;
+        double dailyTotal = 0D;
         if(StringUtils.isNotBlank(jsonStr)) {
             Map<String, String> respMap = JSONObject.parseObject(jsonStr, HashMap.class);
             if(StringUtils.isNotBlank(respMap.get("totalSuccessMoney")))
@@ -102,7 +101,7 @@ public class MerchantApiFilterServiceImpl implements MerchantApiFilterService {
         if(map.get("dailyLimit")!=null && StringUtils.isNotBlank(map.get("dailyLimit").toString())){
             limitStr = map.get("dailyLimit").toString();
         }
-        Double dailyLimit = Double.parseDouble(limitStr);
+        double dailyLimit = Double.parseDouble(limitStr);
         logger.info("【merchant pay in api filter】 dailyTotal:" + dailyTotal + "; dailyLimit:"+ dailyLimit);
         if(SafeComputeUtils.add(dailyTotal, merchantPayMoneyYuan) > dailyLimit){
             authResponse =  ApiResponse.creatFail(new ResponseCode.COMMON(SysPayResultConstants.ERROR_MERCHANT_AUTH, "["+ merchantCode +"]商户暂不接发起支付[超过每日上限]"));

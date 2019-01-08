@@ -2,18 +2,12 @@ package com.cloud.sysconf.service.impl;
 
 import com.cloud.sysconf.common.basePDSC.BaseMybatisServiceImpl;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
-import com.cloud.sysconf.common.dto.SysMenuDto;
 import com.cloud.sysconf.common.dto.SysOfficeDto;
-import com.cloud.sysconf.common.dto.SysRoleDto;
 import com.cloud.sysconf.common.utils.BuildTree;
 import com.cloud.sysconf.common.utils.ResponseCode;
-import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.vo.ReturnVo;
 import com.cloud.sysconf.dao.SysOfficeDao;
-import com.cloud.sysconf.po.SysMenu;
 import com.cloud.sysconf.po.SysOffice;
-import com.cloud.sysconf.po.SysRole;
-import com.cloud.sysconf.po.SysRoleMenu;
 import com.cloud.sysconf.service.SysOfficeService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;

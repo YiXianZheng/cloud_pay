@@ -1,7 +1,6 @@
 package com.cloud.sysconf.controller;
 
 import com.cloud.sysconf.common.basePDSC.BaseController;
-import com.cloud.sysconf.common.enums.RoleTypeEnum;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.service.SysBankService;
@@ -10,9 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @Auther Toney

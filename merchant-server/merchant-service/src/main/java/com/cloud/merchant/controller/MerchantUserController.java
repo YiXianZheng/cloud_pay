@@ -2,7 +2,6 @@ package com.cloud.merchant.controller;
 
 import com.cloud.merchant.common.dto.MerchantFormDto;
 import com.cloud.merchant.common.dto.MerchantUpdateFormDto;
-import com.cloud.merchant.dao.MerchantPayChannelDao;
 import com.cloud.merchant.service.MerchantUserService;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
@@ -259,6 +258,7 @@ public class MerchantUserController extends BaseController {
             ReturnVo returnVo = merchantUserService.initMerchantToRedis(merchantCode);
             return this.toApiResponse(returnVo);
         } catch (Exception e){
+            e.printStackTrace();
             return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
         }
     }
