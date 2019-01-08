@@ -18,7 +18,6 @@ import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.StringUtil;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +41,6 @@ public class Shtd1PayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -132,6 +125,7 @@ public class Shtd1PayService implements BasePayService {
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
             }else{
                 payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setResultMessage("生成跳转地址失败");
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 logger.error("【通道支付请求失败】-------"+respMap.get("respInfo"));
@@ -140,7 +134,7 @@ public class Shtd1PayService implements BasePayService {
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("【通道支付请求异常】-------");
-            payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS+"");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
         }
         return payCreateResult;
     }

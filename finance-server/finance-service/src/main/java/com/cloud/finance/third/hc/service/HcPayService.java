@@ -1,14 +1,12 @@
 package com.cloud.finance.third.hc.service;
 
 import com.cloud.finance.common.dto.ShopPayDto;
-import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.finance.common.service.base.BasePayService;
 import com.cloud.finance.common.utils.ASCIISortUtil;
 import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
 import com.cloud.finance.common.vo.cash.ChannelAccountData;
-import com.cloud.finance.common.vo.pay.mes.MesPayCreateData;
 import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.common.vo.pay.req.RepPayCreateData;
@@ -17,23 +15,18 @@ import com.cloud.finance.service.ShopPayService;
 import com.cloud.finance.third.ainong.enums.RespCodeEnum;
 import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.finance.third.ainong.vo.AccountQueryData;
-import com.cloud.finance.third.ainong.vo.PayRespData;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.DateUtil;
-import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.StringUtil;
-import com.cloud.sysconf.common.vo.ApiResponse;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,12 +44,6 @@ public class HcPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -152,7 +139,7 @@ public class HcPayService implements BasePayService {
             String jsonStr = PostUtils.jsonPost(thirdChannelDto.getPayUrl(), params);
             if(StringUtils.isEmpty(jsonStr)){
                 logger.error("【通道支付请求请求结果为空】");
-                midPayCreateResult.setResultMessage(SysPayResultConstants.ERROR_SYS_PARAMS+"");
+                midPayCreateResult.setResultMessage(SysPayResultConstants.ERROR_SYS_PARAMS + "");
 
                 return midPayCreateResult;
             }
@@ -165,18 +152,16 @@ public class HcPayService implements BasePayService {
                 logger.info("【生成支付链接成功】");
                 midPayCreateResult.setStatus(jsonObject.get("success").toString());
                 midPayCreateResult.setResultMessage(jsonObject.get("message").toString());
-                midPayCreateResult.setResultCode(jsonObject.get("code").toString());
+                midPayCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
                 midPayCreateResult.setPayUrl(jsonObject.get("payUrl").toString());
                 midPayCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
-                midPayCreateResult.setChannelOrderNo(jsonObject.get("sysPayOrderNo").toString());
             }else{
                 logger.info("【生成支付链接失败】");
                 midPayCreateResult.setStatus(jsonObject.get("success").toString());
                 midPayCreateResult.setResultMessage(jsonObject.get("message").toString());
-                midPayCreateResult.setResultCode(jsonObject.get("code").toString());
+                midPayCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 midPayCreateResult.setPayUrl(jsonObject.get("payUrl").toString());
                 midPayCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
-                midPayCreateResult.setChannelOrderNo(jsonObject.get("sysPayOrderNo").toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -184,9 +169,7 @@ public class HcPayService implements BasePayService {
 
             midPayCreateResult.setResultMessage("请求异常");
             midPayCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS+"");
-            midPayCreateResult.setPayUrl("");
             midPayCreateResult.setSysOrderNo(shopPayDto.getMerchantOrderNo());
-            midPayCreateResult.setChannelOrderNo("");
         }
 
         return  midPayCreateResult;

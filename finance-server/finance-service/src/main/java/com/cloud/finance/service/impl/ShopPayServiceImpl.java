@@ -240,7 +240,7 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
         shopPay.setThirdChannelType(channelTypeStr!=null?Integer.parseInt(channelTypeStr.toString()):ThirdChannelDto.CHANNEL_TYPE_RECHARGE);
 
         String costRateStr = redisClient.Gethget(RedisConfig.THIRD_PAY_CHANNEL, channelId, shopPay.getChannelTypeCode());
-        Double costRate = 0D;
+        double costRate = 0D;
         if(costRateStr!=null){
             costRate = Double.parseDouble(costRateStr.toString());
         }
@@ -349,8 +349,6 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                 }
             }
             return ReturnVo.returnSuccess(list);
-
-
         }catch (Exception e){
             e.printStackTrace();
             return ReturnVo.returnFail();
@@ -372,7 +370,7 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                     logger.info("[order frozen] order time error");
                     return ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "只能冻结七天以内的订单"));
                 }
-                if(shopPay.getPayStatus() != PayStatusEnum.PAY_STATUS_ALREADY.getStatus()){
+                if(!shopPay.getPayStatus().equals(PayStatusEnum.PAY_STATUS_ALREADY.getStatus())){
                     logger.info("[order frozen] order status error");
                     return ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "当前状态不可操作"));
                 }
@@ -399,7 +397,7 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                     logger.info("[order frozen] order time error");
                     return ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "只能解冻15日以内的订单"));
                 }
-                if(shopPay.getPayStatus() != PayStatusEnum.PAY_STATUS_FROZEN.getStatus()){
+                if(!shopPay.getPayStatus().equals(PayStatusEnum.PAY_STATUS_FROZEN.getStatus())){
                     logger.info("[order frozen] order status error");
                     return ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "当前状态不可操作"));
                 }
@@ -518,38 +516,38 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                 //总订单数
                 Integer hisTotalOrder = redisFinanceDto.getHistoryTotalOrder();
                 Integer totalOrder = finance.getTotalOrder();
-                redisFinanceDto.setHistoryTotalOrder((hisTotalOrder.intValue() + totalOrder.intValue()));
+                redisFinanceDto.setHistoryTotalOrder((hisTotalOrder + totalOrder));
 
                 Integer redisTotalOrder = redisFinanceDto.getTotalOrder();
-                redisFinanceDto.setTotalOrder((redisTotalOrder.intValue() - totalOrder.intValue()));
+                redisFinanceDto.setTotalOrder((redisTotalOrder - totalOrder));
                 //总成功订单数
                 Integer hisTotalSuccessOrder = redisFinanceDto.getHistoryTotalSuccessOrder();
                 Integer totalSuccessOrder = finance.getTotalSuccessOrder();
-                redisFinanceDto.setHistoryTotalSuccessOrder((hisTotalSuccessOrder.intValue() + totalSuccessOrder.intValue()));
+                redisFinanceDto.setHistoryTotalSuccessOrder((hisTotalSuccessOrder + totalSuccessOrder));
 
                 Integer redisSuccessOrder = redisFinanceDto.getTotalSuccessOrder();
-                redisFinanceDto.setTotalSuccessOrder((redisSuccessOrder.intValue() - totalSuccessOrder.intValue()));
+                redisFinanceDto.setTotalSuccessOrder((redisSuccessOrder - totalSuccessOrder));
                 //总代付笔数
                 Integer hisTotalPaid = redisFinanceDto.getHistoryTotalPaid();
                 Integer totalPaid = finance.getTotalPaid();
-                redisFinanceDto.setHistoryTotalPaid((hisTotalPaid.intValue()+ totalPaid.intValue()));
+                redisFinanceDto.setHistoryTotalPaid((hisTotalPaid + totalPaid));
 
                 Integer redisTotalPaid = redisFinanceDto.getTotalPaid();
-                redisFinanceDto.setTotalPaid((redisTotalPaid.intValue() - totalPaid.intValue()));
+                redisFinanceDto.setTotalPaid((redisTotalPaid - totalPaid));
                 //总成功代付笔数
                 Integer hisTotalSuccessPaid = redisFinanceDto.getHistoryTotalSuccessPaid();
                 Integer totalSuccessPaid = finance.getTotalSuccessPaid();
-                redisFinanceDto.setHistoryTotalSuccessPaid((hisTotalSuccessPaid.intValue() + totalSuccessPaid.intValue()));
+                redisFinanceDto.setHistoryTotalSuccessPaid((hisTotalSuccessPaid + totalSuccessPaid));
 
                 Integer redisTotalSuccessPaid = redisFinanceDto.getTotalSuccessPaid();
-                redisFinanceDto.setTotalSuccessPaid((redisTotalSuccessPaid.intValue() - totalSuccessPaid.intValue()));
+                redisFinanceDto.setTotalSuccessPaid((redisTotalSuccessPaid - totalSuccessPaid));
                 //总风控订单
                 Integer hisTotalRisk = redisFinanceDto.getHistoryTotalRiskControlOrder();
                 Integer totalRisk = finance.getTotalRiskControlOrder();
-                redisFinanceDto.setHistoryTotalRiskControlOrder((hisTotalRisk.intValue() + totalRisk.intValue()));
+                redisFinanceDto.setHistoryTotalRiskControlOrder((hisTotalRisk + totalRisk));
 
                 Integer redisTotalRisk = redisFinanceDto.getTotalSuccessPaid();
-                redisFinanceDto.setTotalRiskControlOrder((redisTotalRisk.intValue() - totalRisk.intValue()));
+                redisFinanceDto.setTotalRiskControlOrder((redisTotalRisk - totalRisk));
 
 
                 redisClient.SetHsetJedis(RedisConfig.ORDER_COUNT_DB, finance.getUserCode(), MyBeanUtil.transBean2Map2(redisFinanceDto));
@@ -593,38 +591,38 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                         //总订单数
                         Integer hisTotalOrder = redisChannelSummaryDto.getHistoryTotalOrder();
                         Integer totalOrder = summary.getTotalOrder();
-                        redisChannelSummaryDto.setHistoryTotalOrder((hisTotalOrder.intValue() + totalOrder.intValue()));
+                        redisChannelSummaryDto.setHistoryTotalOrder((hisTotalOrder + totalOrder));
 
                         Integer redisTotalOrder = redisChannelSummaryDto.getTotalOrder();
-                        redisChannelSummaryDto.setTotalOrder((redisTotalOrder.intValue() - totalOrder.intValue()));
+                        redisChannelSummaryDto.setTotalOrder((redisTotalOrder - totalOrder));
                         //总成功订单数
                         Integer hisTotalSuccessOrder = redisChannelSummaryDto.getHistoryTotalSuccessOrder();
                         Integer totalSuccessOrder = summary.getTotalSuccessOrder();
-                        redisChannelSummaryDto.setHistoryTotalSuccessOrder((hisTotalSuccessOrder.intValue() + totalSuccessOrder.intValue()));
+                        redisChannelSummaryDto.setHistoryTotalSuccessOrder((hisTotalSuccessOrder + totalSuccessOrder));
 
                         Integer redisSuccessOrder = redisChannelSummaryDto.getTotalSuccessOrder();
-                        redisChannelSummaryDto.setTotalSuccessOrder((redisSuccessOrder.intValue() - totalSuccessOrder.intValue()));
+                        redisChannelSummaryDto.setTotalSuccessOrder((redisSuccessOrder - totalSuccessOrder));
                         //总代付笔数
                         Integer hisTotalPaid = redisChannelSummaryDto.getHistoryTotalPaid();
                         Integer totalPaid = summary.getTotalPaid();
-                        redisChannelSummaryDto.setHistoryTotalPaid((hisTotalPaid.intValue()+ totalPaid.intValue()));
+                        redisChannelSummaryDto.setHistoryTotalPaid((hisTotalPaid + totalPaid));
 
                         Integer redisTotalPaid = redisChannelSummaryDto.getTotalPaid();
-                        redisChannelSummaryDto.setTotalPaid((redisTotalPaid.intValue() - totalPaid.intValue()));
+                        redisChannelSummaryDto.setTotalPaid((redisTotalPaid - totalPaid));
                         //总成功代付笔数
                         Integer hisTotalSuccessPaid = redisChannelSummaryDto.getHistoryTotalSuccessPaid();
                         Integer totalSuccessPaid = summary.getTotalSuccessPaid();
-                        redisChannelSummaryDto.setHistoryTotalSuccessPaid((hisTotalSuccessPaid.intValue() + totalSuccessPaid.intValue()));
+                        redisChannelSummaryDto.setHistoryTotalSuccessPaid((hisTotalSuccessPaid + totalSuccessPaid));
 
                         Integer redisTotalSuccessPaid = redisChannelSummaryDto.getTotalSuccessPaid();
-                        redisChannelSummaryDto.setTotalSuccessPaid((redisTotalSuccessPaid.intValue() - totalSuccessPaid.intValue()));
+                        redisChannelSummaryDto.setTotalSuccessPaid((redisTotalSuccessPaid - totalSuccessPaid));
                         //总风控订单
                         Integer hisTotalRisk = redisChannelSummaryDto.getHistoryTotalRiskControlOrder();
                         Integer totalRisk = summary.getTotalRiskControlOrder();
-                        redisChannelSummaryDto.setHistoryTotalRiskControlOrder((hisTotalRisk.intValue() + totalRisk.intValue()));
+                        redisChannelSummaryDto.setHistoryTotalRiskControlOrder((hisTotalRisk + totalRisk));
 
                         Integer redisTotalRisk = redisChannelSummaryDto.getTotalSuccessPaid();
-                        redisChannelSummaryDto.setTotalRiskControlOrder((redisTotalRisk.intValue() - totalRisk.intValue()));
+                        redisChannelSummaryDto.setTotalRiskControlOrder((redisTotalRisk - totalRisk));
 
                         redisClient.SetHsetJedis(RedisConfig.MERCHANT_CHANNEL_COUNT_DB, merCode, summary.getChannelId(),
                                 JSONObject.toJSONString(MyBeanUtil.transBean2Map2(redisChannelSummaryDto)));
@@ -755,8 +753,6 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                 }
             }
             shopAccountRecordService.updateStep();
-
-
             return ReturnVo.returnSuccess();
         }catch (Exception e){
             e.printStackTrace();

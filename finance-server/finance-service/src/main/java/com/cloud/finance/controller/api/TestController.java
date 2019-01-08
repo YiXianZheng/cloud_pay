@@ -1,7 +1,6 @@
 package com.cloud.finance.controller.api;
 
 import com.cloud.finance.common.utils.ASCIISortUtil;
-import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.pay.req.RepPayCreateData;
 import com.cloud.finance.third.ainong.utils.MD5Util;
@@ -16,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,9 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 @RestController
 @RequestMapping(value = "/hctest")
@@ -44,16 +40,6 @@ public class TestController {
 
     @RequestMapping("/test")
     public ApiResponse test(HttpServletRequest request){
-
-        /**
-         *
-         * http://localhost:8888/finance-service/ebank/pay?assCode=181013210017572&paymentType=ali_h5_wake
-         *      &assNotifyUrl=11&assReturnUrl=11&assCancelUrl=11&subPayCode=ABC&assPayMoney=1000&assPayMessage=11
-         *      &assGoodsTitle=测试订单&assGoodsDesc=11&sign=C2E1C54B064E9E567A6B363D5DF229D2&assPayOrderNo=1000000005
-         *
-         */
-
-
         String merchantCode = this.getStringParameter("assCode",request);                //商户编号
         String merchantPayOrderNo = this.getStringParameter("assPayOrderNo",request);    //商户订单号
         String merchantNotifyUrl = this.getStringParameter("assNotifyUrl",request);    //商户回调地址
@@ -163,21 +149,6 @@ public class TestController {
             apiResponse.setCode("0");
             apiResponse.setMsg("请求成功");
             return apiResponse;
-
-//            if(StringUtils.isNotBlank(merchantPayMoney)) {
-//                params.put("assPayMoney", merchantPayMoney);
-//            }
-//            if(StringUtils.isNotBlank(merchantPayMessage)) {
-//                params.put("assPayMessage", merchantPayMessage);
-//            }
-//            if(StringUtils.isNotBlank(merchantGoodsTitle)) {
-//                params.put("assGoodsTitle", merchantGoodsTitle);
-//            }
-//            params.put("sign", signStr);
-//
-//            String respStr = PostUtils.jsonPost("http://pay.bth2.cn:5500/finance-service/ebank/pay", params);
-//            logger.info("response json :"+respStr);
-
         } catch (Exception e) {
             e.printStackTrace();
         }

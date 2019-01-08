@@ -14,10 +14,8 @@ import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
-import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.Util;
 import com.cloud.sysconf.common.vo.ResultVo;
-import com.cloud.sysconf.common.vo.ReturnVo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * ecash对外服务接口

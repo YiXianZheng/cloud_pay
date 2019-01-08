@@ -6,7 +6,6 @@ import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.common.enums.*;
 import com.cloud.finance.common.service.base.BasePayService;
 import com.cloud.finance.common.service.base.PayServiceFactory;
-import com.cloud.finance.common.utils.ASCIISortUtil;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
 import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
@@ -17,7 +16,6 @@ import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.FinanceService;
 import com.cloud.finance.service.ShopAccountRecordService;
 import com.cloud.finance.service.ShopPayService;
-import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
@@ -34,7 +32,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -268,11 +269,10 @@ public class HcPayController extends BaseController {
             }
 
             Map<String, String> map = new HashMap<>();
-            map.put("success", "false");
             map.put("message", "生成" + SysPaymentTypeEnum.getLabelMap().get(paymentType) + "支付链接失败");
+            map.put("success", "false");
             map.put("code", SysPayResultConstants.ERROR_PAY_CHANNEL_NULL + "");
             map.put("assPayOrderNo", merchantPayOrderNo);
-            String txnTimeString = new SimpleDateFormat("yyyyMMdd").format(new Date());
             logger.info("[create pay url failed]:cost-" + (System.currentTimeMillis() - startTime) + "ms,assCode:" + merchantCode + ",assPayOrderNo:" + merchantPayOrderNo + ",paymentType:" + paymentType + ",assPayMoneyYuan:" + merchantPayMoneyYuan);
 
             return renderString(response, map);
@@ -599,20 +599,19 @@ public class HcPayController extends BaseController {
         boolean channelActive = false;//是否有可用通道
         ThirdChannelDto thirdChannelDto = new ThirdChannelDto();
         if(channels.size()>0) {
-            for (String channelId : channels
-                    ) {
+            for (String channelId : channels) {
                 Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, channelId);
-                if(map.get(paymentType) != null && StringUtils.isNotBlank(map.get(paymentType).toString())
+                if(map.get(paymentType) != null && StringUtils.isNotBlank(map.get(paymentType))
                         && map.get("channelType") != null && "1".equals(map.get("channelType").toString())){
                     ThirdChannelDto channelDto = ThirdChannelDto.map2Object(map);
                     if(thirdChannelDto.getRouteWeight()==null || channelDto.getRouteWeight() > thirdChannelDto.getRouteWeight()){
-                        thirdChannelDto = channelDto;
                         channelActive = true;
+                        thirdChannelDto = channelDto;
                     }
                 }
             }
 
-            return channelActive?thirdChannelDto:null;
+            return channelActive ? thirdChannelDto : null;
         }else{
             return null;
         }

@@ -173,21 +173,15 @@ public class DirectPayController extends BaseController {
         } finally {
             out.close();
         }
-
     }
-
 
 	/**
 	 * 爱农 H5
 	 * @param sysPayOrderNo
-	 * @param request
 	 * @param response
-	 * @param model
-	 * @throws Exception
 	 */
 	@RequestMapping("/an_{sysPayOrderNo}.html")
-	public void ainong(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletRequest request, HttpServletResponse response,
-					   Model model) throws Exception {
+	public void ainong(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
 
 		logger.info("...[ainong ali h5  pay] pay order action...");
 		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
@@ -270,20 +264,15 @@ public class DirectPayController extends BaseController {
 		} finally {
 			out.close();
 		}
-
 	}
 
 	/**
 	 * 易融通 H5
 	 * @param sysPayOrderNo
-	 * @param request
 	 * @param response
-	 * @param model
-	 * @throws Exception
 	 */
 	@RequestMapping("/yrt_{sysPayOrderNo}.html")
-	public void yirongtong(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletRequest request, HttpServletResponse response,
-					   Model model) throws Exception {
+	public void yirongtong(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
 
 		logger.info("...[yirongtong ali h5  pay] pay order action...");
 		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
@@ -330,11 +319,12 @@ public class DirectPayController extends BaseController {
 		logger.info("...[yirongtong alih5 pay] html:" + html);
 		PrintWriter out = null;
 		try {
-			response.setCharacterEncoding("utf-8");
 			response.setContentType("text/html;charset=utf-8");
+			response.setCharacterEncoding("utf-8");
 			out = response.getWriter();
 		} catch (IOException e) {
 			e.printStackTrace();
+			return;
 		}
 		try {
 			out.print(html);
@@ -347,14 +337,10 @@ public class DirectPayController extends BaseController {
 	/**
 	 * 酷宝享 H5
 	 * @param sysPayOrderNo
-	 * @param request
 	 * @param response
-	 * @param model
-	 * @throws Exception
 	 */
 	@RequestMapping("/kbx_{sysPayOrderNo}.html")
-	public void kubaoxiang(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletRequest request, HttpServletResponse response,
-						   Model model) throws Exception {
+	public void kubaoxiang(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
 
 		logger.info("...[kubaoxiang ali h5  pay] pay order action...");
 		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
@@ -410,6 +396,7 @@ public class DirectPayController extends BaseController {
 			out = response.getWriter();
 		} catch (IOException e) {
 			e.printStackTrace();
+			return;
 		}
 		try {
 			out.print(html);
@@ -422,14 +409,10 @@ public class DirectPayController extends BaseController {
 	/**
 	 * 北京 H5
 	 * @param sysPayOrderNo
-	 * @param request
 	 * @param response
-	 * @param model
-	 * @throws Exception
 	 */
 	@RequestMapping("/bj_{sysPayOrderNo}.html")
-	public void beijing(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletRequest request, HttpServletResponse response,
-					   Model model) throws Exception {
+	public void beijing(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
 
 		logger.info("...[beijing ali h5  pay] pay order action...");
 		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
@@ -503,20 +486,15 @@ public class DirectPayController extends BaseController {
                 out.close();
             }
         }
-
 	}
 
 	/**
 	 * 物流支付
 	 * @param sysPayOrderNo
-	 * @param request
 	 * @param response
-	 * @param model
-	 * @throws Exception
 	 */
 	@RequestMapping("/wl_{sysPayOrderNo}.html")
-	public void wuliu(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletRequest request, HttpServletResponse response,
-						 Model model) throws Exception {
+	public void wuliu(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
 
 		logger.info("...[wuliu h5 pay] pay order action...");
 		ShopPay od = shopPayService.getBySysOrderNo(sysPayOrderNo);
@@ -617,14 +595,10 @@ public class DirectPayController extends BaseController {
 	/**
 	 * 中华 H5
 	 * @param sysPayOrderNo
-	 * @param request
 	 * @param response
-	 * @param model
-	 * @throws Exception
 	 */
 	@RequestMapping("/zh_{sysPayOrderNo}.html")
-	public void zhonghua(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletRequest request, HttpServletResponse response,
-					   Model model) throws Exception {
+	public void zhonghua(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
 
 		logger.info("...[zhonghua pay] pay order action...");
 		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
@@ -682,14 +656,10 @@ public class DirectPayController extends BaseController {
 	/**
 	 * 云极 快捷
 	 * @param sysPayOrderNo
-	 * @param request
 	 * @param response
-	 * @param model
-	 * @throws Exception
 	 */
 	@RequestMapping("/yj_{sysPayOrderNo}.html")
-	public void yunji(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletRequest request, HttpServletResponse response,
-						Model model) throws Exception {
+	public void yunji(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
 
 		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
 		String orderPayType = shopPayDto.getChannelTypeCode();
@@ -739,17 +709,15 @@ public class DirectPayController extends BaseController {
 			logger.error("[yunji pay url create fail]");
 			return;
 		}
-		StringBuffer sf = new StringBuffer();
-		sf.append("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/></head><body>");
-		sf.append(postResp);
-		sf.append("</body>");
-		sf.append("</html>");
-		String html = sf.toString();
+		String html = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/></head><body>" +
+				postResp +
+				"</body>" +
+				"</html>";
 
 		PrintWriter out = null;
 		try {
-			response.setCharacterEncoding("utf-8");
 			response.setContentType("text/html;charset=utf-8");
+			response.setCharacterEncoding("utf-8");
 			out = response.getWriter();
 		} catch (IOException e) {
 			e.printStackTrace();

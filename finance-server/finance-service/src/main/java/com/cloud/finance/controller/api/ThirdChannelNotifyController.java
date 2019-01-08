@@ -15,7 +15,7 @@ import com.cloud.finance.third.ainong.enums.RespTradeStatusEnum;
 import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.finance.third.ainong.vo.AilongDfRespData;
 import com.cloud.finance.third.ainong.vo.H5NotifyData;
-import com.cloud.finance.third.guanjun.service.utils.GJSignUtil;
+import com.cloud.finance.third.guanjun.utils.GJSignUtil;
 import com.cloud.finance.third.hangzhou.utils.XmlUtil;
 import com.cloud.finance.third.hankou.utils.HKUtil;
 import com.cloud.finance.third.moshang.utils.MSSignUtil;
@@ -162,7 +162,7 @@ public class ThirdChannelNotifyController extends BaseController {
             if("000000".equals(respData.getHead().getRespCode())){
                 logger.info("【通道代付成功】----");
 
-                if(shopRecharge != null && shopRecharge.getCompleteTime() == null){
+                if(shopRecharge.getCompleteTime() == null){
                     shopRecharge.setRechargeStatus(1);
                     shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
                     shopRecharge.setThirdChannelOrderNo(respData.getHead().getPlatformId());
@@ -192,7 +192,6 @@ public class ThirdChannelNotifyController extends BaseController {
             e.printStackTrace();
             logger.error("【通道代付请求异常】-------");
         }
-
     }
 
     @RequestMapping(value = "/angateNotify")
@@ -240,14 +239,8 @@ public class ThirdChannelNotifyController extends BaseController {
                     shopPayService.updateOrderStatus(shopOrder);
 
                     //通知商户
-//                    boolean notifyResult = payCommonService.notifyAssWithMd5Key(orderNo);
-//                    if (notifyResult) {
                     response.getWriter().write("SUCCESS");
                     this.logger.info("[source ainong syt Notify]notify success:" + outTradeNo);
-//                    } else {
-//                        this.logger.error("[source xiandai AliH5 Notify]notify error:" + orderNo);
-//                    }
-
                 }else if(RespTradeStatusEnum.CODE_PAYING.getCode().equals(tradeStatus)){
                     this.logger.info("[ainong gate Notify ]...付款中");
                 }else{
@@ -258,12 +251,9 @@ public class ThirdChannelNotifyController extends BaseController {
                 this.logger.info("[ainong syt Notify ]...回调找不到订单");
 
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -349,12 +339,9 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopOrder.setThirdChannelOrderNo(params.get("pay_number"));
                 shopPayService.updateOrderStatus(shopOrder);
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -424,10 +411,7 @@ public class ThirdChannelNotifyController extends BaseController {
             e.printStackTrace();
             logger.error("【通道代付请求异常】-------");
         }
-
     }
-
-
 
     /**
      * 金信 支付请求回调
@@ -500,14 +484,10 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopOrder.setThirdChannelNotifyFlag(1);
                 shopOrder.setThirdChannelOrderNo(params.get("transaction_id"));
                 shopPayService.updateOrderStatus(shopOrder);
-
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -540,15 +520,14 @@ public class ThirdChannelNotifyController extends BaseController {
             ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
             if (shopOrder == null) {
                 this.logger.info("[xunjiefu pay Notify ]...回调找不到订单");
+                return;
             }
-            Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopOrder.getThirdChannelId());
-            ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
 
             //签名
             String signMsg = ASCIISortUtil.buildSign(params, "=", "");
-            logger.info("[xunjiefu before sign msg]:"+signMsg);
+            logger.info("[xunjiefu before sign msg]:" + signMsg);
             boolean signCheck = XJFSignUtil.checkSign(signMsg, sign);
-            logger.info("[xunjiefu sign result]:"+signCheck);
+            logger.info("[xunjiefu sign result]:" + signCheck);
 
             if(!signCheck){
                 logger.error("【通道回调请求失败】回调签名错误");
@@ -575,8 +554,6 @@ public class ThirdChannelNotifyController extends BaseController {
                 } else {
                     this.logger.error("[Notify merchant]notify error:" + orderNo);
                 }
-
-
             } else if ("P000".equals(params.get("respCode")) || "P999".equals(params.get("respCode"))){
                 // 交易处理中或结果未知  不做操作
             } else {
@@ -589,12 +566,9 @@ public class ThirdChannelNotifyController extends BaseController {
                 this.logger.info("[xunjiefu pay Notify ]...回调支付成功 - 支付失败");
                 response.getWriter().write("success");
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -665,13 +639,10 @@ public class ThirdChannelNotifyController extends BaseController {
                 logger.info("【通道代付失败】----> 代付结果状态错误：" + params.get("respCode") + "--->" + params.get("respDesc"));
                 response.getWriter().write("SUCCESS");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-
 
     /**
      * 陌上支付 支付回调
@@ -694,7 +665,6 @@ public class ThirdChannelNotifyController extends BaseController {
             params.put("opstate", request.getParameter("opstate"));
             params.put("ovalue", request.getParameter("ovalue"));
             params.put("sysorderid", request.getParameter("sysorderid"));
-
 
             ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
             if (shopOrder == null) {
@@ -747,7 +717,6 @@ public class ThirdChannelNotifyController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -798,8 +767,8 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_ALREADY.getStatus());
                 shopOrder.setPayCompleteTime(new Date());
                 shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
-                shopOrder.setThirdChannelNotifyFlag(1);
                 shopOrder.setThirdChannelOrderNo(params.get("sysorderid"));
+                shopOrder.setThirdChannelNotifyFlag(1);
                 shopOrder.setRemarks(params.get("msg"));
                 shopPayService.updateOrderStatus(shopOrder);
                 //通知商户
@@ -814,8 +783,8 @@ public class ThirdChannelNotifyController extends BaseController {
                 // 支付失败
                 shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
                 shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
-                shopOrder.setThirdChannelNotifyFlag(1);
                 shopOrder.setThirdChannelOrderNo(params.get("sysorderid"));
+                shopOrder.setThirdChannelNotifyFlag(1);
                 shopOrder.setRemarks(params.get("msg"));
                 shopPayService.updateOrderStatus(shopOrder);
                 this.logger.info("[yirongtong pay Notify ]...回调支付成功 - 支付失败");
@@ -1006,7 +975,6 @@ public class ThirdChannelNotifyController extends BaseController {
             e.printStackTrace();
             logger.error("[订单回调通知异常]------");
         }
-
     }
 
     /**
@@ -1159,7 +1127,6 @@ public class ThirdChannelNotifyController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -1226,8 +1193,8 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
                 shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
                 shopOrder.setThirdChannelNotifyFlag(1);
-                shopOrder.setThirdChannelOrderNo(params.get("merOrderId"));
                 shopOrder.setRemarks(params.get("msg"));
+                shopOrder.setThirdChannelOrderNo(params.get("merOrderId"));
                 shopPayService.updateOrderStatus(shopOrder);
                 this.logger.info("[xinfulai pay Notify ]...回调支付成功 - 支付失败");
                 response.getWriter().write("ok");
@@ -1236,7 +1203,6 @@ public class ThirdChannelNotifyController extends BaseController {
             e.printStackTrace();
         }
     }
-
 
     /**
      * 中华 支付请求回调
@@ -1258,7 +1224,7 @@ public class ThirdChannelNotifyController extends BaseController {
             String remark = request.getParameter("remark");
             String mer_sign = request.getParameter("mer_sign");
 
-            StringBuffer respInfo = new StringBuffer();
+            StringBuilder respInfo = new StringBuilder();
             respInfo.append("{status:").append(status).append(",");
             respInfo.append("account:").append(account).append(",");
             respInfo.append("resqn:").append(orderId).append(",");
@@ -1270,6 +1236,7 @@ public class ThirdChannelNotifyController extends BaseController {
             ShopPay shopOrder = shopPayService.getBySysOrderNo(orderId);
             if (shopOrder == null) {
                 this.logger.info("[zhonghua AliH5 Notify ]...回调找不到订单");
+                return;
             }
 
             Double payMoney = SafeComputeUtils.div(Double.parseDouble(tempPayMoney), 100D);
@@ -1306,12 +1273,9 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopOrder.setThirdChannelOrderNo(thirdChannelOrderId);
                 shopPayService.updateOrderStatus(shopOrder);
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -1391,7 +1355,7 @@ public class ThirdChannelNotifyController extends BaseController {
     }
 
     /**
-     * 云极付支付 支付回调
+     * 云极支付 支付回调
      * @param request
      * @param response
      */
@@ -1416,12 +1380,12 @@ public class ThirdChannelNotifyController extends BaseController {
             ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
             if (shopOrder == null) {
                 this.logger.info("[guanjun pay Notify ]...回调找不到订单");
+                return;
             }
             Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopOrder.getThirdChannelId());
             ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
 
             String key = thirdChannelDto.getPayMd5Key();
-
             String signBefore = key + orderNo + money + status;
             //签名
             String signCheck = com.cloud.sysconf.common.utils.MD5Util.md5(signBefore);

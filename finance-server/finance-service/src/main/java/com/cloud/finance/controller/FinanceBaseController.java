@@ -5,7 +5,6 @@ import com.cloud.finance.common.enums.RechargeStatusEnum;
 import com.cloud.finance.common.enums.SysOrderTypeEnum;
 import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.sysconf.common.basePDSC.BaseController;
-import com.cloud.sysconf.common.enums.RoleTypeEnum;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import org.springframework.web.bind.annotation.PostMapping;

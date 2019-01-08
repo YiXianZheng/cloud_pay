@@ -6,7 +6,6 @@ import com.cloud.finance.common.utils.HttpClientUtil;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.pay.mes.MesPayNotifyData;
 import com.cloud.finance.po.ShopPay;
-import com.cloud.finance.service.ShopPayService;
 import com.cloud.merchant.provider.MerchantUserProvider;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
@@ -35,13 +34,9 @@ import java.util.Map;
 public class MerchantPayService {
 	
 	private static Logger logger = LoggerFactory.getLogger(MerchantPayService.class);
-	
-	@Autowired
-	private ShopPayService payService;
 
 	@Autowired
 	private RedisClient redisClient;
-
 	@Autowired
 	private MerchantUserProvider merchantUserProvider;
 	
@@ -49,7 +44,7 @@ public class MerchantPayService {
 	@Transactional(readOnly = false)
 	public boolean notifyAssWithMd5Key(ShopPay shopPay) throws Exception{
 		if(shopPay == null) return false;
-		this.logger.info("[notify merchant by orderid]:"+shopPay.getMerchantOrderNo());
+		logger.info("[notify merchant by orderid]:"+shopPay.getMerchantOrderNo());
 		Map<String, String> merchant = redisClient.Gethgetall(RedisConstants.MERCHANT_INFO_DB, shopPay.getMerchantCode());
 		if(merchant == null || merchant.size()==0){
 			ApiResponse apiResponse = merchantUserProvider.initMerchantToRedis(shopPay.getMerchantCode());
@@ -67,21 +62,14 @@ public class MerchantPayService {
 		String assPayMoney = returnDouble.intValue()+"";
 		SimpleDateFormat formatter;
 	    formatter = new SimpleDateFormat ("yyyyMMddHHmmss");
-		String succTime = "";
+		String succTime;
 		if(null==shopPay.getPayCompleteTime()){
 			succTime =formatter.format(new Date());
 		}else{
 			succTime =formatter.format(shopPay.getPayCompleteTime());
 		}
-		//返回地址
-		String returnUrl = shopPay.getMerchantReturnUrl();
-		if (StringUtils.isEmpty(returnUrl)) {
-			returnUrl = "http://www.baidu.com";
-		}
-		if(StringUtils.isEmpty(returnUrl)){
-			//商户添加默认回调地址
-			returnUrl = "http://www.baidu.com";
-		}
+
+		//商户添加默认回调地址
 		//返回地址
 		String respCode = shopPay.getPayStatus()+"";
 		String respMsg = PayStatusEnum.getByStatus(shopPay.getPayStatus());
@@ -92,7 +80,7 @@ public class MerchantPayService {
 		if (StringUtils.isEmpty(assPayMessage)) {
 			assPayMessage = sysPayOrderNo;
 		}
-		String notifyResponseResult="";
+		String notifyResponseResult;
 		if (StringUtils.isNotEmpty(notifyUrl)) {
             MesPayNotifyData res = new MesPayNotifyData(assCode, assPayOrderNo,sysPayOrderNo, assPayMoney, assPayMessage, succTime,respCode, respMsg, md5Key);
             Map<String, String>  notifyMap = res.getReturnParamMap();
@@ -114,7 +102,7 @@ public class MerchantPayService {
 
 	public String returnAssWithMd5Key(ShopPay shopPay) throws Exception{
 		if(shopPay == null) return "http://www.baidu.com";
-		this.logger.info("[notify merchant by orderid]:"+shopPay.getMerchantOrderNo());
+		logger.info("[notify merchant by orderid]:"+shopPay.getMerchantOrderNo());
 		Map<String, String> merchant = redisClient.Gethgetall(RedisConstants.MERCHANT_INFO_DB, shopPay.getMerchantCode());
 		if(merchant == null || merchant.size()==0){
 			ApiResponse apiResponse = merchantUserProvider.initMerchantToRedis(shopPay.getMerchantCode());
@@ -132,7 +120,7 @@ public class MerchantPayService {
 		String assPayMoney = returnDouble.intValue()+"";
 		SimpleDateFormat formatter;
 	    formatter = new SimpleDateFormat ("yyyyMMddHHmmss");
-		String succTime = "";
+		String succTime;
 		if(null==shopPay.getPayCompleteTime()){
 			succTime =formatter.format(new Date());
 		}else{
@@ -149,7 +137,7 @@ public class MerchantPayService {
 			//商户添加默认回调地址
 			returnUrl = "http://www.baidu.com";
 		}
-		String resultFinalUrl = "";
+		String resultFinalUrl;
 
 		if(StringUtils.isNotEmpty(returnUrl)){
 			

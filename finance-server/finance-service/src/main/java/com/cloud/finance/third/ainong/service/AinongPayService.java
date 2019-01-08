@@ -12,7 +12,6 @@ import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
-import com.cloud.finance.third.ainong.enums.RespCodeAliPayEnum;
 import com.cloud.finance.third.ainong.enums.RespCodeEnum;
 import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.finance.third.ainong.vo.*;
@@ -31,10 +30,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @Auther Toney

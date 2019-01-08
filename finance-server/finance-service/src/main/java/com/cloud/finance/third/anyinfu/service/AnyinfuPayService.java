@@ -2,6 +2,7 @@ package com.cloud.finance.third.anyinfu.service;
 
 import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.common.enums.PayAmountEnum;
+import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.finance.common.service.base.BasePayService;
 import com.cloud.finance.common.utils.ASCIISortUtil;
 import com.cloud.finance.common.utils.GetUtils;
@@ -18,7 +19,6 @@ import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.finance.MD5;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +37,6 @@ public class AnyinfuPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -83,6 +77,7 @@ public class AnyinfuPayService implements BasePayService {
             Integer total_fee = (int) (shopPayDto.getMerchantPayMoney() * 100);
             if (!PayAmountEnum.checkAmount(total_fee)) {
                 payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_AMOUNT_PARAM + "");
                 payCreateResult.setResultMessage("暂不支持此金额，支付金额只支持10，20，30，50，100");
                 return payCreateResult;
             }
@@ -124,7 +119,8 @@ public class AnyinfuPayService implements BasePayService {
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
             } else {
                 payCreateResult.setStatus("false");
-                payCreateResult.setResultMessage("生成跳转地址失败，" + respMap.get("message") + "，请重试");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+                payCreateResult.setResultMessage("生成跳转地址失败，" + respMap.get("message"));
                 logger.error("【通道支付请求失败】-------" + respMap.get("message"));
             }
         } catch (Exception e) {
@@ -173,12 +169,11 @@ public class AnyinfuPayService implements BasePayService {
             // 总金额
             String total_fee = String.valueOf((int) (shopPayDto.getMerchantPayMoney() * 100));
             // 终端IP
-            String mch_create_ip = "1227.0.0.1";
+            String mch_create_ip = "127.0.0.1";
             // 通知地址
             String notify_url = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
             // 随机字符串
             String nonce_str = HKUtil.getRandomString(32);
-            // 签名
 
             Map<String, String> reqParams = new HashMap<>();
             reqParams.put("mch_id", mch_id);
@@ -190,6 +185,7 @@ public class AnyinfuPayService implements BasePayService {
             reqParams.put("out_trade_no", out_trade_no);
 
             logger.info("[anyinfu before sign msg]: " + reqParams);
+            // 签名
             String sign = HKUtil.generateMd5Sign(reqParams, key);
 
             reqParams.put("sign", sign);
@@ -210,11 +206,14 @@ public class AnyinfuPayService implements BasePayService {
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
             } else {
                 payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setResultMessage("生成跳转地址失败");
                 logger.error("【通道支付请求失败】-------" + jsonStr);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            payCreateResult.setResultCode(SysPayResultConstants.CHANNEL_REQUEST_ERROR + "");
+            payCreateResult.setStatus("false");
             logger.error("【通道支付请求异常】-------");
         }
         return payCreateResult;
@@ -279,5 +278,71 @@ public class AnyinfuPayService implements BasePayService {
             logger.error("[anyinfu send POST request exception]");
             return "";
         }
+    }
+
+    private MidPayCreateResult createPayUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
+
+        String payType = shopPayDto.getChannelTypeCode();
+        logger.info("[anyinfu " + payType + " pay channelId]: " + thirdChannelDto.getId() + ", sysPayNo: " + shopPayDto.getSysPayOrderNo());
+        MidPayCreateResult payCreateResult = new MidPayCreateResult();
+        payCreateResult.setStatus("error");
+        payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+        Map<String, String> params = new HashMap<>();
+
+        try {
+            String mch_id = thirdChannelDto.getMerchantId();
+            String out_trade_no = shopPayDto.getSysPayOrderNo();
+            String body = "test";
+            String total_fee = String.format("%.2f", shopPayDto.getMerchantPayMoney());
+            String mch_create_ip = "127.0.0.1";
+            String notify_url = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
+            String nonce_str = HKUtil.getRandomString(32);
+            String card_no = "1212121212121212121";
+
+            params.put("mch_id", mch_id);
+            params.put("out_trade_no", out_trade_no);
+            params.put("body", body);
+            params.put("total_fee", total_fee);
+            params.put("mch_create_ip", mch_create_ip);
+            params.put("notify_url", notify_url);
+            params.put("nonce_str", nonce_str);
+            if (shopPayDto.getChannelTypeCode().equals(SysPaymentTypeEnum.GATE_WEB_SYT.getValue())) {
+                params.put("card_no", card_no);
+            }
+
+            String sign = HKUtil.generateMd5Sign(params, thirdChannelDto.getPayMd5Key());
+            logger.info("[anyinfu " + payType + " sign msg]: " + sign);
+
+            params.put("sign", sign);
+            String xmlStr = ASCIISortUtil.buildXmlSign(params);
+
+            String contentType = "application/xml; charset=utf-8";
+            String jsonStr = xmlPost(thirdChannelDto.getPayUrl(), xmlStr, contentType);
+            logger.info("[anyinfu " + payType + " pay post result]: " + jsonStr);
+
+            Map<String, String> respMap = XmlUtil.xmlToMap(jsonStr);
+
+            logger.info("[anyinfu " + payType + " pay success result]: " + respMap);
+            if (respMap != null && "0".equals(respMap.get("status")) && "0".equals(respMap.get("result_code"))) {
+                payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+                payCreateResult.setStatus("true");
+                payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
+                payCreateResult.setPayUrl(respMap.get("pay_info"));
+                payCreateResult.setResultMessage("成功生成支付链接");
+                logger.info("【" + payType + " 通道支付请求成功】-------成功生成支付链接");
+            } else {
+                payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+                payCreateResult.setResultMessage("生成跳转地址失败");
+                logger.error("【" + payType + " 通道支付请求失败】------- respMap: " + respMap);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            payCreateResult.setResultCode(SysPayResultConstants.CHANNEL_REQUEST_ERROR + "");
+            payCreateResult.setStatus("false");
+            logger.error("[anyinfu create " + payType + " pay url exception]");
+        }
+
+        return payCreateResult;
     }
 }

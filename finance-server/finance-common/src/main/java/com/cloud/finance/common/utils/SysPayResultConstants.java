@@ -33,7 +33,9 @@ public final class SysPayResultConstants {
 
 	public static final int ERROR_THIRD_BANK = 20014;//银行错误
 
-	public static final int ERROR_PAY_CHANNEL_NULL = 20015;//无可用通道
+	public static final int ERROR_PAY_CHANNEL_NULL = 20015; //无可用通道
+
+	public static final int ERROR_PAY_CHANNEL_UNUSABLE = 20016; //通道请求错误
 
 	public static final int SUCCESS_MAKE_ORDER = 10000;//下单成功
 
@@ -55,13 +57,7 @@ public final class SysPayResultConstants {
 
 	public static final int CHANNEL_ERROR = 50000;//通道调用异常
 
+	public static final int CHANNEL_REQUEST_ERROR = 50001;//通道支付请求异常
+
 	public static final int ERROR_MERCHANT_AUTH = 20016;//商户API支付权限异常
-
-
-
-
-
-
-
-
 }

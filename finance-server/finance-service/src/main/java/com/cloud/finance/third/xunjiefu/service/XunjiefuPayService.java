@@ -1,18 +1,13 @@
 package com.cloud.finance.third.xunjiefu.service;
 
-import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.common.service.base.BasePayService;
-import com.cloud.finance.common.utils.PostUtils;
-import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
 import com.cloud.finance.common.vo.cash.ChannelAccountData;
 import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
-import com.cloud.finance.third.jinxin.utils.MD5Util;
-import com.cloud.finance.third.jinxin.utils.PayUtil;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
@@ -21,14 +16,10 @@ import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Auther Toney

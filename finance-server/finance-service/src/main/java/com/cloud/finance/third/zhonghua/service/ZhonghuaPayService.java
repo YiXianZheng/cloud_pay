@@ -1,11 +1,7 @@
 package com.cloud.finance.third.zhonghua.service;
 
-import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.common.service.base.BasePayService;
-import com.cloud.finance.common.utils.ASCIISortUtil;
-import com.cloud.finance.common.utils.PostUtils;
-import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
 import com.cloud.finance.common.vo.cash.ChannelAccountData;
 import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
@@ -16,17 +12,11 @@ import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
-import com.cloud.sysconf.common.utils.MD5Util;
 import com.cloud.sysconf.common.utils.StringUtil;
-import com.cloud.sysconf.provider.SysBankProvider;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Auther Toney
@@ -41,15 +31,9 @@ public class ZhonghuaPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
 
     private String getBasePayUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
-
-    private String getBaseNotifyUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
     }
 
     @Override
@@ -119,8 +103,7 @@ public class ZhonghuaPayService implements BasePayService {
     public String createSysPayOrderId(String channelId, String assId, String assPayOrderNo) {
         String tm = System.currentTimeMillis() + "";// 获取系统毫秒时间戳
         // 4位+13位+3位随机数
-        String sysPayOrderNo = channelId + tm + StringUtil.getRandom(3);
-        return sysPayOrderNo;
+        return channelId + tm + StringUtil.getRandom(3);
     }
 
     @Override

@@ -18,7 +18,6 @@ import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.StringUtil;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +40,6 @@ public class JinxinPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -69,7 +62,7 @@ public class JinxinPayService implements BasePayService {
         logger.info("[jinxin pay create params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
 
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("error");
+        payCreateResult.setStatus("false");
 
         //请求参数
         String pay_bankcode = "904";  //银行编码 支付宝
@@ -167,7 +160,7 @@ public class JinxinPayService implements BasePayService {
                 payCreateResult.setPayUrl(data.get("qrcodeUrl"));
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
             }else{
-                payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setResultMessage("生成跳转地址失败");
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 logger.error("【通道支付请求失败】-------"+jsonStr);

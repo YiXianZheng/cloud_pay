@@ -4,7 +4,6 @@ import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisService;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
-import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.vo.ReturnVo;
 

@@ -92,7 +92,6 @@ public class YunjifuPayService implements BasePayService {
 
         String jsonStr = JSONObject.toJSONString(params);
         String requestBody = "requestBody=" + jsonStr;
-
         String respStr = PostUtils.sendPost(thirdChannelDto.getPayUrl(), requestBody);
         logger.info("【yunji ali_h5_wake request result】：" + respStr);
         Map<String, String> respMap = JSONObject.parseObject(respStr, HashMap.class);
@@ -101,12 +100,14 @@ public class YunjifuPayService implements BasePayService {
         if ("0000".equals(respMap.get("resultCode")) && "成功".equals(respMap.get("resultMsg"))) {
             payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
             payCreateResult.setStatus("true");
+            payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
             payCreateResult.setResultMessage("生成跳转地址成功");
             payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             payCreateResult.setChannelOrderNo(channelPayOrderNo);
             payCreateResult.setPayUrl(respMap.get("codeImageUrl"));
         } else {
             payCreateResult.setStatus("false");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
             payCreateResult.setResultMessage("生成跳转地址失败：" + respMap.get("resultMsg"));
             payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             logger.error("【通道支付请求失败】错误代码：" + respMap.get("resultCode") + "---->" + respMap.get("resultMsg"));
@@ -148,7 +149,10 @@ public class YunjifuPayService implements BasePayService {
 
         if (actionRespCode.equals(SysPayResultConstants.SUCCESS_MAKE_ORDER + "")) {
             payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+            payCreateResult.setStatus("true");
             payCreateResult.setPayUrl(actionRespUrl);
+        } else {
+            payCreateResult.setStatus("false");
         }
         return payCreateResult;
     }

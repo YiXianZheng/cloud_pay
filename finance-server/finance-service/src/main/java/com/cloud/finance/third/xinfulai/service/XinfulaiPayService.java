@@ -16,7 +16,6 @@ import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.StringUtil;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -40,12 +39,6 @@ public class XinfulaiPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -118,12 +111,13 @@ public class XinfulaiPayService implements BasePayService {
         if("0".equals(respMap.get("code") + "") && "1".equals(respMap.get("success") + "")){
             payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
             payCreateResult.setStatus("true");
-            payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER+"");
+            payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
             payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             payCreateResult.setPayUrl((String) respMap.get("payLink"));
             logger.info("【通道支付请求成功】-------成功生成支付链接");
         }else{
             payCreateResult.setStatus("false");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
             payCreateResult.setResultMessage("生成跳转地址失败");
             payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             logger.error("【通道支付请求失败】-------"+respMap.get("msg"));

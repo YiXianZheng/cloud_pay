@@ -74,7 +74,7 @@ public class YunjifuCashService implements BaseCashService {
         params.put("bank_name", bank_name);
         params.put("account_name", account_name);
         params.put("id_card_no", id_card_no);
-        params.put("account_number", account_number);
+        params.put("account_number", account_number.trim());
         params.put("paypassword", paypassword);
         params.put("notifyUrl", Base64Util.encode(notifyUrl));
 

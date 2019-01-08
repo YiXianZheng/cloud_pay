@@ -2,17 +2,18 @@ package com.cloud.finance.controller.api;
 
 import com.alibaba.fastjson.JSON;
 import com.cloud.finance.common.dto.ShopPayDto;
-import com.cloud.finance.common.enums.*;
+import com.cloud.finance.common.enums.AccountRecordStatusEnum;
+import com.cloud.finance.common.enums.AccountRecordTypeEnum;
+import com.cloud.finance.common.enums.SysOrderTypeEnum;
+import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.finance.common.service.base.BasePayService;
 import com.cloud.finance.common.service.base.PayServiceFactory;
 import com.cloud.finance.common.utils.ASCIISortUtil;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
-import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.common.vo.pay.req.RepPayCreateData;
 import com.cloud.finance.common.vo.pay.req.ReqPayQueryData;
-import com.cloud.finance.po.ShopAccountRecord;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.FinanceService;
 import com.cloud.finance.service.ShopAccountRecordService;
@@ -24,15 +25,15 @@ import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
-import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.Util;
-import com.cloud.sysconf.common.vo.ReturnVo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -129,7 +130,6 @@ public class EbankPayController extends BaseController {
             return renderFailString(response, false, SysPayResultConstants.ERROR_SIGN_RESULT_NULL, "[sign]MD5签名结果不能为空");
         }
 
-
         Map<String, String> merchantInfoDto = redisClient.Gethgetall(RedisConfig.MERCHANT_INFO_DB, merchantCode);
         String merchantMd5Key = merchantInfoDto.get("md5Key");
 
@@ -188,7 +188,7 @@ public class EbankPayController extends BaseController {
                     return renderFailString(response,false,SysPayResultConstants.ERROR_PAY_CHANNEL_NULL,"[paymentType]["+payTypeStr+"]无可用通道");
                 }
 
-                //开启了通道风控的花，支付金额随机上上一个值
+                //开启了通道风控的话，支付金额随机上上一个值
                 if(thirdChannelDto.getOpenRandom() != null && thirdChannelDto.getOpenRandom() != 0){
                     logger.info("[create pay url] 开启通道风控");
                     int min = thirdChannelDto.getRandomMin();
@@ -198,13 +198,13 @@ public class EbankPayController extends BaseController {
                     int intRandom = random.nextInt(max-min) + min;
                     if(thirdChannelDto.getOpenRandom() == 1){
                         Double randomMoney = new Double(intRandom);
-                        merchantPayMoneyYuan = SafeComputeUtils.add(merchantPayMoneyYuan, randomMoney);
                         logger.info("[create pay url] 开启通道风控 风控金额[整数]："+ randomMoney);
+                        merchantPayMoneyYuan = SafeComputeUtils.add(merchantPayMoneyYuan, randomMoney);
                     }else if(thirdChannelDto.getOpenRandom() == 2){
                         double temp = random.nextDouble() + intRandom;
                         Double randomMoney = new Double(SafeComputeUtils.numberFormate(temp));
-                        merchantPayMoneyYuan = SafeComputeUtils.add(merchantPayMoneyYuan, randomMoney);
                         logger.info("[create pay url] 开启通道风控 风控金额[小数]："+ randomMoney);
+                        merchantPayMoneyYuan = SafeComputeUtils.add(merchantPayMoneyYuan, randomMoney);
                     }
 
                 }
@@ -286,7 +286,6 @@ public class EbankPayController extends BaseController {
             map.put("message", "生成" + SysPaymentTypeEnum.getLabelMap().get(paymentType) + "支付链接失败");
             map.put("code", SysPayResultConstants.ERROR_PAY_CHANNEL_NULL + "");
             map.put("assPayOrderNo", merchantPayOrderNo);
-            String txnTimeString = new SimpleDateFormat("yyyyMMdd").format(new Date());
             logger.info("[create pay url failed]:cost-" + (System.currentTimeMillis() - startTime) + "ms,assCode:" + merchantCode + ",assPayOrderNo:" + merchantPayOrderNo + ",paymentType:" + paymentType + ",assPayMoneyYuan:" + merchantPayMoneyYuan);
 
             return renderString(response, map);

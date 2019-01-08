@@ -3,7 +3,6 @@ package com.cloud.finance.third.hangzhou.service;
 import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.common.service.base.BasePayService;
 import com.cloud.finance.common.utils.ASCIISortUtil;
-import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
 import com.cloud.finance.common.vo.cash.ChannelAccountData;
@@ -23,13 +22,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.cloud.finance.common.utils.PostUtils.xmlPost;
 
@@ -43,14 +38,9 @@ public class HangzhouPayService implements BasePayService {
     @Autowired
     private ShopPayService payService;
 
-    private String getBasePayUrl(){
-        return redisClient.Gethget( RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
-
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
     }
-
 
     @Override
     public MidPayCreateResult createQrCode(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
@@ -137,10 +127,11 @@ public class HangzhouPayService implements BasePayService {
                 payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
                 payCreateResult.setResultMessage("成功生成支付链接");
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
-                payCreateResult.setPayUrl(respMap.get("location").toString());
+                payCreateResult.setPayUrl(respMap.get("location"));
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
             }else{
                 payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setResultMessage("生成跳转地址失败");
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 logger.error("【通道支付请求失败】-------" + jsonStr);

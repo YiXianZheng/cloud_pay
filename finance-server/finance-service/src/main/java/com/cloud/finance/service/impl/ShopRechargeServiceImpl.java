@@ -12,7 +12,6 @@ import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.dao.ShopRechargeDao;
 import com.cloud.finance.po.ShopAccount;
-import com.cloud.finance.po.ShopAccountRecord;
 import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.FinanceService;
 import com.cloud.finance.service.ShopAccountRecordService;
@@ -24,7 +23,9 @@ import com.cloud.sysconf.common.basePDSC.BaseMybatisServiceImpl;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
-import com.cloud.sysconf.common.utils.*;
+import com.cloud.sysconf.common.utils.DateUtil;
+import com.cloud.sysconf.common.utils.ResponseCode;
+import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.utils.page.PageResult;
 import com.cloud.sysconf.common.vo.ApiResponse;
@@ -330,7 +331,7 @@ public class ShopRechargeServiceImpl extends BaseMybatisServiceImpl<ShopRecharge
     @Override
     public ReturnVo updateRechargeStatus(ShopRecharge shopRecharge) {
         if(shopRechargeDao.updateRechargeStatus(shopRecharge)>0){
-            if(RechargeStatusEnum.CASH_STATUS_REJECT.getStatus() == shopRecharge.getRechargeStatus()){
+            if(RechargeStatusEnum.CASH_STATUS_REJECT.getStatus().equals(shopRecharge.getRechargeStatus())){
                 shopAccountRecordService.updateRecordStatus(shopRecharge.getRechargeNo(), AccountRecordStatusEnum.ACCOUNT_RECORD_STATUS_FAIL.getCode());
             }
             return ReturnVo.returnSuccess();

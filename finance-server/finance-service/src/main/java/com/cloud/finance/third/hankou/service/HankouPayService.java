@@ -15,7 +15,6 @@ import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +34,6 @@ public class HankouPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -62,7 +55,7 @@ public class HankouPayService implements BasePayService {
 
         logger.info("[hankou pay create params] channel: " + thirdChannelDto.getId() + ", sysPayNo: " + shopPayDto.getSysPayOrderNo());
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("error");
+        payCreateResult.setStatus("false");
         payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
 
         // 请求参数
@@ -135,7 +128,7 @@ public class HankouPayService implements BasePayService {
                 payCreateResult.setPayUrl(respMap.get("location"));
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
             }else{
-                payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setResultMessage("生成跳转地址失败");
                 logger.error("【通道支付请求失败】-------" + jsonStr);
             }

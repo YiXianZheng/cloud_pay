@@ -16,8 +16,6 @@ import com.cloud.finance.third.xinbao.vo.PayNotifyData;
 import com.cloud.finance.third.xinbao.vo.PayRespData;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
-import com.cloud.sysconf.common.redis.RedisConfig;
-import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.vo.ApiResponse;
@@ -47,10 +45,6 @@ public class XinbaoPayService implements BasePayService {
     private ShopPayService payService;
     @Autowired
     private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     @Override
     public MidPayCreateResult createQrCode(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
@@ -129,7 +123,6 @@ public class XinbaoPayService implements BasePayService {
 
         logger.info("[xinbao sign msg]:signMsg:"+sign);
 
-
         try {
             String jsonStr = PostUtils.jsonPost(thirdChannelDto.getPayUrl(), params);
             if(StringUtils.isEmpty(jsonStr)){
@@ -149,25 +142,25 @@ public class XinbaoPayService implements BasePayService {
                     payCreateResult.setStatus("true");
                     payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
                     payCreateResult.setResultMessage(payRespData.getResultMessage());
-                    payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                     payCreateResult.setChannelOrderNo(payRespData.getPaymentNo());
+                    payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                     payCreateResult.setPayUrl(payRespData.getPayUrl());
                 } else if(RespCodeEnum.EXECUTE_SUCCESS.getCode().equals(payRespData.getResultCode())){
-                    payCreateResult.setStatus("false");
                     payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_DOING + "");
+                    payCreateResult.setStatus("false");
                     payCreateResult.setResultMessage("生成跳转地址失败[交易已成功]");
                     payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                     payCreateResult.setChannelOrderNo(payRespData.getPaymentNo());
                 } else{
                     payCreateResult.setStatus("false");
-                    payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
+                    payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                     payCreateResult.setResultMessage("生成跳转地址失败");
                     payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                     payCreateResult.setChannelOrderNo(payRespData.getPaymentNo());
                 }
             }else{
                 payCreateResult.setStatus("false");
-                payCreateResult.setResultCode(SysPayResultConstants.CHANNEL_ERROR + "");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setResultMessage("生成跳转地址失败[接口调用失败]");
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 payCreateResult.setChannelOrderNo(payRespData.getPaymentNo());
@@ -297,10 +290,10 @@ public class XinbaoPayService implements BasePayService {
                 }
             }else{
                 payCreateResult.setStatus("false");
-                payCreateResult.setResultCode(SysPayResultConstants.CHANNEL_ERROR + "");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setResultMessage("生成跳转地址失败[接口调用失败]");
-                payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 payCreateResult.setChannelOrderNo(payNotifyData.getPaymentNo());
+                payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             }
             return payCreateResult;
         } catch (Exception e) {

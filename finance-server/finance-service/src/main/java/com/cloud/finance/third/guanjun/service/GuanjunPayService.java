@@ -11,7 +11,7 @@ import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
-import com.cloud.finance.third.guanjun.service.utils.GJSignUtil;
+import com.cloud.finance.third.guanjun.utils.GJSignUtil;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
@@ -42,10 +42,6 @@ public class GuanjunPayService implements BasePayService {
     private ShopPayService payService;
     @Autowired
     private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -106,7 +102,7 @@ public class GuanjunPayService implements BasePayService {
 
     private MidPayCreateResult createPayUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("error");
+        payCreateResult.setStatus("false");
         // 支付方式，默认为微信唤醒
         String payType = shopPayDto.getChannelTypeCode();
         logger.info("【pay type:】 " + payType);
@@ -218,7 +214,7 @@ public class GuanjunPayService implements BasePayService {
             payCreateResult.setPayUrl((String) respMap.get("imgUrl"));
             logger.info("【通道支付请求成功】-------成功生成支付链接");
         }else{
-            payCreateResult.setStatus("false");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
             payCreateResult.setResultMessage("生成跳转地址失败");
             payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             logger.error("【通道支付请求失败】------- " + respMap.get("code"));

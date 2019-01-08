@@ -18,7 +18,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * @Auther Toney
  * @Date 2018/7/29 17:52
@@ -77,7 +76,7 @@ public class ShopPayLogServiceImpl extends BaseMybatisServiceImpl<ShopPayLog, St
 
                 //总代付笔数
                 Integer totalPaid = finance.getTotalPaid();
-                redisFinanceDto.setHistoryTotalPaid(totalPaid.intValue());
+                redisFinanceDto.setHistoryTotalPaid(totalPaid);
 
                 //总成功代付笔数
                 Integer totalSuccessPaid = finance.getTotalSuccessPaid();
@@ -85,7 +84,7 @@ public class ShopPayLogServiceImpl extends BaseMybatisServiceImpl<ShopPayLog, St
 
                 //总风控订单
                 Integer totalRisk = finance.getTotalRiskControlOrder();
-                redisFinanceDto.setHistoryTotalRiskControlOrder(totalRisk.intValue());
+                redisFinanceDto.setHistoryTotalRiskControlOrder(totalRisk);
 
 
             }else{
@@ -117,7 +116,7 @@ public class ShopPayLogServiceImpl extends BaseMybatisServiceImpl<ShopPayLog, St
 
                 //总代付笔数
                 Integer totalPaid = finance.getTotalPaid();
-                redisFinanceDto.setHistoryTotalPaid(totalPaid.intValue());
+                redisFinanceDto.setHistoryTotalPaid(totalPaid);
                 redisFinanceDto.setTotalPaid(0);
                 redisFinanceDto.setDailyTotalPaid(0);
 
@@ -129,7 +128,7 @@ public class ShopPayLogServiceImpl extends BaseMybatisServiceImpl<ShopPayLog, St
 
                 //总风控订单
                 Integer totalRisk = finance.getTotalRiskControlOrder();
-                redisFinanceDto.setHistoryTotalRiskControlOrder(totalRisk.intValue());
+                redisFinanceDto.setHistoryTotalRiskControlOrder(totalRisk);
                 redisFinanceDto.setTotalRiskControlOrder(0);
                 redisFinanceDto.setDailyTotalRiskControlOrder(0);
             }

@@ -8,7 +8,6 @@ import com.cloud.finance.common.enums.PayStatusEnum;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.pay.finance.OverviewVo;
 import com.cloud.finance.dao.ShopPayDao;
-import com.cloud.finance.po.ShopAccountRecord;
 import com.cloud.finance.service.FinanceService;
 import com.cloud.finance.service.ShopAccountRecordService;
 import com.cloud.merchant.provider.MerchantUserProvider;
@@ -69,7 +68,7 @@ public class FinanceServiceImpl implements FinanceService {
             }
         }
 
-        if(map == null || map.size()>0){
+        if(map != null){
             shopPayDto.setSysPayOrderNo("E" + DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_17)
                         + StringUtil.getRandom(4));
             shopPayDto.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
@@ -123,7 +122,6 @@ public class FinanceServiceImpl implements FinanceService {
             }
 
             return shopPayDto;
-
         }
         return null;
     }
@@ -202,15 +200,15 @@ public class FinanceServiceImpl implements FinanceService {
 
             double dailySuccessRate = 0D;
             if(redisFinanceDto.getDailyTotalOrder()>0){
-                int a = redisFinanceDto.getDailyTotalSuccessOrder().intValue();
-                int b = redisFinanceDto.getDailyTotalOrder().intValue();
+                int a = redisFinanceDto.getDailyTotalSuccessOrder();
+                int b = redisFinanceDto.getDailyTotalOrder();
                 dailySuccessRate = a/(double) b;
             }
             overviewVo.setDailySuccessOrderRate(dailySuccessRate);                                  // 今日订单成功率
 
             double dailySuccessPaidRate = 0D;
             if(redisFinanceDto.getDailyTotalPaid()>0){
-                int a = redisFinanceDto.getDailyTotalSuccessPaid().intValue();
+                int a = redisFinanceDto.getDailyTotalSuccessPaid();
                 int b = redisFinanceDto.getDailyTotalPaid();
                 dailySuccessPaidRate = a/(double) b;
             }
@@ -356,15 +354,13 @@ public class FinanceServiceImpl implements FinanceService {
             if (apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())) {
                 String temp = apiResponse.getData().toString();
                 String[] arr = temp.split(",");
-                for (String codes : arr
-                        ) {
+                for (String codes : arr) {
                     merchantCodes.add(codes);
                 }
             }
         }
 
-        for (String merCode: merchantCodes
-                ) {
+        for (String merCode: merchantCodes) {
             //存到Redis中
             Map<String, String> map = redisClient.Gethgetall(RedisConfig.MERCHANT_INFO_DB, merCode);
             if(StringUtils.isNotBlank(map.get("sysUserId"))) {
@@ -405,8 +401,7 @@ public class FinanceServiceImpl implements FinanceService {
                 if (apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())) {
                     String temp = apiResponse.getData().toString();
                     String[] arr = temp.split(",");
-                    for (String codes : arr
-                            ) {
+                    for (String codes : arr) {
                         merchantCodes.add(codes);
                     }
                 }
@@ -464,15 +459,15 @@ public class FinanceServiceImpl implements FinanceService {
 
                     double dailySuccessRate = 0D;
                     if (redisChannelSummaryDto.getDailyTotalOrder() > 0) {
-                        int a = redisChannelSummaryDto.getDailyTotalSuccessOrder().intValue();
-                        int b = redisChannelSummaryDto.getDailyTotalOrder().intValue();
+                        int a = redisChannelSummaryDto.getDailyTotalSuccessOrder();
+                        int b = redisChannelSummaryDto.getDailyTotalOrder();
                         dailySuccessRate = a / (double) b;
                     }
                     overviewVo.setDailySuccessOrderRate(dailySuccessRate);                                  // 今日订单成功率
 
                     double dailySuccessPaidRate = 0D;
                     if (redisChannelSummaryDto.getDailyTotalPaid() > 0) {
-                        int a = redisChannelSummaryDto.getDailyTotalSuccessPaid().intValue();
+                        int a = redisChannelSummaryDto.getDailyTotalSuccessPaid();
                         int b = redisChannelSummaryDto.getDailyTotalPaid();
                         dailySuccessPaidRate = a / (double) b;
                     }
@@ -488,18 +483,16 @@ public class FinanceServiceImpl implements FinanceService {
                     overviewVo.setTotalPaidMoney(SafeComputeUtils.add(overviewVo.getTotalPaidMoney(), SafeComputeUtils.add(redisChannelSummaryDto.getDailyTotalPaidMoney(),
                             SafeComputeUtils.add(redisChannelSummaryDto.getHistoryTotalPaidMoney(), redisChannelSummaryDto.getTotalPaidMoney()))));
                     // 总订单数
-                    overviewVo.setTotalOrder(overviewVo.getTotalOrder()!=null?overviewVo.getTotalOrder():0 + redisChannelSummaryDto.getHistoryTotalOrder()
+                    overviewVo.setTotalOrder(overviewVo.getTotalOrder()!=null?overviewVo.getTotalOrder() : redisChannelSummaryDto.getHistoryTotalOrder()
                             + redisChannelSummaryDto.getTotalOrder() + redisChannelSummaryDto.getDailyTotalOrder());
                     // 总代付笔数
-                    overviewVo.setTotalPaid(overviewVo.getTotalPaid()!=null?overviewVo.getTotalPaid():0 + redisChannelSummaryDto.getHistoryTotalPaid()
+                    overviewVo.setTotalPaid(overviewVo.getTotalPaid()!=null?overviewVo.getTotalPaid() : redisChannelSummaryDto.getHistoryTotalPaid()
                             + redisChannelSummaryDto.getTotalPaid() + redisChannelSummaryDto.getDailyTotalPaid());
                     // 总风控订单数
-                    overviewVo.setTotalRiskControlOrder(overviewVo.getTotalRiskControlOrder()!=null?overviewVo.getTotalRiskControlOrder():0
-                            + redisChannelSummaryDto.getHistoryTotalRiskControlOrder() + redisChannelSummaryDto.getTotalRiskControlOrder()
+                    overviewVo.setTotalRiskControlOrder(overviewVo.getTotalRiskControlOrder()!=null ? overviewVo.getTotalRiskControlOrder() : redisChannelSummaryDto.getHistoryTotalRiskControlOrder() + redisChannelSummaryDto.getTotalRiskControlOrder()
                             + redisChannelSummaryDto.getDailyTotalRiskControlOrder());
                     // 总成功订单数
-                    overviewVo.setTotalSuccessOrder(overviewVo.getTotalSuccessOrder()!=null?overviewVo.getTotalSuccessOrder():0
-                            + redisChannelSummaryDto.getHistoryTotalSuccessOrder() + redisChannelSummaryDto.getTotalSuccessOrder()
+                    overviewVo.setTotalSuccessOrder(overviewVo.getTotalSuccessOrder()!=null?overviewVo.getTotalSuccessOrder() : redisChannelSummaryDto.getHistoryTotalSuccessOrder() + redisChannelSummaryDto.getTotalSuccessOrder()
                             + redisChannelSummaryDto.getDailyTotalSuccessOrder());
 
                     double totalSuccessRate = 0D;
@@ -593,9 +586,9 @@ public class FinanceServiceImpl implements FinanceService {
             int i=0;
             for (Map<String, String> m: list
                     ) {
-                Double money = m.get("totalMoney")!=null?Double.parseDouble(m.get("totalMoney")):0D;
+                double money = m.get("totalMoney")!=null?Double.parseDouble(m.get("totalMoney")):0D;
                 Double rate = m.get("rate")!=null?Double.parseDouble(m.get("rate")):0;
-                if(money.doubleValue() == 0){
+                if(money == 0){
                     continue;
                 }
 
@@ -615,14 +608,9 @@ public class FinanceServiceImpl implements FinanceService {
                 m.put("rate", overFive.get("rate").toString());
                 res.add(m);
             }
-
-
             return ReturnVo.returnSuccess(ResponseCode.Base.SUCCESS, JSONArray.toJSONString(res));
         } catch (Exception e){
             return ReturnVo.returnFail();
         }
-
     }
-
-
 }

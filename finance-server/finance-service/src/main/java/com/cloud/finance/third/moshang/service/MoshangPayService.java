@@ -11,7 +11,6 @@ import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
-import com.cloud.finance.third.jinxin.utils.MD5Util;
 import com.cloud.finance.third.jinxin.utils.PayUtil;
 import com.cloud.finance.third.moshang.utils.MSSignUtil;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
@@ -19,7 +18,6 @@ import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.StringUtil;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +40,6 @@ public class MoshangPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
-
-    private String getBasePayUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
-    }
 
     private String getBaseNotifyUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
@@ -70,7 +62,7 @@ public class MoshangPayService implements BasePayService {
         logger.info("[moshang pay create params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
 
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("error");
+        payCreateResult.setStatus("false");
 
         //请求参数
         String callbackurl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();			//支付结果异步地址
@@ -129,20 +121,18 @@ public class MoshangPayService implements BasePayService {
             Map<String, Object> respMap = JSONObject.parseObject(jsonStr, HashMap.class);
 
             if("000".equals(respMap.get("resCode").toString())){
-                Map<String, String> data = (Map<String, String>) respMap.get("data");
-
                 payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
                 payCreateResult.setStatus("true");
-                payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER+"");
+                payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
                 payCreateResult.setResultMessage("成功生成支付链接");
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 payCreateResult.setPayUrl(respMap.get("codeUrl").toString());
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
             }else{
-                payCreateResult.setStatus("false");
                 payCreateResult.setResultMessage("生成跳转地址失败");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
                 payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
-                logger.error("【通道支付请求失败】-------"+jsonStr);
+                logger.error("【通道支付请求失败】-------" + jsonStr);
             }
             return payCreateResult;
         } catch (Exception e) {

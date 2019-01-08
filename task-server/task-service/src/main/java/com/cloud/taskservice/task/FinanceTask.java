@@ -69,9 +69,9 @@ public class FinanceTask {
 
 
     /**
-     * 每个月1号凌晨两点 迁移一个月之前的订单数据，并清算
+     * 每个月1号凌晨十二点一分 迁移一个月之前的订单数据，并清算
      */
-    @Scheduled(cron = "0 0 2 1 * ?")
+    @Scheduled(cron = "0 1 0 1 * ?")
     public void monthMove() {
         logger.info("==============  begin month move  ===============");
         ApiResponse response = financeProvider.monthMove();
@@ -83,9 +83,9 @@ public class FinanceTask {
     }
 
     /**
-     * 每天凌晨十二点五分更新昨天的订单的step 并核算
+     * 每天凌晨十二点二分更新昨天的订单的step 并核算
      */
-    @Scheduled(cron = "0 5 0 * * ?")
+    @Scheduled(cron = "0 3 0 * * ?")
     public void dailyUpdate() {
         logger.info("==============  begin daily update  ===============");
         ApiResponse response = financeProvider.dailyUpdate();
@@ -97,9 +97,9 @@ public class FinanceTask {
     }
 
     /**
-     * 每天凌晨四点统计各个商户昨日数据，并放入redis
+     * 每天十二点五分统计各个商户昨日数据，并放入redis
      */
-    @Scheduled(cron = "0 0 4 * * ?")
+    @Scheduled(cron = "0 5 0 * * ?")
     public void dailyAccounting() {
         logger.info("==============  begin daily accounting  ===============");
         ApiResponse response = financeProvider.dailySummary();
@@ -109,8 +109,6 @@ public class FinanceTask {
                 DateUtil.DateToString(time, DateUtil.DATE_PATTERN_01), JSONObject.toJSONString(response));
         logger.info("==============  daily accounting result: >>>"+ response.getMsg() +"<<<  ===============");
     }
-
-
 
     /**
      * 每秒查询需要补发通知的订单
