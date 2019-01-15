@@ -27,6 +27,7 @@ import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
+import com.cloud.sysconf.common.utils.StringUtil;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,10 +41,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * ebank对外服务接口
@@ -123,9 +121,6 @@ public class ThirdChannelNotifyController extends BaseController {
             }else{
                 this.logger.info("[ainong AliH5 Notify ]...回调签名错误");
             }
-
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -204,9 +199,9 @@ public class ThirdChannelNotifyController extends BaseController {
             this.logger.info("[ainong gate Notify params]...");
             Enumeration<String> paraNames = request.getParameterNames();
             JSONObject jsonObject = new JSONObject();
-            for(Enumeration<String> e=paraNames;e.hasMoreElements();){
-                String thisName=e.nextElement().toString();
-                String thisValue=request.getParameter(thisName);
+            for(Enumeration<String> e = paraNames;e.hasMoreElements();){
+                String thisName = e.nextElement().toString();
+                String thisValue = request.getParameter(thisName);
                 this.logger.info("----------------key:"+thisName+"  ----  val:"+thisValue);
                 jsonObject.put(thisName, thisValue);
             }
@@ -375,9 +370,9 @@ public class ThirdChannelNotifyController extends BaseController {
 
             //签名
             String signCheck = MD5Utils.getSignParam(params) + "&key=" + channelDto.getPayMd5Key();
-            logger.info("[shanghai channel 1 before sign msg]:"+signCheck);
+            logger.info("[shanghai channel 1 before sign msg]:" + signCheck);
             signCheck = MD5Utils.getKeyedDigest(signCheck, "");
-            logger.info("[shanghai channel 1 sign msg]:"+signCheck);
+            logger.info("[shanghai channel 1 sign msg]:" + signCheck);
 
             if (!signCheck.equals(sign)) {
                 logger.error("【通道代付请求失败】回调签名错误");
@@ -436,7 +431,6 @@ public class ThirdChannelNotifyController extends BaseController {
             params.put("returncode", request.getParameter("returncode"));
             params.put("transaction_id", request.getParameter("transaction_id"));
 
-
             ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
             if (shopOrder == null) {
                 this.logger.info("[jinxin AliH5 Notify ]...回调找不到订单");
@@ -475,8 +469,6 @@ public class ThirdChannelNotifyController extends BaseController {
                 } else {
                     this.logger.error("[jinxin AliH5 Notify]notify error:" + orderNo);
                 }
-
-
             } else {
                 // 支付失败
                 shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
@@ -515,7 +507,6 @@ public class ThirdChannelNotifyController extends BaseController {
             params.put("serialId", request.getParameter("serialId"));
             params.put("respCode", request.getParameter("respCode"));
             params.put("respDesc", request.getParameter("respDesc"));
-
 
             ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
             if (shopOrder == null) {
@@ -697,12 +688,10 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopPayService.updateOrderStatus(shopOrder);
                 //通知商户
                 boolean notifyResult = merchantPayService.notifyAssWithMd5Key(shopOrder);
-                if (notifyResult) {
-                    response.getWriter().write("SUCCESS");
-                    this.logger.info("[Notify merchant]notify success:" + orderNo);
-                } else {
-                    this.logger.error("[Notify merchant]notify error:" + orderNo);
-                }
+                String result = notifyResult ? "成功" : "失败";
+                logger.info("【回调通知商户】" + result);
+                response.getWriter().write("SUCCESS");
+                this.logger.info("[Notify merchant]notify success:" + orderNo);
             } else {
                 // 支付失败
                 shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
@@ -760,7 +749,7 @@ public class ThirdChannelNotifyController extends BaseController {
             }
 
             this.logger.info("[yirongtong pay Notify resp code:" + params.get("opstate") + "===orderNo:" + orderNo + "]");
-
+            shopOrder.setThirdChannelId(thirdChannelDto.getId());
             if ("1".equals(params.get("opstate"))) {
                 // 支付成功
                 this.logger.info("[yirongtong pay Notify ]...回调支付成功");
@@ -773,12 +762,10 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopPayService.updateOrderStatus(shopOrder);
                 //通知商户
                 boolean notifyResult = merchantPayService.notifyAssWithMd5Key(shopOrder);
-                if (notifyResult) {
-                    response.getWriter().write("ok");
-                    this.logger.info("[Notify merchant]notify success:" + orderNo);
-                } else {
-                    this.logger.error("[Notify merchant]notify error:" + orderNo);
-                }
+                String result = notifyResult ? "成功" : "失败";
+                logger.info("【回调通知商户】" + result);
+                response.getWriter().write("ok");
+                this.logger.info("[Notify merchant]notify success:" + orderNo);
             } else {
                 // 支付失败
                 shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
@@ -1298,32 +1285,37 @@ public class ThirdChannelNotifyController extends BaseController {
             params.put("merOrderId", request.getParameter("merOrderId"));
             params.put("orderId", request.getParameter("orderId"));
             params.put("currency", request.getParameter("currency"));
+            params.put("code", request.getParameter("code"));
+            params.put("message", request.getParameter("message"));
             params.put("success", request.getParameter("success") + "");
             params.put("txnAmt", request.getParameter("txnAmt"));
             params.put("attach", request.getParameter("attach"));
 
+            logger.info("[回调参数：]" + params);
             ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
             if (shopOrder == null) {
                 this.logger.info("[guanjun pay Notify ]...回调找不到订单");
+                return;
             }
             Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopOrder.getThirdChannelId());
             ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
 
             //签名
-            String signCheck = GJSignUtil.signData(params, thirdChannelDto.getPayMd5Key());
+            String signCheck = GJSignUtil.signData(params, thirdChannelDto.getPayMd5Key()).toUpperCase();
 
             logger.info("[guanjun sign result]:" + signCheck);
+            logger.info("[回调签名]:" + sign);
 
             if(StringUtils.isBlank(sign) || !sign.equals(signCheck)){
                 logger.error("【冠军支付通道回调请求失败】回调签名错误");
                 return;
             }
 
-            this.logger.info("[xinfulai pay Notify resp code:" + params.get("respCode") + "====orderNo:" + orderNo + "]");
+            this.logger.info("[guanjun pay Notify resp code:" + params.get("code") + "====orderNo:" + orderNo + "]");
 
-            if ("true".equals(params.get("success"))) {
+            if ("true".equals(params.get("success") + "")) {
                 // 支付成功
-                this.logger.info("[xinfulai pay Notify ]...回调支付成功");
+                this.logger.info("[guanjun pay Notify ]...回调支付成功");
                 shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_ALREADY.getStatus());
                 shopOrder.setPayCompleteTime(new Date());
                 shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
@@ -1344,10 +1336,11 @@ public class ThirdChannelNotifyController extends BaseController {
                 shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
                 shopOrder.setThirdChannelNotifyFlag(1);
                 shopOrder.setThirdChannelOrderNo(params.get("merOrderId"));
-                shopOrder.setRemarks(params.get("msg"));
+                shopOrder.setRemarks(request.getParameter("message"));
                 shopPayService.updateOrderStatus(shopOrder);
-                this.logger.info("[xinfulai pay Notify ]...回调支付成功 - 支付失败");
-                response.getWriter().write("ok");
+                logger.info("【回调code】：" + request.getParameter("code") + "=====> " + request.getParameter("message"));
+                logger.info("[guanjun pay Notify ]...回调支付成功 - 支付失败");
+                response.getWriter().write("success");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1430,5 +1423,194 @@ public class ThirdChannelNotifyController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 草草支付 支付回调
+     * @param request
+     * @param response
+     */
+    @RequestMapping(value = "/cc/notify")
+    public void ccNotify(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            logger.info("[caocao pay Notify]...");
+            this.printAcceptValue(request);
+
+            response.setContentType("text/html;charset=UTF-8");
+
+            String sign = request.getParameter("sign");
+            logger.info("【草草回调签名】：" + sign);
+            String orderNo = request.getParameter("mchOrderNo");
+
+            Map<String, String> params = new HashMap<>();
+            params.put("payOrderId", request.getParameter("payOrderId"));
+            params.put("mchOrderNo", orderNo);
+            params.put("mchId", request.getParameter("mchId"));
+            params.put("appId", request.getParameter("appId"));
+            params.put("productId", request.getParameter("productId"));
+            params.put("amount", request.getParameter("amount"));
+            params.put("status", request.getParameter("status"));
+            params.put("paySuccTime", request.getParameter("paySuccTime"));
+            params.put("backType", request.getParameter("backType"));
+            params.put("income", request.getParameter("income"));
+            params.put("channelOrderNo", request.getParameter("channelOrderNo"));
+
+            ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
+            if (shopOrder == null) {
+                this.logger.info("[caocao pay Notify ]...回调找不到订单");
+                return;
+            }
+            Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopOrder.getThirdChannelId());
+            ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+
+            //签名
+            String signBefore = ASCIISortUtil.buildSign(params, "=", "&key=" + thirdChannelDto.getPayMd5Key());
+            logger.info("[caocao sign before]:" + signBefore);
+            String signCheck = com.cloud.sysconf.common.utils.MD5Util.md5(signBefore).toUpperCase();
+            logger.info("[caocao sign result]:" + signCheck);
+
+            if(StringUtils.isBlank(sign) || !sign.equals(signCheck)){
+                logger.error("【通道回调请求失败】回调签名错误");
+                return;
+            }
+
+            this.logger.info("[caocao pay Notify resp status:" + params.get("status") + " ===> orderNo:" + orderNo + "]");
+
+            if ("2".equals(params.get("status"))) {
+                // 支付成功
+                this.logger.info("[caocao pay Notify ]...回调支付成功");
+                shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_ALREADY.getStatus());
+                shopOrder.setPayCompleteTime(new Date());
+                shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
+                shopOrder.setThirdChannelNotifyFlag(1);
+                shopOrder.setThirdChannelOrderNo(orderNo);
+                shopPayService.updateOrderStatus(shopOrder);
+                //通知商户
+                boolean notifyResult = merchantPayService.notifyAssWithMd5Key(shopOrder);
+                String result = notifyResult ? "成功" : "失败";
+                logger.info("【回调通知商户】" + result);
+                response.getWriter().write("success");
+                this.logger.info("[Notify merchant]notify success:" + orderNo);
+            } else {
+                // 支付失败
+                shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
+                shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
+                shopOrder.setThirdChannelNotifyFlag(1);
+                shopOrder.setThirdChannelOrderNo(params.get("sysorderid"));
+                shopOrder.setRemarks(params.get("msg"));
+                shopPayService.updateOrderStatus(shopOrder);
+                logger.info("[caocao pay Notify ]...回调支付成功 - 支付失败");
+                response.getWriter().write("success");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 汉口支付 支付回调
+     * @param request
+     * @param response
+     */
+    @RequestMapping(value = "/hk/notify")
+    public void hkNotify(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            logger.info("[hankou pay Notify]...");
+            this.printAcceptValue(request);
+
+            response.setContentType("text/html;charset=UTF-8");
+
+            String sign = request.getParameter("sign");
+            logger.info("【草草回调签名】：" + sign);
+            String orderNo = request.getParameter("mchOrderNo");
+
+            Map<String, String> params = new HashMap<>();
+            params.put("payOrderId", request.getParameter("payOrderId"));
+            params.put("mchOrderNo", orderNo);
+            params.put("mchId", request.getParameter("mchId"));
+            params.put("appId", request.getParameter("appId"));
+            params.put("productId", request.getParameter("productId"));
+            params.put("amount", request.getParameter("amount"));
+            params.put("status", request.getParameter("status"));
+            params.put("paySuccTime", request.getParameter("paySuccTime"));
+            params.put("backType", request.getParameter("backType"));
+            params.put("income", request.getParameter("income"));
+            params.put("channelOrderNo", request.getParameter("channelOrderNo"));
+
+            ShopPay shopOrder = shopPayService.getBySysOrderNo(orderNo);
+            if (shopOrder == null) {
+                this.logger.info("[hankou pay Notify ]...回调找不到订单");
+                return;
+            }
+            Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopOrder.getThirdChannelId());
+            ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+
+            //签名
+            String signBefore = ASCIISortUtil.buildSign(params, "=", "&key=" + thirdChannelDto.getPayMd5Key());
+            logger.info("[hankou sign before]:" + signBefore);
+            String signCheck = com.cloud.sysconf.common.utils.MD5Util.md5(signBefore).toUpperCase();
+            logger.info("[hankou sign result]:" + signCheck);
+
+            if(StringUtils.isBlank(sign) || !sign.equals(signCheck)){
+                logger.error("【通道回调请求失败】回调签名错误");
+                return;
+            }
+
+            this.logger.info("[hankou pay Notify resp status:" + params.get("status") + " ===> orderNo:" + orderNo + "]");
+
+            if ("2".equals(params.get("status"))) {
+                // 支付成功
+                this.logger.info("[hankou pay Notify ]...回调支付成功");
+                shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_ALREADY.getStatus());
+                shopOrder.setPayCompleteTime(new Date());
+                shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
+                shopOrder.setThirdChannelNotifyFlag(1);
+                shopOrder.setThirdChannelOrderNo(orderNo);
+                shopPayService.updateOrderStatus(shopOrder);
+                //通知商户
+                boolean notifyResult = merchantPayService.notifyAssWithMd5Key(shopOrder);
+                String result = notifyResult ? "成功" : "失败";
+                logger.info("【回调通知商户】" + result);
+                response.getWriter().write("success");
+                this.logger.info("[Notify merchant]notify success:" + orderNo);
+            } else {
+                // 支付失败
+                shopOrder.setPayStatus(PayStatusEnum.PAY_STATUS_WAIT.getStatus());
+                shopOrder.setThirdChannelRespMsg(JSONObject.toJSONString(params));
+                shopOrder.setThirdChannelNotifyFlag(1);
+                shopOrder.setThirdChannelOrderNo(params.get("sysorderid"));
+                shopOrder.setRemarks(params.get("msg"));
+                shopPayService.updateOrderStatus(shopOrder);
+                logger.info("[hankou pay Notify ]...回调支付成功 - 支付失败");
+                response.getWriter().write("success");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 获取第三方回调的所有参数
+    private Map<String, String> getAllParam(HttpServletRequest request) {
+        Map map = request.getParameterMap();
+        Map<String, String> params = new HashMap<>();
+        Set keSet = map.entrySet();
+        for (Object aKeSet : keSet) {
+            Map.Entry me = (Map.Entry) aKeSet;
+            Object ok = me.getKey();
+            Object ov = me.getValue();
+            String[] value = new String[1];
+            if (ov instanceof String[]) {
+                value = (String[]) ov;
+            } else {
+                value[0] = ov.toString();
+            }
+
+            for (String aValue : value) {
+                if (StringUtil.isNotEmpty(aValue))
+                    params.put(ok.toString(), aValue);
+            }
+        }
+
+        return params;
     }
 }

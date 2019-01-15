@@ -5,13 +5,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.service.base.BaseCashService;
 import com.cloud.finance.common.utils.ASCIISortUtil;
 import com.cloud.finance.common.utils.GetUtils;
-import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.common.vo.cash.CashRespData;
 import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.ShopRechargeService;
-import com.cloud.finance.third.jinxin.utils.MD5Util;
 import com.cloud.finance.third.jinxin.utils.PayUtil;
 import com.cloud.finance.third.moshang.utils.MD5;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
@@ -28,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,7 +125,8 @@ public class MoshangCashService implements BaseCashService {
             if("SUCCESS".equalsIgnoreCase(respMap.get("returncode"))){
                 logger.info("【通道代付受理成功】----");
 
-                shopRecharge.setRechargeStatus(2);
+                shopRecharge.setRechargeStatus(1);
+                shopRecharge.setCompleteTime(new Date());
                 shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
                 shopRecharge.setThirdChannelOrderNo(respMap.get("ordernum"));
                 shopRecharge.setThirdChannelRespMsg(jsonStr);

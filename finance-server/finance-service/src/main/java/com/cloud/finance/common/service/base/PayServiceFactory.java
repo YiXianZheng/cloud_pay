@@ -70,6 +70,9 @@ public class PayServiceFactory {
     @Autowired
     @Qualifier("YunjifuPayService")
     BasePayService yunjifuPayService;
+    @Autowired
+    @Qualifier("CaocaoPayService")
+    BasePayService caocaoPayService;
 
 
     public BasePayService getPayment(String channelCode){
@@ -127,6 +130,9 @@ public class PayServiceFactory {
         }else if("yunjifu_pay".equals(channelCode)){
             logger.info("pay chose channel yunjifuPayService");
             return yunjifuPayService;
+        }else if("caocao_pay".equals(channelCode)){
+            logger.info("pay chose channel caocaoPayService");
+            return caocaoPayService;
         }else{
             return null;
         }

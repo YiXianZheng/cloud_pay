@@ -11,6 +11,7 @@ import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.finance.third.ainong.vo.H5ReqData;
 import com.cloud.finance.third.ainong.vo.HeadReqData;
 import com.cloud.finance.third.hangzhou.utils.SignUtil;
+import com.cloud.finance.third.hankou.utils.HKUtil;
 import com.cloud.finance.third.kubaoxiang.utils.Md5SignUtil;
 import com.cloud.finance.third.shtd1.util.MD5Utils;
 import com.cloud.finance.third.wuliu.utils.WuliuMD5;
@@ -650,7 +651,6 @@ public class DirectPayController extends BaseController {
 		} finally {
 			out.close();
 		}
-
 	}
 
 	/**
@@ -676,14 +676,8 @@ public class DirectPayController extends BaseController {
 		String notifyUrl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
 		String callbackurl = "http://www.baidu.com";
 		String clientip = "127.0.0.1";
-		String bank_id = null;
+		String bank_id = "ccb";
 
-		ApiResponse apiResponse = sysBankProvider.toChannelCode(shopPayDto.getBankCode(), thirdChannelDto.getId());
-		if(!(ResponseCode.Base.SUCCESS+"").equals(apiResponse.getCode())) {
-			logger.error("【通道不支持的该银行的支付请求】-------系统银行编码："+ shopPayDto.getBankCode());
-		} else {
-			bank_id = apiResponse.getData().toString();
-		}
 		params.put("bank_id", bank_id);
 		params.put("mchNo", mchNo);
 		params.put("orderID", orderID);
@@ -718,6 +712,57 @@ public class DirectPayController extends BaseController {
 		try {
 			response.setContentType("text/html;charset=utf-8");
 			response.setCharacterEncoding("utf-8");
+			out = response.getWriter();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			out.print(html);
+			out.flush();
+		} finally {
+			out.close();
+		}
+	}
+
+	/**
+	 * 汉口 H5
+	 * @param sysPayOrderNo
+	 * @param response
+	 */
+	@RequestMapping("/hk_{sysPayOrderNo}.html")
+	public void hankou(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
+
+		logger.info("...[hankou pay] pay order action...");
+		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
+		Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopPayDto.getThirdChannelId());
+		ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+
+		Map<String, String> params = new HashMap<>();
+		params.put("pay_memberid", thirdChannelDto.getMerchantId());
+		params.put("pay_applydate", DateUtil.getSystemTime(DateUtil.DATE_PATTERN_01));
+		params.put("pay_amount", String.valueOf(shopPayDto.getMerchantPayMoney()));
+		params.put("pay_notifyurl", getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl());
+		params.put("pay_orderid", shopPayDto.getSysPayOrderNo());
+		params.put("pay_callbackurl", "http://www.baidu.com");
+		params.put("pay_bankcode", "903");
+
+		logger.info("[hankou before sign msg]: " + params);
+		// 签名   key不参与排序
+		String sign = null;
+		try {
+			sign = HKUtil.generateMd5Sign(params, thirdChannelDto.getPayMd5Key());
+		} catch (Exception e) {
+			logger.info("【hankou pay sign exception】");
+		}
+		logger.info("[hankou sign str]: " + sign);
+		params.put("pay_md5sign", sign);
+
+		String html = createAutoFormHtml(thirdChannelDto.getPayUrl(), params, "UTF-8", "POST");
+		logger.info("...[hankou pay] html:" + html);
+		PrintWriter out = null;
+		try {
+			response.setCharacterEncoding("utf-8");
+			response.setContentType("text/html;charset=utf-8");
 			out = response.getWriter();
 		} catch (IOException e) {
 			e.printStackTrace();

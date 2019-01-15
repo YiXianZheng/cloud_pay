@@ -3,6 +3,7 @@ package com.cloud.finance.third.moshang.service;
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.common.service.base.BasePayService;
+import com.cloud.finance.common.utils.ASCIISortUtil;
 import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
@@ -17,6 +18,7 @@ import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
+import com.cloud.sysconf.common.utils.MD5Util;
 import com.cloud.sysconf.common.utils.StringUtil;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -47,8 +49,62 @@ public class MoshangPayService implements BasePayService {
 
     @Override
     public MidPayCreateResult createQrCode(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
-        // TODO Auto-generated method stub
-        return null;
+        logger.info("[moshang " + shopPayDto.getChannelTypeCode() + " create params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
+
+        MidPayCreateResult payCreateResult = new MidPayCreateResult();
+        payCreateResult.setStatus("false");
+
+        String mch_id = thirdChannelDto.getMerchantId();
+        String total_fee = String.valueOf((int) (shopPayDto.getMerchantPayMoney() * 100));
+        String service = "WECHAT_FAST";
+        String out_trade_no = shopPayDto.getSysPayOrderNo();
+        String sign_type = "MD5";
+        String notify_url = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
+        String body = "test";
+        String return_url = "http://www.baidu.com";
+
+        Map<String, String> params = new HashMap<>();
+        params.put("mch_id", mch_id);
+        params.put("total_fee", total_fee);
+        params.put("service", service);
+        params.put("out_trade_no", out_trade_no);
+        params.put("sign_type", sign_type);
+        params.put("notify_url", notify_url);
+        params.put("body", body);
+        params.put("return_url", return_url);
+
+        String signBefore = ASCIISortUtil.buildSign(params, "=", "&key=" + thirdChannelDto.getPayMd5Key());
+        logger.info("[moshang sign before]: " + signBefore);
+        String sign = MD5Util.md5(signBefore).toUpperCase();
+        logger.info("[moshang sign]: " + sign);
+        params.put("sign", sign);
+
+        String respStr = PostUtils.jsonPost(thirdChannelDto.getPayUrl(), params);
+        logger.info("[moshang post result str]: " + respStr);
+        Map<String, Object> respMap = JSONObject.parseObject(respStr, HashMap.class);
+        logger.info("[moshang post result map]: " + respMap);
+        if (respMap == null) {
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+            payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+            logger.error("【通道支付请求结果为空】");
+            return payCreateResult;
+        }
+
+        if ("SUCCESS".equals(respMap.get("ret_code"))) {
+            payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+            payCreateResult.setStatus("true");
+            payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
+            payCreateResult.setResultMessage("成功生成支付链接");
+            payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+            payCreateResult.setPayUrl((String) respMap.get("payinfo"));
+            logger.info("【通道支付请求成功】-------成功生成支付链接");
+        } else {
+            payCreateResult.setResultMessage("生成跳转地址失败");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+            payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+            logger.error("【通道支付请求失败】-------" + respMap.get("ret_message"));
+        }
+        return payCreateResult;
     }
 
     @Override

@@ -104,11 +104,13 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
                 merchantUser.setMerchantCode(merchantCode);
                 merchantUser.setMd5Key(md5Key);
                 merchantUser.setMd5Source(md5Source);
+                merchantUser.setDailyLimit((double) 1000000);
+                merchantUser.setThirdChannels("999");
 
                 merchantUser.initStatus();
                 if (map.get("id") != null) {
-                    merchantUser.setSysUserId(map.get("id").toString());
-                    sysUserProviderDto.setId(map.get("id").toString());
+                    merchantUser.setSysUserId(map.get("id"));
+                    sysUserProviderDto.setId(map.get("id"));
                 }
 
                 merchantUser.preInsert(headerInfoDto.getCurUserId(), headerInfoDto.getPanId());
@@ -119,9 +121,7 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
 
                     List<PayChannelRateDto> channelRateDtos = merchantFormDto.getChannelRates();
 
-                    List<MerchantPayChannel> list = new ArrayList<>();
-                    for (PayChannelRateDto channelRate : channelRateDtos
-                            ) {
+                    for (PayChannelRateDto channelRate : channelRateDtos) {
                         MerchantPayChannel merchantPayChannel = new MerchantPayChannel();
                         merchantPayChannel.setAgentRate(channelRate.getRate());
                         merchantPayChannel.setMerchantUser(merchantUser.getId());
@@ -410,8 +410,7 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
             }
 
             redisClient.SetHsetJedis(RedisConfig.MERCHANT_INFO_DB, merchantCode, MyBeanUtil.transBean2Map2(merchantInfoDto));
-            logger.info("set redis info from db "+ RedisConfig.ORDER_COUNT_DB);
-
+            logger.info("set redis info from db "+ RedisConfig.MERCHANT_INFO_DB);
             returnVo.code = ReturnVo.SUCCESS;
         }else{
             returnVo.responseCode = new ResponseCode.COMMON(ResponseCode.Base.SUCCESS.getCode(), "商户不存在");

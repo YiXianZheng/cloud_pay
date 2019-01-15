@@ -147,13 +147,11 @@ public class FinanceServiceImpl implements FinanceService {
         }
 
         //存到Redis中
-        for (FinanceOverviewDto finance: overview
-                ) {
+        for (FinanceOverviewDto finance: overview) {
             Map<String, String> map = redisClient.Gethgetall(RedisConfig.ORDER_COUNT_DB, finance.getUserCode());
 
             logger.info("get redis info from db "+ RedisConfig.ORDER_COUNT_DB);
 
-            logger.info("总成功订单：" + Integer.parseInt(map.get("totalSuccessOrder")));
             RedisFinanceDto financeDto = RedisFinanceDto.map2Object(map);
 
             // 总利润
@@ -173,7 +171,6 @@ public class FinanceServiceImpl implements FinanceService {
 
             redisClient.SetHsetJedis(RedisConfig.ORDER_COUNT_DB, finance.getUserCode(), MyBeanUtil.transBean2Map2(financeDto));
             logger.info("set redis info from db "+ RedisConfig.ORDER_COUNT_DB);
-
         }
         return ReturnVo.returnSuccess();
     }
@@ -408,8 +405,7 @@ public class FinanceServiceImpl implements FinanceService {
             }
 
             Map<String, Object> res = new HashMap<>();
-            for (String merCode: merchantCodes
-                    ) {
+            for (String merCode: merchantCodes) {
                 Map<String, String> redisInfo = redisClient.Gethgetall(RedisConfig.MERCHANT_CHANNEL_COUNT_DB, merCode);
                 if (redisInfo == null || redisInfo.size() == 0) {
                     initChannelOverview(headerInfoDto);

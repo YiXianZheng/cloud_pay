@@ -16,13 +16,11 @@ import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
-import com.cloud.sysconf.common.utils.ResponseCode;
-import com.cloud.sysconf.common.vo.ApiResponse;
-import com.cloud.sysconf.provider.SysBankProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,8 +33,6 @@ public class YunjifuPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
 
     private String getBasePayUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
@@ -128,16 +124,6 @@ public class YunjifuPayService implements BasePayService {
 
         String actionRespCode = SysPayResultConstants.SUCCESS_MAKE_ORDER + "";
         String actionRespMessage = "生成跳转地址成功";
-        // 判断通道是否支持银行编码
-        if(shopPayDto.getBankCode() != null && !shopPayDto.getBankCode().equals(shopPayDto.getChannelTypeCode())){
-            logger.info("【支付请求】 bank code :" + shopPayDto.getBankCode());
-            ApiResponse apiResponse = sysBankProvider.toChannelCode(shopPayDto.getBankCode(), thirdChannelDto.getId());
-            logger.info("【支付请求】 bank response :" + apiResponse);
-            if(!(ResponseCode.Base.SUCCESS.getCode() + "").equals(apiResponse.getCode())){
-                actionRespCode = SysPayResultConstants.ERROR_THIRD_BANK + "";
-                actionRespMessage = "生成跳转地址失败[不支持的银行]";
-            }
-        }
 
         String actionRespUrl = getBasePayUrl() + "/d8/yj_" + shopPayDto.getSysPayOrderNo() + ".html";
         String channelPayOrderNo = shopPayDto.getSysPayOrderNo();
@@ -147,13 +133,9 @@ public class YunjifuPayService implements BasePayService {
         payCreateResult.setResultMessage(actionRespMessage);
         payCreateResult.setChannelOrderNo(channelPayOrderNo);
 
-        if (actionRespCode.equals(SysPayResultConstants.SUCCESS_MAKE_ORDER + "")) {
-            payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
-            payCreateResult.setStatus("true");
-            payCreateResult.setPayUrl(actionRespUrl);
-        } else {
-            payCreateResult.setStatus("false");
-        }
+        payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+        payCreateResult.setStatus("true");
+        payCreateResult.setPayUrl(actionRespUrl);
         return payCreateResult;
     }
 

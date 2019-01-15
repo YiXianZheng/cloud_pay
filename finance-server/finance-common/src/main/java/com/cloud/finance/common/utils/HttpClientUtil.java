@@ -151,7 +151,6 @@ public class HttpClientUtil {
 		return post(url, CONNECTION_TIMEOUT, READ_DATA_TIMEOUT, data, encoding);
 	}
 
-
 	/**
 	 * Post请求（默认超时时间,默认编码格式）
 	 *
@@ -163,14 +162,10 @@ public class HttpClientUtil {
 		return post(url, CONNECTION_TIMEOUT, READ_DATA_TIMEOUT, data, ENCODING);
 	}
 
-	
-
 	public static String post(String url, int timeout,
 			Map<String, String> data, String encoding) throws IOException {
 		return post(url, timeout, timeout, data, encoding);
 	}
-	
-
 
 	/**
 	 * Post请求
@@ -222,11 +217,9 @@ public class HttpClientUtil {
 			}
 			returnResult = buf.toString();
 	        in.close();
-		} catch (UnsupportedOperationException e) {
+		} catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }finally {            
+        } finally {
             if(response!=null){
 	            try {
 	                response.close();
@@ -393,6 +386,4 @@ public class HttpClientUtil {
         }
         return flatParams;
     }
-
-
 }

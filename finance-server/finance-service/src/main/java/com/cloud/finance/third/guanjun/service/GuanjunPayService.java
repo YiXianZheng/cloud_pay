@@ -2,7 +2,6 @@ package com.cloud.finance.third.guanjun.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.dto.ShopPayDto;
-import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.finance.common.service.base.BasePayService;
 import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
@@ -17,8 +16,6 @@ import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.DateUtil;
-import com.cloud.sysconf.common.utils.ResponseCode;
-import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.lang.StringUtils;
@@ -113,81 +110,35 @@ public class GuanjunPayService implements BasePayService {
         String merId = thirdChannelDto.getMerchantId();
         // 商户订单号
         String merOrderId = shopPayDto.getSysPayOrderNo();
-        // 商品标题
-        String subject = "电子产品";
-        // 业务类型
-        String bizType = "1";
-        // 交易类型
-        String txnType = "00";
-        // 交易子类型
-        String txnSubType = "01";
-        // 交易金额
+        // 交易金额 单位为分
         String txnAmt = String.valueOf((int) (shopPayDto.getMerchantPayMoney() * 100));
-        // 交易币种
-        String currency = "CNY";
-
         // 后台通知地址
         String notifyUrl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
-        // 成功跳转地址
-        String returnUrl = "http://www.baidu.com";
-        // 商户终端IP
-        String sendIp = "127.0.0.1";
         // 订单发送时间  yyyyMMddHHmmss
         String txnTime = DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18);
 
         params.put("merId", merId);
         params.put("merOrderId", merOrderId);
-        params.put("subject", subject);
-
-        params.put("txnType", txnType);
-        params.put("txnSubType", txnSubType);
+        params.put("subject", "H5支付测试");
+        params.put("body", "H5支付测试描述");
+        params.put("bizType", "3");  // 1 微信H5交易 2 QQ H5交易 3 支付宝H5交易 4 京东H5交易
+        params.put("txnType", "00");
+        params.put("txnSubType", "01");
         params.put("txnAmt", txnAmt);
-        params.put("currency", currency);
+        params.put("currency", "CNY");
         params.put("notifyUrl", notifyUrl);
-        params.put("returnUrl", returnUrl);
-        params.put("sendIp", sendIp);
+        params.put("returnUrl", "http://www.baidu.com"); // 此字段无功能，为必填系统扩展字段
+        params.put("sendIp", "103.230.242.216");
         params.put("txnTime", txnTime);
+        params.put("province", "福建");
+        params.put("city", "厦门");
+        params.put("areaId", "厦门");
+        params.put("attach", "attach");
 
-        if (payType.equals(SysPaymentTypeEnum.ALI_H5_JUMP.getValue())) {
-            bizType = "3";
-            params.put("province", "110000");
-            params.put("city", "110100");
-            params.put("areaId", "110101");
-        } else if (payType.equals(SysPaymentTypeEnum.GATE_H5.getValue())) {
-            // 银行ID
-            ApiResponse response = sysBankProvider.toChannelCode(shopPayDto.getBankCode(), thirdChannelDto.getId());
-            if(!(ResponseCode.Base.SUCCESS+"").equals(response.getCode())) {
-                logger.error("【通道不支持的该银行的支付请求】-------系统银行编码："+ shopPayDto.getBankCode());
-                payCreateResult.setResultCode(SysPayResultConstants.ERROR_THIRD_BANK+"");
-
-                return payCreateResult;
-            }
-            if (shopPayDto.getSource() == 1) {
-                // 移动端
-                bizType = "62";
-            } else {
-                // pc端
-                bizType = "61";
-            }
-            String bankCode = response.getData().toString();
-            // 银行卡类型    1：借记卡  2：贷记卡
-            String cardType = "1";
-            // 用户类型     1：个人  2：企业
-            String userType = "1";
-            // 银行账户
-            String acctId = "";
-
-            params.put("bankCode", bankCode);
-            params.put("cardType", cardType);
-            params.put("userType", userType);
-            params.put("acctId", acctId);
-        }
-
-        params.put("bizType", bizType);
         // 签名方法
         String signMethod = "MD5";
         // 签名信息
-        String signature = GJSignUtil.signData(params, thirdChannelDto.getPayMd5Key());
+        String signature = GJSignUtil.signData(params, thirdChannelDto.getPayMd5Key()).toUpperCase();
 
         logger.info("【guanjun channel sign msg:】 " + signature);
 
@@ -214,7 +165,7 @@ public class GuanjunPayService implements BasePayService {
             payCreateResult.setPayUrl((String) respMap.get("imgUrl"));
             logger.info("【通道支付请求成功】-------成功生成支付链接");
         }else{
-            payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+            payCreateResult.setResultCode(respMap.get("code").toString());
             payCreateResult.setResultMessage("生成跳转地址失败");
             payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             logger.error("【通道支付请求失败】------- " + respMap.get("code"));

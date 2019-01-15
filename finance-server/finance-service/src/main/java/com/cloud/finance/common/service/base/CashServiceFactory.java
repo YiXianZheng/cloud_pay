@@ -62,6 +62,9 @@ public class CashServiceFactory {
     @Autowired
     @Qualifier("YunjifuCashService")
     BaseCashService yunjifuCashService;
+    @Autowired
+    @Qualifier("CaocaoCashService")
+    BaseCashService caocaoCashService;
 
     public BaseCashService getPayment(String channelCode){
         if("ainong_cash".equals(channelCode)) {
@@ -91,12 +94,13 @@ public class CashServiceFactory {
         }else if("yunjifu_cash".equals(channelCode)){
             logger.info("cash chose channel yunji ");
             return yunjifuCashService;
+        }else if("caocao_cash".equals(channelCode)){
+            logger.info("cash chose channel CaocaoCashService ");
+            return caocaoCashService;
         }else{
             return null;
         }
     }
-
-
 
     /**
      * 第三通通道选择路由
