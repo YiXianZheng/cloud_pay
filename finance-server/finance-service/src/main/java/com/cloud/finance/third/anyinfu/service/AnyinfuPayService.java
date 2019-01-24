@@ -47,7 +47,7 @@ public class AnyinfuPayService implements BasePayService {
 
         logger.info("[anyinfu wx_qrcode pay create params] channel: " + thirdChannelDto.getId() + ", sysPayNo: " + shopPayDto.getSysPayOrderNo());
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("error");
+        payCreateResult.setStatus("false");
         payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
 
         try {
@@ -140,7 +140,7 @@ public class AnyinfuPayService implements BasePayService {
 
         logger.info("[anyinfu ali_h5_wake pay create params] channel: " + thirdChannelDto.getId() + ", sysPayNo: " + shopPayDto.getSysPayOrderNo());
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("error");
+        payCreateResult.setStatus("false");
         payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
 
         try {

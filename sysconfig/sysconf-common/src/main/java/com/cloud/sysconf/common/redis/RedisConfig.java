@@ -59,7 +59,7 @@ public class RedisConfig extends CachingConfigurerSupport {
 
     public static final int DISTRIBUTED_LOCK_DB = 15;   //分布式锁
 
-    public static final int MERCHANT_DAILY_CHANNEL_COUNT_DB = 16;   // 商户每日通道累计支付总额
+    public static final int MERCHANT_DAILY_CHANNEL_COUNT_DB = 17;   // 商户每日通道累计支付总额
 
     //16-25  待通知商户  26 未能成功通知的
     public static final int UN_RESPONSE_NOTIFY = 16;    //没有收到商户响应的订单

@@ -776,6 +776,57 @@ public class DirectPayController extends BaseController {
 	}
 
 	/**
+	 * 上海口碑 H5
+	 * @param sysPayOrderNo
+	 * @param response
+	 */
+	@RequestMapping("/shkb_{sysPayOrderNo}.html")
+	public void shkb(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
+
+		logger.info("...[shkb pay] pay order action...");
+		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
+		Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopPayDto.getThirdChannelId());
+		ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+
+		Map<String, String> params = new HashMap<>();
+		params.put("pay_memberid", thirdChannelDto.getMerchantId());
+		params.put("pay_applydate", DateUtil.getSystemTime(DateUtil.DATE_PATTERN_01));
+		params.put("pay_amount", String.valueOf(shopPayDto.getMerchantPayMoney()));
+		params.put("pay_notifyurl", getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl());
+		params.put("pay_orderid", shopPayDto.getSysPayOrderNo());
+		params.put("pay_callbackurl", "http://www.baidu.com");
+		params.put("pay_bankcode", "904");
+
+		logger.info("[shkb before sign msg]: " + params);
+		// 签名   key不参与排序
+		String sign = null;
+		try {
+			sign = HKUtil.generateMd5Sign(params, thirdChannelDto.getPayMd5Key());
+		} catch (Exception e) {
+			logger.info("【shkb pay sign exception】");
+		}
+		logger.info("[shkb sign str]: " + sign);
+		params.put("pay_md5sign", sign);
+
+		String html = createAutoFormHtml(thirdChannelDto.getPayUrl(), params, "UTF-8", "POST");
+		logger.info("...[shkb pay] html:" + html);
+		PrintWriter out = null;
+		try {
+			response.setCharacterEncoding("utf-8");
+			response.setContentType("text/html;charset=utf-8");
+			out = response.getWriter();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			out.print(html);
+			out.flush();
+		} finally {
+			out.close();
+		}
+	}
+
+	/**
 	 * 功能：前台交易构造HTTP POST自动提交表单<br>
 	 *
 	 * @param reqUrl

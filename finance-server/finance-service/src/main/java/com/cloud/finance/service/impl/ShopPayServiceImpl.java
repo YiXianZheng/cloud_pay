@@ -285,6 +285,9 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
 
             if (list1.size() > 0) {
                 for (MerchantChannelDto merchantChannelDto: list1) {
+                    if (StringUtil.isEmpty(merchantChannelDto.getChannelId())) {
+                        merchantChannelDto.setChannelId("999");
+                    }
                     List<MerchantChannelDto> redisList = new ArrayList<>();
 
                     // 获取redis数据
@@ -294,13 +297,17 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                         redisList = JSONArray.parseArray(redisStr, MerchantChannelDto.class);
                     }
                     redisList.add(merchantChannelDto);
-                    for (int i = 0; i < redisList.size()-1; i++) {
-                        for (int j = redisList.size()-1; j > i; j--) {
-                            if (redisList.get(j).getChannelId().equals(redisList.get(i).getChannelId())) {
-                                redisList.remove(j);
+                    logger.info("redisList length: " + redisList.size());
+                    if (redisList.size() > 1) {
+                        for (int i = 0; i < redisList.size() - 1; i++) {
+                            for (int j = redisList.size() - 1; j > i; j--) {
+                                if (redisList.get(j).getChannelId().equals(redisList.get(i).getChannelId())) {
+                                    redisList.remove(j);
+                                }
                             }
                         }
                     }
+
                     // 存储数据
                     redisClient.SetHsetJedis(RedisConfig.MERCHANT_DAILY_CHANNEL_COUNT_DB, merchantChannelDto.getMerchantCode(),
                             DateUtil.DateToString(date, DateUtil.DATE_PATTERN_02), JSONObject.toJSONString(redisList));
@@ -425,6 +432,7 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
         try {
             List<MerchantChannelDto> list = new ArrayList<>();
             Set<String> merchantCodes = new HashSet<>();
+            logger.info("ShopPayServiceImpl ---- 获取商户每日通道数据汇总");
             // 获取商户编号
             if (HeaderInfoDto.AUTH_PLATFORM_SYSTEM.equals(headerInfoDto.getAuth())) {
                 merchantCodes = redisClient.GetWhereKeys(RedisConfig.MERCHANT_DAILY_CHANNEL_COUNT_DB, "*");
@@ -438,7 +446,7 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                     }
                 }
             }
-
+            logger.info("商户列表: " + merchantCodes);
             for (String codes : merchantCodes) {
                 int i = 1;
                 while (i < 31) {
@@ -454,6 +462,7 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
                     list.addAll(redisList);
                 }
             }
+            logger.info("数据结果：" + list);
             return ReturnVo.returnSuccess(list);
         } catch (Exception e) {
             e.printStackTrace();

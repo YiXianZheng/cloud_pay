@@ -73,6 +73,12 @@ public class PayServiceFactory {
     @Autowired
     @Qualifier("CaocaoPayService")
     BasePayService caocaoPayService;
+    @Autowired
+    @Qualifier("ShkbPayService")
+    BasePayService shkbPayService;
+    @Autowired
+    @Qualifier("TtPayService")
+    BasePayService ttPayService;
 
 
     public BasePayService getPayment(String channelCode){
@@ -133,6 +139,12 @@ public class PayServiceFactory {
         }else if("caocao_pay".equals(channelCode)){
             logger.info("pay chose channel caocaoPayService");
             return caocaoPayService;
+        }else if("shkb_pay".equals(channelCode)){
+            logger.info("pay chose channel shkbPayService");
+            return shkbPayService;
+        }else if("tt_pay".equals(channelCode)){
+            logger.info("pay chose channel ttPayService");
+            return ttPayService;
         }else{
             return null;
         }

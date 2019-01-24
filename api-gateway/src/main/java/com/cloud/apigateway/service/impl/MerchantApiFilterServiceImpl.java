@@ -29,6 +29,8 @@ import java.util.Map;
 @Service
 public class MerchantApiFilterServiceImpl implements MerchantApiFilterService {
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Autowired
     private RedisClient redisClient;
     @Autowired
@@ -36,15 +38,16 @@ public class MerchantApiFilterServiceImpl implements MerchantApiFilterService {
 
     @Override
     public ApiResponse checkApi(HttpServletRequest request) {
-        Logger logger = LoggerFactory.getLogger(this.getClass());
+
 
         String merchantCode = request.getParameter("assCode");      //商户号
         String paymentType = request.getParameter("paymentType");      //支付方式
         String merchantMoneyStr = request.getParameter("assPayMoney");
 
         logger.info("【merchant pay in api filter】 merchantCode:" + merchantCode + "; paymentType:"+ paymentType + "; money:"+merchantMoneyStr);
-        Double merchantMoney = 0D;
-        if(merchantMoney != null){
+
+        double merchantMoney = 0D;
+        if(merchantMoneyStr != null){
             merchantMoney = Double.parseDouble(merchantMoneyStr);
         }
         Double merchantPayMoneyYuan = SafeComputeUtils.div(merchantMoney, 100D);
@@ -98,8 +101,8 @@ public class MerchantApiFilterServiceImpl implements MerchantApiFilterService {
         }
 
         String limitStr = "0";
-        if(map.get("dailyLimit")!=null && StringUtils.isNotBlank(map.get("dailyLimit").toString())){
-            limitStr = map.get("dailyLimit").toString();
+        if(map.get("dailyLimit")!=null && StringUtils.isNotBlank(map.get("dailyLimit"))){
+            limitStr = map.get("dailyLimit");
         }
         double dailyLimit = Double.parseDouble(limitStr);
         logger.info("【merchant pay in api filter】 dailyTotal:" + dailyTotal + "; dailyLimit:"+ dailyLimit);
