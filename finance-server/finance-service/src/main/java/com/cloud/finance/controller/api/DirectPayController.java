@@ -1,13 +1,17 @@
 package com.cloud.finance.controller.api;
 
 import com.alibaba.fastjson.JSONObject;
+import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.finance.common.utils.ASCIISortUtil;
+import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
+import com.cloud.finance.third.ainong.utils.AES;
 import com.cloud.finance.third.ainong.utils.Base64Util;
 import com.cloud.finance.third.ainong.utils.MD5Util;
+import com.cloud.finance.third.ainong.vo.GatewayPayReq;
 import com.cloud.finance.third.ainong.vo.H5ReqData;
 import com.cloud.finance.third.ainong.vo.HeadReqData;
 import com.cloud.finance.third.hangzhou.utils.SignUtil;
@@ -26,6 +30,7 @@ import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,6 +258,98 @@ public class DirectPayController extends BaseController {
 		logger.info("...[ainong alih5 pay] html:" + html);
 		PrintWriter out = null;
 		try {
+			response.setCharacterEncoding("utf-8");
+			response.setContentType("text/html;charset=utf-8");
+			out = response.getWriter();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			out.print(html);
+			out.flush();
+		} finally {
+			out.close();
+		}
+	}
+
+	/**
+	 * 爱农 快捷
+	 * @param sysPayOrderNo
+	 * @param response
+	 */
+	@RequestMapping("/anSyt_{sysPayOrderNo}.html")
+	public void ainongSyt(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
+
+		logger.info("...[ainong gate syt  pay] pay order action...");
+		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
+		Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopPayDto.getThirdChannelId());
+		ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+
+		Date time = new Date();
+		//请求参数
+		//请求头
+		//合作方标识号
+		String partnerNo = thirdChannelDto.getMerchantId();
+		//版本
+		String version = "1.0.0";
+		//字符集
+		String charset = "UTF-8";
+		//合作方类型
+		String  partnerType = "OUTER";
+		//交易代码
+		String txnCode = "102001";
+		//交易跟踪号
+		String traceId = shopPayDto.getSysPayOrderNo() + "0";
+		//请求日期  格式为yyyyMMdd
+		String reqDate = DateUtil.DateToString(time, DateUtil.DATE_PATTERN_11);
+		//请求时间  格式为yyyyMMddHHmmss
+		String reqTime = DateUtil.DateToString(time, DateUtil.DATE_PATTERN_18);
+
+		//交易请求参数
+		//交易金额  单位分
+		String amount = String.valueOf((int) (shopPayDto.getMerchantPayMoney() * 100));
+		//
+		String notifyUrl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
+		//
+		String returnUrl = shopPayDto.getMerchantReturnUrl();
+
+		GatewayPayReq payReq = new GatewayPayReq();
+		HeadReqData headReqDTO = new HeadReqData();
+		headReqDTO.setPartnerNo(partnerNo);
+		headReqDTO.setVersion(version);
+		headReqDTO.setCharset(charset);
+		headReqDTO.setPartnerType(partnerType);
+		headReqDTO.setTxnCode(txnCode);
+		headReqDTO.setTraceId(traceId);
+		headReqDTO.setReqDate(reqDate);
+		headReqDTO.setReqTime(reqTime);
+		payReq.setPayAmount(amount);
+		payReq.setProductDesc("电子产品1");
+		payReq.setProductName("电子产品1");
+		payReq.setCallBackUrl(notifyUrl);
+		payReq.setFrontUrl(returnUrl);
+		payReq.setChannelType("02");
+		payReq.setHead(headReqDTO);
+
+		//加密
+		String plainText = JSONObject.toJSONString(payReq);
+		String encryptData = com.cloud.finance.third.ainong.utils.Base64.encode(AES.encode(plainText, thirdChannelDto.getPayMd5Key()));
+		logger.info("加密结果：" + plainText);
+		// 签名
+		String signData = DigestUtils.sha1Hex(plainText + thirdChannelDto.getCashMd5Key());
+		logger.info("[ailong sign msg]:" + signData);
+
+		Map<String, String> params = new HashMap<>();
+		params.put("encryptData", encryptData);
+		params.put("signData", signData);
+		params.put("partnerNo", partnerNo);
+		logger.info("pay post params == >  encryptData:"+ encryptData + "; signData:" + signData);
+
+		String html = createAutoFormHtml(thirdChannelDto.getPayUrl(), params, "UTF-8", "POST");
+		logger.info("...[ainong gate syt pay] html:" + html);
+		PrintWriter out = null;
+		try {
+			logger.info("爱农快捷支付请求");
 			response.setCharacterEncoding("utf-8");
 			response.setContentType("text/html;charset=utf-8");
 			out = response.getWriter();
@@ -795,7 +892,13 @@ public class DirectPayController extends BaseController {
 		params.put("pay_notifyurl", getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl());
 		params.put("pay_orderid", shopPayDto.getSysPayOrderNo());
 		params.put("pay_callbackurl", "http://www.baidu.com");
-		params.put("pay_bankcode", "904");
+		String payType = shopPayDto.getChannelTypeCode();
+		logger.info("[shkb pay type]: " + payType);
+		String pay_bankcode = "904";
+		if (payType.equals(SysPaymentTypeEnum.ALI_QR_CODE.getValue())) {
+			pay_bankcode = "903";
+		}
+		params.put("pay_bankcode", pay_bankcode);
 
 		logger.info("[shkb before sign msg]: " + params);
 		// 签名   key不参与排序

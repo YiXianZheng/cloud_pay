@@ -5,6 +5,7 @@ import com.cloud.agent.provider.AgentUserProvider;
 import com.cloud.finance.common.dto.AccountDto;
 import com.cloud.finance.common.dto.AccountInfoDto;
 import com.cloud.finance.common.dto.RedisFinanceDto;
+import com.cloud.finance.common.dto.UpdateSecurityCode;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.dao.ShopAccountDao;
 import com.cloud.finance.dao.ShopPayFrozenDao;
@@ -191,5 +192,33 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
     @Override
     public void updateAccountInfo(ShopAccount shopAccount) {
         shopAccountDao.updateAccountInfo(shopAccount);
+    }
+
+    @Override
+    public ReturnVo updateSecurityCode(UpdateSecurityCode securityCode, String curUserId) {
+        ReturnVo returnVo = new ReturnVo();
+        // 通过用户id获取ShopAccount
+        ShopAccount account = shopAccountDao.getByUserId(curUserId);
+        // 验证旧安全码是否正确
+        if (account.getSecurityCode() == null || !securityCode.getOldCode().equals(account.getSecurityCode())) {
+            returnVo.code = ReturnVo.FAIL;
+            returnVo.responseCode = ResponseCode.SecurityCode.OLD_CODE_ERR;
+            return returnVo;
+        }
+        if (!securityCode.getNewCode().equals(securityCode.getReNewCode())) {
+            returnVo.code = ReturnVo.FAIL;
+            returnVo.responseCode = ResponseCode.SecurityCode.NEW_CODE_ERR;
+            return returnVo;
+        }
+        if (securityCode.getNewCode().length() != 6) {
+            returnVo.code = ReturnVo.FAIL;
+            returnVo.responseCode = ResponseCode.SecurityCode.CODE_LENGTH_ERR;
+            return returnVo;
+        }
+
+        shopAccountDao.updateSecurityCode(curUserId, securityCode.getNewCode());
+
+        returnVo.code = ReturnVo.SUCCESS;
+        return returnVo;
     }
 }

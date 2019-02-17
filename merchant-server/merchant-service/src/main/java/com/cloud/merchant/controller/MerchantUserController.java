@@ -39,6 +39,7 @@ public class MerchantUserController extends BaseController {
             ReturnVo returnVo = merchantUserService.addMerchant(merchantFormDto, headerInfoDto);
             return this.toApiResponse(returnVo);
         } catch (Exception e) {
+            e.printStackTrace();
             return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
         }
     }
@@ -123,10 +124,25 @@ public class MerchantUserController extends BaseController {
             ReturnVo returnVo = merchantUserService.detail(id);
             return this.toApiResponse(returnVo);
         } catch (Exception e) {
+            e.printStackTrace();
             return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
         }
     }
 
+    /**
+     * 通过用户编号获取商户详情
+     * @param sysUserId
+     * @return
+     */
+    @PostMapping("/detailByUserId")
+    public ApiResponse detailByUserId(@RequestParam String sysUserId) {
+        try {
+            ReturnVo returnVo = merchantUserService.detailByUserId(sysUserId);
+            return this.toApiResponse(returnVo);
+        } catch (Exception e) {
+            return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+        }
+    }
 
     /**
      * 商户商详情

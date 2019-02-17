@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.merchant.dao.SysUserBankDao">
+
+    <resultMap type="SysUserBank" id="sysUserBankMap">
+        <id column="id" property="id"/>
+        <id column="sys_user_id" property="sysUserId"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="bank_branch_name" property="bankBranchName"/>
+        <result column="bank_card_holder" property="bankCardHolder"/>
+        <result column="bank_card_no" property="bankCardNo"/>
+        <result column="bank_province" property="bankProvince"/>
+        <result column="bank_city" property="bankCity"/>
+        <result column="card_status" property="cardStatus"/>
+        <result column="daily_money" property="dailyMoney"/>
+        <result column="total_money" property="totalMoney"/>
+        <result column="daily_recharge" property="dailyRecharge"/>
+        <result column="total_recharge" property="totalRecharge"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_date" property="createDate"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_date" property="updateDate"/>
+        <result column="del_flag" property="delFlag"/>
+        <result column="remarks" property="remarks"/>
+    </resultMap>
+
+    <insert id="add" parameterType="SysUserBank">
+        <selectKey keyProperty="id" resultType="String" order="BEFORE">
+            SELECT UUID()
+        </selectKey>
+		INSERT INTO sys_user_bank (
+			id,
+			sys_user_id,
+			bank_name,
+			bank_branch_name,
+			bank_card_holder,
+			bank_card_no,
+			bank_province,
+			bank_city,
+			card_status,
+			daily_money,
+			total_money,
+			daily_recharge,
+			total_recharge,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		)
+		VALUES
+			(
+				#{id},
+				#{sysUserId},
+				#{bankName},
+				#{bankBranchName},
+				#{bankCardHolder},
+				#{bankCardNo},
+				#{bankProvince},
+				#{bankCity},
+				#{cardStatus},
+				#{dailyMoney},
+				#{totalMoney},
+				#{dailyRecharge},
+				#{totalRecharge},
+				#{createBy},
+				#{createDate},
+				#{updateBy},
+				#{updateDate},
+				#{remarks},
+				#{delFlag}
+			);
+	</insert>
+
+	<select id="getById" resultMap="sysUserBankMap">
+		SELECT * FROM sys_user_bank WHERE id = #{id}
+	</select>
+
+	<select id="getByUserId" resultMap="sysUserBankMap">
+		SELECT * FROM sys_user_bank WHERE sys_user_id = #{sysUserId} AND del_flag = 0
+	</select>
+
+	<select id="getByCardNo" resultMap="sysUserBankMap">
+		SELECT * FROM sys_user_bank WHERE sys_user_id = #{sysUserId} AND bank_card_no = #{bankCardNo} AND del_flag = 0
+	</select>
+
+	<select id="listPage" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT (SELECT aa.merchant_name from merchant_user aa where
+		aa.sys_user_id = t.sys_user_id) AS merchantName,
+		t.bank_card_no AS bankCardNo,
+		t.bank_card_holder AS bankCardHolder,
+		t.bank_name AS bankName,
+		t.bank_branch_name AS bankBranchName,
+		t.bank_province AS bankProvince,
+		t.bank_city AS bankCity,
+		t.card_status AS cardStatus,
+		t.daily_money AS dailyMoney,
+		t.total_money AS totalMoney,
+		t.daily_recharge AS dailyRecharge,
+		t.total_recharge AS totalRecharge
+	  	FROM sys_user_bank t WHERE 1=1 AND t.del_flag = 0
+		<if test="sysUserId != null and sysUserId !=''">
+			AND t.sys_user_id = #{sysUserId}
+		</if>
+		<if test="bankCardNo != null and bankCardNo !=''">
+			AND t.bank_card_no = #{bankCardNo}
+		</if>
+
+		ORDER BY create_date DESC
+		LIMIT ${pageStart},${pageSize}
+	</select>
+
+	<select id="count" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(1) FROM sys_user_bank t WHERE 1=1 AND t.del_flag = 0
+		<if test="sysUserId != null and sysUserId !=''">
+			AND t.sys_user_id = #{sysUserId}
+		</if>
+		<if test="bankCardNo != null and bankCardNo !=''">
+			AND t.bank_card_no = #{bankCardNo}
+		</if>
+	</select>
+
+	<update id="updateInfo" parameterType="SysUserBank">
+		UPDATE sys_user_bank SET bank_card_no = #{bankCardNo},
+		bank_name = #{bankName},
+		bank_branch_name = #{bankBranchName},
+		bank_province = #{bankProvince},
+		bank_city = #{bankCity},
+		card_status = #{cardStatus},
+		daily_money = #{dailyMoney},
+		total_money = #{totalMoney},
+		daily_recharge = #{dailyRecharge},
+		total_recharge = #{totalRecharge},
+		update_by = #{updateBy},
+		update_date = NOW(),
+		del_flag = #{delFlag}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

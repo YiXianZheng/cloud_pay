@@ -5,6 +5,9 @@ import com.cloud.finance.po.ShopRecharge;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisDao;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
+import java.util.Map;
+
 /**
  * ShopRecharge dao
  * @Auther Toney
@@ -68,4 +71,13 @@ public interface ShopRechargeDao extends BaseMybatisDao<ShopRecharge, String> {
      * @return
      */
     int updateBankInfo(ShopRecharge shopRecharge);
+
+    /**
+     * 统计银行卡下发数据
+     * @param userId
+     * @param bankNo
+     * @param today
+     */
+    Map<String, Object> summaryPaid(@Param("userId") String userId, @Param("bankNo") String bankNo,
+                                    @Param("today") Date today);
 }

@@ -31,9 +31,11 @@
         <spring-cloud.version>Finchley.RELEASE</spring-cloud.version>
         <merchant-common.version>0.0.1-SNAPSHOT</merchant-common.version>
         <sysconf-common.version>0.0.1-SNAPSHOT</sysconf-common.version>
+        <sysconf-provider.version>0.0.1-SNAPSHOT</sysconf-provider.version>
         <sysuser-provider.version>0.0.1-SNAPSHOT</sysuser-provider.version>
         <agent-common.version>0.0.1-SNAPSHOT</agent-common.version>
         <finance-common.version>0.0.1-SNAPSHOT</finance-common.version>
+        <finance-provider.version>0.0.1-SNAPSHOT</finance-provider.version>
         <agent-provider.version>0.0.1-SNAPSHOT</agent-provider.version>
         <lcn.last.version>4.1.0</lcn.last.version>
     </properties>

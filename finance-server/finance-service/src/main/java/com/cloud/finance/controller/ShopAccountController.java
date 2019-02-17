@@ -1,18 +1,17 @@
 package com.cloud.finance.controller;
 
+import com.cloud.finance.common.dto.UpdateSecurityCode;
 import com.cloud.finance.service.ShopAccountService;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
+import com.cloud.sysconf.common.vo.ReturnVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 代付controller
@@ -35,4 +34,22 @@ public class ShopAccountController extends BaseController {
         }
     }
 
+    /**
+     * 商户修改安全码
+     * @param securityCode
+     * @param headers
+     * @return
+     */
+    @PostMapping("securityCode")
+    public ApiResponse updateSecurityCode(@RequestBody UpdateSecurityCode securityCode, @RequestHeader HttpHeaders headers) {
+
+        HeaderInfoDto headerInfoDto = this.getHeaderInfo(headers);
+        // 只有商户端能操作
+        if (!headerInfoDto.getAuth().equals(HeaderInfoDto.AUTH_MERCHANT_SYSTEM)) {
+            return this.toApiResponse(ReturnVo.returnFail(ResponseCode.Base.AUTH_ERR));
+        }
+
+        ReturnVo returnVo = accountService.updateSecurityCode(securityCode, headerInfoDto.getCurUserId());
+        return this.toApiResponse(returnVo);
+    }
 }

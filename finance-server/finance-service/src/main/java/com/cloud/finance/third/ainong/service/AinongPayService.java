@@ -2,17 +2,17 @@ package com.cloud.finance.third.ainong.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.dto.ShopPayDto;
+import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.finance.common.service.base.BasePayService;
-import com.cloud.finance.common.utils.ASCIISortUtil;
-import com.cloud.finance.common.utils.PostUtils;
-import com.cloud.finance.common.utils.SafeComputeUtils;
-import com.cloud.finance.common.utils.SysPayResultConstants;
+import com.cloud.finance.common.utils.*;
 import com.cloud.finance.common.vo.cash.ChannelAccountData;
 import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
 import com.cloud.finance.third.ainong.enums.RespCodeEnum;
+import com.cloud.finance.third.ainong.utils.AES;
+import com.cloud.finance.third.ainong.utils.HexUtil;
 import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.finance.third.ainong.vo.*;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
@@ -24,12 +24,18 @@ import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,13 +79,13 @@ public class AinongPayService implements BasePayService {
     @Override
     public MidPayCreateResult createH5JumpUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
         logger.info("[ainong create H5 params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
+        MidPayCreateResult payCreateResult = new MidPayCreateResult();
 
-        String actionRespCode = SysPayResultConstants.SUCCESS_MAKE_ORDER+"";
+        /*String actionRespCode = SysPayResultConstants.SUCCESS_MAKE_ORDER+"";
         String actionRespMessage = "生成跳转地址成功";
 
         String actionRespUrl = getBasePayUrl() + "/d8/an_" + shopPayDto.getSysPayOrderNo() + ".html";
         String channelPayOrderNo = shopPayDto.getSysPayOrderNo();
-        MidPayCreateResult payCreateResult = new MidPayCreateResult();
         if (actionRespCode.equals(SysPayResultConstants.SUCCESS_MAKE_ORDER+"")) {
             payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
             payCreateResult.setResultCode(actionRespCode);
@@ -96,9 +102,112 @@ public class AinongPayService implements BasePayService {
             payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
             payCreateResult.setChannelOrderNo(channelPayOrderNo);
             payCreateResult.setPayUrl(actionRespUrl);
-        }
-        return payCreateResult;
+        }*/
 
+        Date time = new Date();
+        //请求参数
+        /**** 请求参数 ****/
+        //请求头
+        //合作方标识号
+        String partnerNo = thirdChannelDto.getMerchantId();
+        //版本
+        String version = "1.0.0";
+        //字符集
+        String charset = "UTF-8";
+        //合作方类型
+        String  partnerType = "OUTER";
+        //交易代码
+        String txnCode = "";
+        if (shopPayDto.getChannelTypeCode().equals(SysPaymentTypeEnum.ALI_H5_JUMP.getValue())) {
+            txnCode = "102001";
+        } else if (shopPayDto.getChannelTypeCode().equals(SysPaymentTypeEnum.WX_H5_JUMP.getValue())) {
+            txnCode = "102003";
+        }
+        //交易跟踪号
+        String traceId = shopPayDto.getSysPayOrderNo() + "0";
+        //请求日期  格式为yyyyMMdd
+        String reqDate = DateUtil.DateToString(time, DateUtil.DATE_PATTERN_11);
+        //请求时间  格式为yyyyMMddHHmmss
+        String reqTime = DateUtil.DateToString(time, DateUtil.DATE_PATTERN_18);
+
+        //交易请求参数
+        //交易金额  单位元保留两位小数
+        String amount = SafeComputeUtils.numberFormate(shopPayDto.getMerchantPayMoney());
+        // 判断固定额度
+        if (!amount.equals("10.00") && !amount.equals("20.00") && !amount.equals("50.00") && !amount.equals("100.00") && !amount.equals("200.00") && !amount.equals("30.00")) {
+
+            payCreateResult.setStatus("false");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_AMOUNT_PARAM + "");
+            payCreateResult.setResultMessage("支付金额固定：10，20，30，50，100，200，500");
+            return payCreateResult;
+        }
+        logger.info("支付金额：" + amount);
+        //
+        String notifyUrl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
+        //
+        String returnUrl = shopPayDto.getMerchantReturnUrl();
+        //
+        String body = "电子产品2";
+
+        H5ReqData h5ReqData = new H5ReqData();
+        HeadReqData headReqDTO = new HeadReqData();
+        headReqDTO.setPartnerNo(partnerNo);
+        headReqDTO.setVersion(version);
+        headReqDTO.setCharset(charset);
+        headReqDTO.setPartnerType(partnerType);
+        headReqDTO.setTxnCode(txnCode);
+        headReqDTO.setTraceId(traceId);
+        headReqDTO.setReqDate(reqDate);
+        headReqDTO.setReqTime(reqTime);
+        h5ReqData.setAmount(amount);
+        h5ReqData.setBody(body);
+        h5ReqData.setNotifyUrl(notifyUrl);
+        h5ReqData.setReturnUrl(returnUrl);
+        h5ReqData.setHead(headReqDTO);
+
+        //签名
+        String signJson = h5ReqData.text(thirdChannelDto.getPayMd5Key());
+
+        logger.info("[ailong before sign msg]:" + signJson);
+        String sign = MD5Util.digest(signJson, "UTF-8");
+        logger.info("[ailong sign msg]:"+sign);
+
+        Map<String, String> method = new HashMap<>();
+        String jsonObject = JSONObject.toJSONString(h5ReqData);
+        method.put("encryptData", jsonObject);
+        method.put("signData", sign);
+        method.put("partnerNo", partnerNo);
+        logger.info("pay post params == >  encryptData:"+ jsonObject + "; signData:" + sign);
+        try {
+            String respStr = HttpClientUtil.post(thirdChannelDto.getPayUrl(), method);
+            logger.info("【爱农h5】请求结果字符串：" + respStr);
+
+            Map<Object, Object> respMap = MapUtils.jsonToMap(respStr);
+            PayRespData respData = JSONObject.parseObject(respMap.get("encryptData").toString(), PayRespData.class);
+            logger.info("【爱农h5】请求结果respCode：" + respData.getHead().getRespCode() + " , respMsg: " + respData.getHead().getRespMsg());
+
+            if (respData.getHead().getRespCode().equals("000001")) {
+                payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+                payCreateResult.setStatus("true");
+                payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
+                payCreateResult.setResultMessage("成功生成支付链接");
+                payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+                payCreateResult.setPayUrl(respData.getCodeUrl());
+                logger.info("【通道支付请求成功】-------成功生成支付链接");
+            } else {
+                payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+                payCreateResult.setResultMessage("生成跳转地址失败 ===>" + respData.getHead().getRespMsg());
+                payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+                logger.error("【通道支付请求失败】-------" + respData.getHead().getRespMsg());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("【通道支付请求异常】-------");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
+        }
+
+        return payCreateResult;
     }
 
     @Override
@@ -106,11 +215,11 @@ public class AinongPayService implements BasePayService {
         logger.info("[ailong create gateDirect params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());// 1.加载通道信息
 
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("error");
+        /*payCreateResult.setStatus("error");
 
         Map<String, String> params = new HashMap<>();
 
-        /*** 公共参数 ***/
+        *//*** 公共参数 ***//*
         //appid
         String appid = thirdChannelDto.getAppId();
         //商户账号  商户在支付平台的唯一标识
@@ -124,7 +233,7 @@ public class AinongPayService implements BasePayService {
         //请求时间戳
         String timestamp = DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18);
 
-        /**** 请求参数 ****/
+        *//**** 请求参数 ****//*
         //商户订单号  商户系统产生的唯一订单号
         String out_trade_no = shopPayDto.getSysPayOrderNo();
         //银行ID
@@ -227,14 +336,31 @@ public class AinongPayService implements BasePayService {
             e.printStackTrace();
             logger.error("【通道支付请求异常】-------");
             payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS+"");
-        }
-        return payCreateResult;
+        }*/
+        return null;
     }
 
     @Override
     public MidPayCreateResult createGateSytJump(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
         // TODO Auto-generated method stub
-        return null;
+
+        logger.info("[ainong create gateSyt params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
+        MidPayCreateResult payCreateResult = new MidPayCreateResult();
+        String actionRespCode = SysPayResultConstants.SUCCESS_MAKE_ORDER + "";
+        String actionRespMessage = "生成跳转地址成功";
+
+        String actionRespUrl = getBasePayUrl() + "/d8/anSyt_" + shopPayDto.getSysPayOrderNo() + ".html";
+        String channelPayOrderNo = shopPayDto.getSysPayOrderNo();
+
+        payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+        payCreateResult.setResultCode(actionRespCode);
+        payCreateResult.setResultMessage(actionRespMessage);
+        payCreateResult.setChannelOrderNo(channelPayOrderNo);
+
+        payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+        payCreateResult.setStatus("true");
+        payCreateResult.setPayUrl(actionRespUrl);
+        return payCreateResult;
     }
 
     @Override

@@ -38,4 +38,11 @@ public class MerchantUserProviderFallback implements MerchantUserProvider {
         return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
     }
 
+    @Override
+    public ApiResponse detailByUserId(String sysUserId) {
+        log.error("========= >> merchant/user/detailByUserId 接口调用异常");
+
+        return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+    }
+
 }

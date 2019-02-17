@@ -54,6 +54,7 @@ public class SysUserServiceImpl extends BaseMybatisServiceImpl<SysUser, String, 
 
     @Override
     public ReturnVo addNewUser(SysUserFormDto sysUserFormDto, HeaderInfoDto headerInfoDto) {
+        logger.info("有进来");
         ReturnVo returnVo = new ReturnVo();
 
         SysUser sysUser = new SysUser();

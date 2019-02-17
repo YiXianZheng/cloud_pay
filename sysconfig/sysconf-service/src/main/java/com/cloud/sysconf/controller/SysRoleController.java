@@ -3,6 +3,7 @@ package com.cloud.sysconf.controller;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
 import com.cloud.sysconf.common.dto.SysRoleDto;
+import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.service.SysRoleService;
@@ -39,7 +40,12 @@ public class SysRoleController extends BaseController {
      */
     @RequestMapping("/detail")
     public ApiResponse detail(@RequestParam("id") String id){
-        return this.toApiResponse(sysRoleService.getDetail(id));
+        try{
+            return this.toApiResponse(sysRoleService.getDetail(id));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+        }
     }
 
     /**

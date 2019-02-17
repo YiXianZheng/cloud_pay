@@ -7,9 +7,9 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringCloudApplication
-@EnableFeignClients(basePackages = {"com.cloud.merchant", "com.cloud.sysuser.provider", "com.cloud.agent.provider"})
+@EnableFeignClients(basePackages = {"com.cloud.merchant", "com.cloud.sysuser.provider", "com.cloud.agent.provider", "com.cloud.sysconf.provider", "com.cloud.finance.provider"})
 @ComponentScan(basePackages = {"com.cloud.merchant", "com.cloud.sysuser.provider", "com.cloud.sysconf.common.redis",
-		"com.cloud.agent.provider"})
+		"com.cloud.agent.provider", "com.cloud.sysconf.provider", "com.cloud.finance.provider"})
 @MapperScan("com.cloud.merchant.dao")
 public class MerchantServiceApplication {
 

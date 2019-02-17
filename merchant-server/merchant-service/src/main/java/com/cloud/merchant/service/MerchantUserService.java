@@ -57,6 +57,12 @@ public interface MerchantUserService extends BaseMybatisService<MerchantUser, St
     ReturnVo detail(String id);
 
     /**
+     * 通过用户编号获取商户详情
+     * @param sysUserId
+     * @return
+     */
+    ReturnVo detailByUserId(String sysUserId);
+    /**
      * 冻结解冻商户商操作
      * @param id
      * @param optStatus

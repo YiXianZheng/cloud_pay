@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.enums.RechargeStatusEnum;
 import com.cloud.finance.common.service.base.BaseCashService;
+import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.cash.CashReqData;
@@ -70,7 +71,7 @@ public class AinongAliPayCashService implements BaseCashService {
         //交易代码
         String txnCode = "102002";
         //交易跟踪号
-        String traceId = shopRecharge.getRechargeNo() + "0";
+        String traceId = shopRecharge.getRechargeNo();
         //请求日期  格式为yyyyMMdd
         String reqDate = DateUtil.DateToString(time, DateUtil.DATE_PATTERN_11);
         //请求时间  格式为yyyyMMddHHmmss
@@ -84,15 +85,15 @@ public class AinongAliPayCashService implements BaseCashService {
         //姓名
         String accountName = shopRecharge.getBankAccount();
         //总行
-        String bankName = "";
-        logger.error("【代付请求】 bank code :" + shopRecharge.getBankCode());
+        String bankName;
+        logger.info("【代付请求】 bank code : " + shopRecharge.getBankCode());
         ApiResponse apiResponse = sysBankProvider.getBankNameByCode(shopRecharge.getBankCode());
-        logger.error("【代付请求】 bank response :" + apiResponse);
-        if((ResponseCode.Base.SUCCESS.getCode()+"").equals(apiResponse.getCode())){
+        logger.info("【代付请求】 bank response : " + apiResponse);
+        if((ResponseCode.Base.SUCCESS.getCode() + "").equals(apiResponse.getCode())){
             bankName = apiResponse.getData().toString();
         }else{
-            logger.error("【代付请求失败】不支持的银行");
             cashRespData.setMsg("【代付请求失败】不支持的银行");
+            logger.error("【代付请求失败】不支持的银行");
             return cashRespData;
         }
         //银行联行号
@@ -116,12 +117,13 @@ public class AinongAliPayCashService implements BaseCashService {
         reqData.setBankBranchNo(bankBranchNo);
         reqData.setTxnAmt(txnAmt);
         reqData.setCallBackUrl(callBackUrl);
+        reqData.setPayType(thirdChannelDto.getAppKey());
         reqData.setHead(headReqDTO);
 
         //签名
         String signJson = reqData.doSign(thirdChannelDto.getPayMd5Key());
 
-        logger.info("[ailong before sign msg]:"+signJson);
+        logger.info("[ailong before sign msg]: " + signJson);
         String sign = MD5Util.digest(signJson, "UTF-8");
         logger.info("[ailong sign msg]:"+sign);
 
@@ -130,39 +132,31 @@ public class AinongAliPayCashService implements BaseCashService {
         method.put("encryptData", jsonString);
         method.put("signData", sign);
         method.put("partnerNo", partnerNo);
-        logger.info("pay post params == >  encryptData:"+ jsonString + "; signData:" + sign);
+        logger.info("pay post params == >  encryptData:" + jsonString + "; signData:" + sign);
 
         try {
             String jsonStr = PostUtils.jsonPost(thirdChannelDto.getPayUrl(), method);
-            JSONObject jsonObject = JSON.parseObject(jsonStr);
-            if(jsonObject.size()==0){
+
+            logger.info("cash post result == > "+ jsonStr);
+            if(jsonStr == null){
                 logger.error("【通道代付请求请求结果为空】");
+                cashRespData.setStatus("false");
                 cashRespData.setMsg("通道代付请求请求结果为空");
                 return cashRespData;
             }
-            logger.info("cash post result == > "+ jsonObject.toJSONString());
 
             //获取返回报文
-            Map<String, String> respMap = JSONObject.parseObject(jsonStr, HashMap.class);
-            AilongDfRespData respData = JSONObject.parseObject(respMap.get("encryptData"), AilongDfRespData.class);
-            //同步返回签名
-            String respSign = respMap.get("signData");
-            //同步返回报文签名
-            String respJsonSign = MD5Util.digest(respData.doSign(thirdChannelDto.getPayMd5Key()), "UTF-8");
-            if (!respSign.equals(respJsonSign)) {
-                logger.error("【通道代付请求失败】回调签名错误");
-                cashRespData.setMsg("【通道代付请求失败】回调签名错误");
-                return cashRespData;
-            }
+            Map<Object, Object> respMap = MapUtils.jsonToMap(jsonStr);
+            AilongDfRespData respData = JSONObject.parseObject(respMap.get("encryptData").toString(), AilongDfRespData.class);
 
             if("000000".equals(respData.getHead().getRespCode()) || "000001".equals(respData.getHead().getRespCode())){
                 logger.info("【通道代付成功】----");
 
-                if(shopRecharge != null && RechargeStatusEnum.CASH_STATUS_WAIT.getStatus() ==shopRecharge.getRechargeStatus()){
+                if(RechargeStatusEnum.CASH_STATUS_WAIT.getStatus().equals(shopRecharge.getRechargeStatus())){
                     shopRecharge.setRechargeStatus(1);
                     shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
                     shopRecharge.setThirdChannelOrderNo(respData.getHead().getPlatformId());
-                    shopRecharge.setThirdChannelRespMsg(jsonObject.toJSONString());
+                    shopRecharge.setThirdChannelRespMsg(jsonStr);
                     shopRecharge.setCompleteTime(new Date());
                     shopRechargeService.rechargeSuccess(shopRecharge);
 
@@ -179,7 +173,7 @@ public class AinongAliPayCashService implements BaseCashService {
                 shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
                 shopRecharge.setThirdChannelRespMsg(jsonStr);
                 shopRechargeService.rechargeFail(shopRecharge);
-                logger.info("【通道代付失败】----> 代付结果状态错误：" + respData.getHead().getRespCode() + "--->"
+                logger.error("【通道代付失败】----> 代付结果状态错误：" + respData.getHead().getRespCode() + "--->"
                         + respData.getHead().getRespMsg());
 
                 cashRespData.setStatus(CashRespData.STATUS_ERROR);

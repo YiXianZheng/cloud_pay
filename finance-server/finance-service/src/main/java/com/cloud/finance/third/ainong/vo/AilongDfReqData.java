@@ -14,6 +14,7 @@ public class AilongDfReqData extends BaseHeadReqData {
     private String callBackUrl = "";
     private String bankBranchNo = "";
     private String txnAmt = "";
+    private String payType = "";
     private String extend1;
     private String extend2;
     private String extend3;

@@ -6,6 +6,7 @@ import com.cloud.finance.common.service.base.CashServiceFactory;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.common.vo.cash.CashRespData;
+import com.cloud.finance.dao.ShopRechargeDao;
 import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.ShopRechargeService;
 import com.cloud.sysconf.common.basePDSC.BaseController;
@@ -52,6 +53,8 @@ public class ShopRechargeController extends BaseController {
     private ShopRechargeService shopRechargeService;
     @Autowired
     private SysUserProvider sysUserProvider;
+    @Autowired
+    private ShopRechargeDao shopRechargeDao;
 
     /**
      * 代付申请
@@ -524,7 +527,24 @@ public class ShopRechargeController extends BaseController {
         }else{
             return toApiResponse(ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "创建失败")));
         }
-
     }
 
+    /**
+     * 统计下发数据
+     * @param userId
+     * @param bankNo
+     * @param today
+     * @return
+     */
+    @PostMapping("/summaryPaid")
+    public ApiResponse summaryPaid(@RequestParam String userId, @RequestParam String bankNo, @RequestParam Date today) {
+
+        try {
+            Map<String, Object> map = shopRechargeDao.summaryPaid(userId, bankNo, today);
+            return toApiResponse(ReturnVo.returnSuccess(map));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+        }
+    }
 }

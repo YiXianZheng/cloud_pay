@@ -2,7 +2,6 @@ package com.cloud.sysconf.provider;
 
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.fallback.SysBankProviderFallback;
-import com.cloud.sysconf.provider.fallback.SysRoleProviderFallback;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;

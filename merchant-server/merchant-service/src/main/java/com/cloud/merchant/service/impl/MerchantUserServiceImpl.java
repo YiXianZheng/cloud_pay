@@ -9,8 +9,10 @@ import com.cloud.merchant.common.enums.MerchantTypeEnum;
 import com.cloud.merchant.common.utils.EncodeUtils;
 import com.cloud.merchant.dao.MerchantPayChannelDao;
 import com.cloud.merchant.dao.MerchantUserDao;
+import com.cloud.merchant.dao.SysUserBankDao;
 import com.cloud.merchant.po.MerchantPayChannel;
 import com.cloud.merchant.po.MerchantUser;
+import com.cloud.merchant.po.SysUserBank;
 import com.cloud.merchant.service.MerchantUserService;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisServiceImpl;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
@@ -60,6 +62,8 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
     private RedisClient redisClient;
     @Autowired
     private AgentUserProvider agentUserProvider;
+    @Autowired
+    private SysUserBankDao sysUserBankDao;
 
     @Override
     @Transactional(rollbackFor=Exception.class)
@@ -132,6 +136,23 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
                         merchantPayChannelDao.add(merchantPayChannel);
                     }
                 }
+
+                // 通过商户名获取商户详情
+                MerchantUser merchantUser1 = merchantUserDao.getByName(merchantFormDto.getMerchantName());
+
+                // 添加银行卡
+                SysUserBank sysUserBank = new SysUserBank();
+                sysUserBank.setSysUserId(merchantUser1.getSysUserId());
+                sysUserBank.setBankName(merchantUser1.getBankName());
+                sysUserBank.setBankBranchName(merchantUser1.getBankBranchName());
+                sysUserBank.setBankCardHolder(merchantUser1.getBankCardHolder());
+                sysUserBank.setBankCardNo(merchantUser1.getBankCardNo());
+                sysUserBank.setBankProvince(merchantUser1.getBankProvince());
+                sysUserBank.setBankCity(merchantUser1.getBankCity());
+                sysUserBank.setCardStatus(1);
+                sysUserBank.initData();
+                sysUserBank.preInsert(headerInfoDto.getCurUserId(), headerInfoDto.getPanId());
+                sysUserBankDao.add(sysUserBank);
 
                 returnVo.code = ReturnVo.SUCCESS;
                 returnVo.responseCode = ResponseCode.Base.SUCCESS;
@@ -242,7 +263,7 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
         returnVo.code = ReturnVo.FAIL;
 
         MerchantUser merchantUser = merchantUserDao.getById(id);
-        if(MerchantUser.DEL_FLAG_COMMON.equals(merchantUser.getDelFlag())){
+        if(merchantUser != null && MerchantUser.DEL_FLAG_COMMON.equals(merchantUser.getDelFlag())){
             MerchantInfoDto merchantInfoDto = new MerchantInfoDto();
             BeanUtils.copyProperties(merchantUser, merchantInfoDto);
 
@@ -267,6 +288,24 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
                     "Merchant does not exist or has been deleted");
         }
 
+        return returnVo;
+    }
+
+    @Override
+    public ReturnVo detailByUserId(String sysUserId) {
+
+        ReturnVo returnVo = new ReturnVo();
+        returnVo.code = ReturnVo.FAIL;
+
+        MerchantUser merchantUser = merchantUserDao.getByUserId(sysUserId);
+        if(merchantUser != null && MerchantUser.DEL_FLAG_COMMON.equals(merchantUser.getDelFlag())){
+            returnVo.code = ReturnVo.SUCCESS;
+            returnVo.object = JSONObject.toJSON(merchantUser);
+        }else{
+            returnVo.responseCode = new ResponseCode.COMMON(ResponseCode.Base.SUCCESS.getCode(),
+                    "商户不存在或已被删除",
+                    "Merchant does not exist or has been deleted");
+        }
         return returnVo;
     }
 

@@ -216,6 +216,61 @@ public interface ResponseCode {
     }
 
     /**
+     * 商户安全码相关
+     */
+    public enum SecurityCode implements ResponseCode {
+        /**
+         * 旧安全码错误
+         */
+        OLD_CODE_ERR(201, "旧安全码错误", "old code error"),
+        /**
+         * 新安全码不一致
+         */
+        NEW_CODE_ERR(202, "新安全码不一致", "codes are inconsistent"),
+        /**
+         * 安全码长度错误
+         */
+        CODE_LENGTH_ERR(203, "安全码长度错误", "code required length is 6");
+
+        private final Integer code;
+        private String zhExplain;
+        private String enExplain;
+
+        private SecurityCode(int code) {
+            this.code = code;
+        }
+
+        private SecurityCode(Integer code, String zhExplain) {
+            this.code = code;
+            this.zhExplain = zhExplain;
+        }
+
+        private SecurityCode(Integer code, String zhExplain, String enExplain) {
+            this.code = code;
+            this.zhExplain = zhExplain;
+            this.enExplain = enExplain;
+        }
+
+        @Override
+        public int getCode() {
+            return code;
+        }
+
+        @Override
+        public String toString() {
+            return code.toString();
+        }
+
+        @Override
+        public String getExplain(LanguageEnum language) {
+            if (language == LanguageEnum.zh_CN) {
+                return zhExplain;
+            } else {
+                return enExplain;
+            }
+        }
+    }
+    /**
      * 用户登录权限相关(310~399)
      */
     public enum LoginRegister implements ResponseCode {
@@ -590,6 +645,11 @@ public interface ResponseCode {
             }
         }
         for (ResponseCode type : ResponseCode.bankcard.values()){
+            if(code.equals(type.getCode()+"")){
+                return type;
+            }
+        }
+        for (ResponseCode type : ResponseCode.SecurityCode.values()){
             if(code.equals(type.getCode()+"")){
                 return type;
             }

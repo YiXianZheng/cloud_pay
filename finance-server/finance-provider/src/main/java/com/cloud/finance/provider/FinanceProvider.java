@@ -5,6 +5,9 @@ import com.cloud.sysconf.common.vo.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.Date;
 
 
 /**
@@ -54,4 +57,6 @@ public interface FinanceProvider {
     @RequestMapping(value = "/finance/order/dailySummary", method = RequestMethod.POST)
     ApiResponse dailySummary();
 
+    @RequestMapping(value = "/recharge/summaryPaid", method = RequestMethod.POST)
+    ApiResponse summaryPaid(@RequestParam String userId, @RequestParam String bankNo, @RequestParam Date today);
 }

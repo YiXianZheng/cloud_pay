@@ -1,5 +1,6 @@
 package com.cloud.finance.service;
 
+import com.cloud.finance.common.dto.UpdateSecurityCode;
 import com.cloud.finance.po.ShopAccount;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisService;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
@@ -61,4 +62,12 @@ public interface ShopAccountService extends BaseMybatisService<ShopAccount, Stri
      * @param shopAccount
      */
     void updateAccountInfo(ShopAccount shopAccount);
+
+    /**
+     * 修改商户代付安全码
+     * @param securityCode
+     * @param curUserId
+     * @return
+     */
+    ReturnVo updateSecurityCode(UpdateSecurityCode securityCode, String curUserId);
 }

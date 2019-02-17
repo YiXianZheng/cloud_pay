@@ -55,6 +55,7 @@ public class AuthSysuserFilter extends ZuulFilter {
                     && !request.getRequestURI().contains("/sys/user/register"))
                 || request.getRequestURI().contains("/agent/user/")
                 || request.getRequestURI().contains("/merchant/user/")
+                || request.getRequestURI().contains("/merchant/bank/")
                 || request.getRequestURI().contains("/finance/")
                 || (request.getRequestURI().contains("/recharge/") && !request.getRequestURI().contains("/recharge/api/"))
                 || request.getRequestURI().contains("/account/")

@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
+
 /**
  * @Auther Toney
  * @Date 2018/7/17 14:53
@@ -48,6 +50,13 @@ public class FinanceProviderFallback implements FinanceProvider {
     @Override
     public ApiResponse dailySummary() {
         log.error("========= >> /finance/order/dailySummary 接口调用异常");
+
+        return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+    }
+
+    @Override
+    public ApiResponse summaryPaid(String userId, String bankNo, Date today) {
+        log.error("========= >> /recharge/summaryPaid 接口调用异常");
 
         return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
     }

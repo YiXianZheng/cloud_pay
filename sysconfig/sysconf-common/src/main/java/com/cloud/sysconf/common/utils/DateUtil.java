@@ -121,6 +121,12 @@ public class DateUtil {
 		}
 	}
 
+	/**
+	 * 把日期字符串转成日期格式
+	 * @param str
+	 * @param pattern
+	 * @return
+	 */
 	public static Date stringToDate(String str, String pattern) {
 		try {
 			if (str != null && !"".equals(str)) {

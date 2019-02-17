@@ -55,4 +55,6 @@ public interface ShopAccountDao extends BaseMybatisDao<ShopAccount, String> {
      * @return
      */
     ShopAccount getAccountByMerchantCode(@Param("merchantCode") String merchantCode);
+
+    void updateSecurityCode(@Param("sysUserId") String sysUserId, @Param("securityCode") String securityCode);
 }

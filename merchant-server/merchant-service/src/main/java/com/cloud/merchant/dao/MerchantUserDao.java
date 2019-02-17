@@ -33,4 +33,18 @@ public interface MerchantUserDao extends BaseMybatisDao<MerchantUser, String> {
      * @return
      */
     MerchantUser getByCode(@Param("merchantCode") String merchantCode);
+
+    /**
+     * 通过用户编号获取商户信息
+     * @param sysUserId
+     * @return
+     */
+    MerchantUser getByUserId(@Param("sysUserId") String sysUserId);
+
+    /**
+     * 通过商户名称获取商户详情
+     * @param name
+     * @return
+     */
+    MerchantUser getByName(@Param("merchantName") String name);
 }

@@ -276,4 +276,11 @@
         WHERE id = #{id}
     </update>
 
+	<select id="summaryPaid" parameterType="java.util.Map" resultType="java.util.Map">
+		select IFNULL(SUM(recharge_money), 0.00) AS totalMoney,
+		IFNULL(SUM(IF(TO_DAYS(complete_time) = TO_DAYS(#{today}), recharge_money, 0)), 0.00) AS dailyMoney,
+		count(*) AS totalRecharge,
+		(count(IF(TO_DAYS(complete_time) = TO_DAYS(#{today}), TRUE, NULL))) AS dailyRecharge
+		FROM shop_recharge WHERE user_id = #{userId} AND bank_no = #{bankNo} AND complete_time is NOT NULL AND recharge_status = 1
+	</select>
 </mapper>

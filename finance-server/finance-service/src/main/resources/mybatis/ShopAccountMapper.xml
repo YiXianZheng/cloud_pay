@@ -75,4 +75,7 @@
 			);
 	</insert>
 
+	<update id="updateSecurityCode">
+		UPDATE shop_account SET security_code = #{securityCode} WHERE sys_user_id = #{sysUserId}
+	</update>
 </mapper>

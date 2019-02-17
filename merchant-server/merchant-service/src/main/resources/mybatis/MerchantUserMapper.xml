@@ -41,6 +41,14 @@
         SELECT * FROM merchant_user WHERE id = #{id}
     </select>
 
+	<select id="getByUserId" resultMap="merchantUserMap">
+        SELECT * FROM merchant_user WHERE sys_user_id = #{sysUserId}
+    </select>
+
+	<select id="getByName" resultMap="merchantUserMap">
+        SELECT * FROM merchant_user WHERE merchant_name = #{merchantName}
+    </select>
+
     <select id="getByCode" resultMap="merchantUserMap">
         SELECT * FROM merchant_user WHERE merchant_code = #{merchantCode}
     </select>

@@ -71,4 +71,11 @@ public class SysUserProviderFallback implements SysUserProvider {
         return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
     }
 
+    @Override
+    public ApiResponse findByLoginName(String loginName) {
+        log.error("========= >> sys/user/findByLoginName 接口调用异常");
+
+        return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+    }
+
 }

@@ -79,4 +79,11 @@ public interface SysUserProvider {
     @RequestMapping(value = "/sys/user/getMerchantCodes", method = RequestMethod.POST)
     ApiResponse getMerchantCodes(@RequestParam("sysUserId")String sysUserId);
 
+    /**
+     * 通过登录名获取用户id
+     * @param loginName
+     * @return
+     */
+    @RequestMapping(value = "/sys/user/findByLoginName", method = RequestMethod.POST)
+    ApiResponse findByLoginName(@RequestParam("loginName") String loginName);
 }

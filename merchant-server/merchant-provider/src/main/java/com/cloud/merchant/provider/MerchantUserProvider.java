@@ -45,4 +45,12 @@ public interface MerchantUserProvider {
      */
     @RequestMapping(value = "/merchant/user/detail", method = RequestMethod.POST)
     ApiResponse detailById(@RequestParam("id") String id);
+
+    /**
+     * 通过用户id获取商户详情
+     * @param sysUserId
+     * @return
+     */
+    @RequestMapping(value = "/merchant/user/detailByUserId")
+    ApiResponse detailByUserId(@RequestParam("sysUserId") String sysUserId);
 }

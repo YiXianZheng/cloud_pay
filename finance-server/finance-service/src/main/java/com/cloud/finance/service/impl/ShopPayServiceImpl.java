@@ -94,8 +94,8 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
         try {
             PageResult pageResult = this.queryForTablePage(pageQuery.getPageIndex(), pageQuery.getPageSize(), pageQuery.getParams());
             return ReturnVo.returnSuccess(ResponseCode.Base.SUCCESS, JSONObject.toJSON(pageResult));
-
         }catch (Exception e){
+            e.printStackTrace();
             return ReturnVo.returnFail();
         }
     }

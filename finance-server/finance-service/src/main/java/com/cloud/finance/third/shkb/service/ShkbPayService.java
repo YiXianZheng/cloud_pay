@@ -33,7 +33,24 @@ public class ShkbPayService implements BasePayService {
 
     @Override
     public MidPayCreateResult createQrCode(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
-        return null;
+
+        logger.info("[shkb create qrcode pay params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
+
+        String actionRespCode = SysPayResultConstants.SUCCESS_MAKE_ORDER + "";
+        String actionRespMessage = "生成跳转地址成功";
+
+        String actionRespUrl = getBasePayUrl() + "/d8/shkb_" + shopPayDto.getSysPayOrderNo() + ".html";
+        String channelPayOrderNo = shopPayDto.getSysPayOrderNo();
+        MidPayCreateResult payCreateResult = new MidPayCreateResult();
+        payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+        payCreateResult.setResultCode(actionRespCode);
+        payCreateResult.setChannelOrderNo(channelPayOrderNo);
+        payCreateResult.setResultMessage(actionRespMessage);
+
+        payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+        payCreateResult.setStatus("true");
+        payCreateResult.setPayUrl(actionRespUrl);
+        return payCreateResult;
     }
 
     @Override
@@ -44,7 +61,7 @@ public class ShkbPayService implements BasePayService {
     @Override
     public MidPayCreateResult createH5JumpUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
 
-        logger.info("[shkb create gateSyt params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
+        logger.info("[shkb create h5_wake pay params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
 
         String actionRespCode = SysPayResultConstants.SUCCESS_MAKE_ORDER + "";
         String actionRespMessage = "生成跳转地址成功";

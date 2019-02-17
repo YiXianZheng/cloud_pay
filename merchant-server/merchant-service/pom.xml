@@ -41,6 +41,12 @@
 
         <dependency>
             <groupId>com.cloud</groupId>
+            <artifactId>sysconf-provider</artifactId>
+            <version>${sysconf-provider.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
             <artifactId>merchant-common</artifactId>
             <version>${merchant-common.version}</version>
         </dependency>
@@ -55,6 +61,12 @@
             <groupId>com.cloud</groupId>
             <artifactId>finance-common</artifactId>
             <version>${finance-common.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.cloud</groupId>
+            <artifactId>finance-provider</artifactId>
+            <version>${finance-provider.version}</version>
         </dependency>
 
         <dependency>

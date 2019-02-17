@@ -1,24 +1,28 @@
 package com.cloud.finance.third.ainong.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.service.base.BaseCashService;
-import com.cloud.finance.common.utils.ASCIISortUtil;
-import com.cloud.finance.common.utils.PostUtils;
-import com.cloud.finance.common.utils.SafeComputeUtils;
+import com.cloud.finance.common.utils.*;
 import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.common.vo.cash.CashRespData;
 import com.cloud.finance.common.vo.cash.ChannelAccountData;
 import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.ShopRechargeService;
 import com.cloud.finance.third.ainong.enums.RespCodeEnum;
+import com.cloud.finance.third.ainong.utils.AES;
+import com.cloud.finance.third.ainong.utils.Base64;
 import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.finance.third.ainong.vo.AccountQueryData;
 import com.cloud.finance.third.ainong.vo.AinongCashRespData;
+import com.cloud.finance.third.ainong.vo.HeadReqData;
+import com.cloud.finance.third.ainong.vo.PayForReq;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,119 +47,121 @@ public class AinongCashService implements BaseCashService {
     @Override
     public CashRespData applyCash(ShopRecharge shopRecharge, ThirdChannelDto thirdChannelDto) {
         logger.info("[ainong cash params]:channelId:" + thirdChannelDto.getId() + ", rechargeNo:" + shopRecharge.getRechargeNo());
-        Map<String, String> params = new HashMap<>();
 
         CashRespData cashRespData = new CashRespData();
         cashRespData.setStatus(CashRespData.STATUS_ERROR);
         cashRespData.setMsg("代付异常");
 
-        /*** 公共参数 ***/
-        //appid
-        String appid = thirdChannelDto.getAppId();
-        //商户账号  商户在支付平台的唯一标识
-        String mch_id = thirdChannelDto.getMerchantId();
-        //随机字符串
-        String nonce_str = new Date().getTime() + "";
-        //签名方式
-        String sign_type = "MD5";
-        //签名
-        String sign = "";
-        //请求时间戳
-        String timestamp = DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18);
+        Date time = new Date();
+        //请求参数
+        //请求头
+        //合作方标识号
+        String partnerNo = thirdChannelDto.getMerchantId();
+        //版本
+        String version = "1.0.0";
+        //字符集
+        String charset = "UTF-8";
+        //合作方类型
+        String  partnerType = "OUTER";
+        //交易代码
+        String txnCode = "102002";
+        //交易跟踪号
+        String traceId = shopRecharge.getRechargeNo();
+        //请求日期  格式为yyyyMMdd
+        String reqDate = DateUtil.DateToString(time, DateUtil.DATE_PATTERN_11);
+        //请求时间  格式为yyyyMMddHHmmss
+        String reqTime = DateUtil.DateToString(time, DateUtil.DATE_PATTERN_18);
+
+        //交易请求参数
+        //交易金额  单位分
+        String amount = String.valueOf((int)(shopRecharge.getRechargeMoney() * 100));
+
+        ApiResponse response = sysBankProvider.getBankNameByCode(shopRecharge.getBankCode());
+        String bank_name = response.getData().toString();
 
         /*** 请求参数 ***/
-        //商户订单号
-        String out_trade_no = shopRecharge.getRechargeNo();
-        //商品名称
-        String title = shopRecharge.getRechargeNo();
-        //收款类型
-        String payee_type = "1";
-        //收款账户类型
-        String bankcard_type = "1";
-        //收款方姓名
-        String payee_name = shopRecharge.getBankAccount();
-        //总金额
-        String total_fee = SafeComputeUtils.numberFormate(SafeComputeUtils.sub(shopRecharge.getRechargeMoney(), shopRecharge.getRechargeRateMoney()));
-        //银行ID
-        ApiResponse response = sysBankProvider.toChannelCode(shopRecharge.getBankCode(), thirdChannelDto.getId());
-        if(!(ResponseCode.Base.SUCCESS+"").equals(response.getCode())) {
-            logger.error("【通道不支持的该银行的代付请求】-------系统银行编码："+ shopRecharge.getBankCode());
-            cashRespData.setMsg("不支持的该银行的代付请求");
+        HeadReqData headReqDTO = new HeadReqData();
+        headReqDTO.setPartnerNo(partnerNo);
+        headReqDTO.setVersion(version);
+        headReqDTO.setCharset(charset);
+        headReqDTO.setPartnerType(partnerType);
+        headReqDTO.setTxnCode(txnCode);
+        headReqDTO.setTraceId(traceId);
+        headReqDTO.setReqDate(reqDate);
+        headReqDTO.setReqTime(reqTime);
+        PayForReq req = new PayForReq();
+        req.setAmount(amount);
+        req.setBankAccountName(shopRecharge.getBankAccount());
+        req.setBankAccountNo(shopRecharge.getBankNo());
+        req.setBankAccountType("PRIVATE");
+        req.setBankName(bank_name);
+        req.setBankChannelNo("03080000");
+        req.setPayForType(thirdChannelDto.getAppKey()); //T0 代付
+        req.setHead(headReqDTO);
 
-            return cashRespData;
-        }
-        String bank_id = response.getData().toString();
-        //银行卡号
-        String bankcard_account = shopRecharge.getBankNo();
+        //加密
+        String plainText = JSONObject.toJSONString(req);
+        String encryptData = com.cloud.finance.third.ainong.utils.Base64.encode(AES.encode(plainText, thirdChannelDto.getPayMd5Key()));
+        logger.info("加密结果：" + encryptData);
+        // 签名
+        String signData = DigestUtils.sha1Hex(plainText + thirdChannelDto.getCashMd5Key());
+        logger.info("[ailong sign msg]:" + signData);
 
-        if(StringUtils.isNotBlank(appid)) {
-            params.put("appid", appid);
-        }
-        if(StringUtils.isNotBlank(mch_id)) {
-            params.put("mch_id", mch_id);
-        }
-        if(StringUtils.isNotBlank(nonce_str)) {
-            params.put("nonce_str", nonce_str);
-        }
-        if(StringUtils.isNotBlank(sign_type)) {
-            params.put("sign_type", sign_type);
-        }
-        if(StringUtils.isNotBlank(timestamp)) {
-            params.put("timestamp", timestamp);
-        }
-        if(StringUtils.isNotBlank(out_trade_no)) {
-            params.put("out_trade_no", out_trade_no);
-        }
-        if(StringUtils.isNotBlank(title)) {
-            params.put("title", title);
-        }
-        if(StringUtils.isNotBlank(payee_type)) {
-            params.put("payee_type", payee_type);
-        }
-        if(StringUtils.isNotBlank(bankcard_type)) {
-            params.put("bankcard_type", bankcard_type);
-        }
-        if(StringUtils.isNotBlank(payee_name)) {
-            params.put("payee_name", payee_name);
-        }
-        if(StringUtils.isNotBlank(total_fee)) {
-            params.put("total_fee", total_fee);
-        }
-        if(StringUtils.isNotBlank(bank_id)) {
-            params.put("bank_id", bank_id);
-        }
-        if(StringUtils.isNotBlank(bankcard_account)) {
-            params.put("bankcard_account", bankcard_account);
-        }
-
-        logger.info("[before MD5 sign] -> " + ASCIISortUtil.buildSign(params, "=", "&key="+thirdChannelDto.getPayMd5Key()));
-        sign = MD5Util.MD5Encode(ASCIISortUtil.buildSign(params, "=", "&key="+thirdChannelDto.getPayMd5Key()));
-        params.put("sign", sign);
-
-        logger.info("[ainong sign msg]:signMsg:"+sign);
+        Map<String, String> params = new HashMap<>();
+        params.put("encryptData", encryptData);
+        params.put("signData", signData);
+        params.put("partnerNo", partnerNo);
+        logger.info("pay post params == >  " + params);
 
         try {
-            String jsonStr = PostUtils.jsonPost(thirdChannelDto.getPayUrl(), params);
+            String jsonStr = HttpClientUtil.post(thirdChannelDto.getPayUrl(), params);
+            logger.info("代付结果：" + jsonStr);
             if(StringUtils.isEmpty(jsonStr)){
-                logger.error("【通道支付请求请求结果为空】");
-                cashRespData.setMsg("通道支付请求请求结果为空");
+                logger.error("【通道代付请求结果为空】");
+                cashRespData.setMsg("通道代付请求结果为空");
                 return cashRespData;
             }
-            logger.info("cash post result == > "+ jsonStr);
 
-            net.sf.json.JSONObject jsonObject = net.sf.json.JSONObject.fromObject(jsonStr);
-            AinongCashRespData ainongCashRespData = (AinongCashRespData) net.sf.json.JSONObject.toBean(jsonObject, AinongCashRespData.class);
+            Map<Object, Object> encryptMap = MapUtils.jsonToMap(jsonStr);
+            logger.info("转换结果：" + encryptData);
+            String plainStr = AES.decode(Base64.decode(encryptMap.get("encryptData").toString()), thirdChannelDto.getPayMd5Key());
+            logger.info("解密结果：" + plainStr);
 
-            if(AinongCashRespData.TRADE_STATUS_SUCCESS == ainongCashRespData.getTrade_status()){
-                logger.info("【通道代付成功】");
-                cashRespData.setStatus(CashRespData.STATUS_SUCCESS);
-                cashRespData.setMsg("代付成功");
-            }else if(AinongCashRespData.TRADE_STATUS_DOING == ainongCashRespData.getTrade_status()){
-                cashRespData.setStatus(CashRespData.STATUS_DOING);
-                cashRespData.setMsg("代付处理中");
-            }else{
-                logger.info("【通道代付失败】----> 查询结果状态错误：" + ainongCashRespData.getTrade_status());
-                cashRespData.setMsg("通道代付失败");
+            Map<Object, Object> respMap = MapUtils.jsonToMap(plainStr);
+            logger.info("参数map：" + respMap);
+
+            if (!respMap.containsKey("orderStatus")) {
+                logger.info("【通道代付失败】----> 查询结果状态错误：" + respMap.get("orderStatus"));
+                Map<Object, Object> failRes = MapUtils.jsonToMap(respMap.get("head"));
+                logger.info("继续转换：" + failRes);
+                cashRespData.setMsg(failRes.get("respMsg").toString());
+                shopRecharge.setRechargeStatus(4);
+                shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
+                shopRecharge.setThirdChannelRespMsg(jsonStr);
+                shopRechargeService.rechargeFail(shopRecharge);
+                return cashRespData;
+            }
+            switch (respMap.get("orderStatus").toString()) {
+                case "01":
+                    logger.info("【通道代付成功】");
+                    cashRespData.setStatus(CashRespData.STATUS_SUCCESS);
+                    shopRecharge.setRechargeStatus(1);
+                    shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
+                    shopRecharge.setThirdChannelRespMsg(jsonStr);
+                    shopRecharge.setCompleteTime(new Date());
+                    cashRespData.setMsg("代付成功");
+                    shopRechargeService.rechargeSuccess(shopRecharge);
+                    break;
+                case "04":
+                    cashRespData.setStatus(CashRespData.STATUS_DOING);
+                    shopRecharge.setRechargeStatus(2);
+                    shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
+                    shopRecharge.setThirdChannelRespMsg(jsonStr);
+                    cashRespData.setMsg("代付处理中");
+                    shopRechargeService.rechargeSuccess(shopRecharge);
+                    break;
+                default:
+                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();

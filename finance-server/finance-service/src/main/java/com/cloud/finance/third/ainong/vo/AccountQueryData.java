@@ -18,7 +18,7 @@ public class AccountQueryData {
     private RespData data;
 
     @Data
-    public static class RespData{
+    private static class RespData{
         private String appid;       //appid
 
         private String mch_id;      //商户号
@@ -27,5 +27,4 @@ public class AccountQueryData {
 
         private Double freeze_amount;  //冻结金额
     }
-
 }
