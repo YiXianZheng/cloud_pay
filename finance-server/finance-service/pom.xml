@@ -114,6 +114,18 @@
             <version>6.0.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>2.2</version>
+        </dependency>
+
         <!--第三方jar包-->
         <!--现代支付Jar包  begin -->
         <dependency>

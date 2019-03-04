@@ -19,7 +19,6 @@ public class ReqPayQueryData {
 	private String assCode = "";
 	private String assPayOrderNo = "";
 
-	
 
 	public String getSign() {
 		return sign;
@@ -51,23 +50,21 @@ public class ReqPayQueryData {
 		this.sign = MD5Util.getSign(toMap(), md5Key);
 	}
 
-	public Map<String, Object> toMap() {
-		Map<String, Object> map = new HashMap<String, Object>();
+	private Map<String, Object> toMap() {
+		Map<String, Object> map = new HashMap<>();
 		Field[] fields = this.getClass().getDeclaredFields();
-		String mapValue = "";
+		StringBuilder mapValue = new StringBuilder();
 		for (Field field : fields) {
 			Object obj;
 			try {
 				obj = field.get(this);
 				if (obj != null) {
 					if(!field.getName().equals("sign")){
-						mapValue = mapValue+(field.getName()+"-"+(String) obj);
-						map.put(field.getName(), (String) obj);
+						mapValue.append(field.getName()).append("-").append(obj);
+						map.put(field.getName(), obj);
 					}
 				}
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
+			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
 		}

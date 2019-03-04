@@ -50,6 +50,7 @@ public class ShkbCashService implements BaseCashService {
         CashRespData cashRespData = new CashRespData();
         cashRespData.setStatus(CashRespData.STATUS_ERROR);
         cashRespData.setMsg("代付异常");
+        shopRecharge.setThirdChannelId(thirdChannelDto.getId());
 
         String order_id = shopRecharge.getRechargeNo();
         String machno = thirdChannelDto.getMerchantId();

@@ -68,21 +68,21 @@ public class EbankPayController extends BaseController {
     public String pay(HttpServletRequest request, HttpServletResponse response){
 
         long startTime = System.currentTimeMillis();   //获取开始时间
-        RepPayCreateData req = null;
-        String merchantCode = this.getStringParameter("assCode");                //商户编号
-        String merchantPayOrderNo = this.getStringParameter("assPayOrderNo");    //商户订单号
-        String merchantNotifyUrl = this.getStringParameter("assNotifyUrl");    //商户回调地址
-        String merchantReturnUrl = this.getStringParameter("assReturnUrl");    //商户返回地址
-        String merchantCancelUrl = this.getStringParameter("assCancelUrl");    //商户取消支付跳转地址
-        String paymentType = this.getStringParameter("paymentType");        //支付类型
-        String subPayCode = this.getStringParameter("subPayCode");        //子支付类型
-        String merchantPayMoney = this.getStringParameter("assPayMoney");        //以分为单位
+        RepPayCreateData req;
+        String merchantCode = this.getStringParameter("assCode");                   //商户编号
+        String merchantPayOrderNo = this.getStringParameter("assPayOrderNo");       //商户订单号
+        String merchantNotifyUrl = this.getStringParameter("assNotifyUrl");         //商户回调地址
+        String merchantReturnUrl = this.getStringParameter("assReturnUrl");         //商户返回地址
+        String merchantCancelUrl = this.getStringParameter("assCancelUrl");         //商户取消支付跳转地址
+        String paymentType = this.getStringParameter("paymentType");                //支付类型
+        String subPayCode = this.getStringParameter("subPayCode");                  //子支付类型
+        String merchantPayMoney = this.getStringParameter("assPayMoney");           //以分为单位
         Double merchantPayMoneyYuan = SafeComputeUtils.div(this.getDoubleParameter("assPayMoney"), 100D);    //以元为单位
         //不参与签名
-        String merchantPayMessage = this.getStringParameter("assPayMessage");  //商户保留字段
-        String merchantGoodsTitle = this.getStringParameter("assGoodsTitle");    //支付产品标题
-        String merchantGoodsDesc = this.getStringParameter("assGoodsDesc");    //支付产品描述
-        String sign = request.getParameter("sign");                        //商户签名结果
+        String merchantPayMessage = this.getStringParameter("assPayMessage");       //商户保留字段
+        String merchantGoodsTitle = this.getStringParameter("assGoodsTitle");       //支付产品标题
+        String merchantGoodsDesc = this.getStringParameter("assGoodsDesc");         //支付产品描述
+        String sign = request.getParameter("sign");                                         //商户签名结果
 
         Integer source = Util.isMobileDevice(request)?1:2;
 
@@ -92,7 +92,7 @@ public class EbankPayController extends BaseController {
         //身份证号   idnumber
         //预留手机号 telephone
         if (StringUtils.isEmpty(merchantCode)) {
-            return renderFailString(response, false, SysPayResultConstants.ERROR_PAY_MERCHANT_ID_NULL, "[assCode]商户编号号不能为空");
+            return renderFailString(response, false, SysPayResultConstants.ERROR_PAY_MERCHANT_ID_NULL, "[assCode]商户编号不能为空");
         }
         if (StringUtils.isEmpty(merchantPayOrderNo)) {
             return renderFailString(response, false, SysPayResultConstants.ERROR_MERCHANT_ORDER_ID_NULL, "[assPayOrderNo]商户订单号不能为空");
@@ -431,7 +431,7 @@ public class EbankPayController extends BaseController {
         String merchantMd5Key = merchantInfoDto.get("md5Key");
         ReqPayQueryData req = null;
         try {
-            req =new ReqPayQueryData(merchantCode, merOrderId, merchantMd5Key);
+            req = new ReqPayQueryData(merchantCode, merOrderId, merchantMd5Key);
         } catch (Exception e) {
             return renderFailString(response,false,SysPayResultConstants.ERROR_SIGN_RESULT_EXCEPTION,"[sign]查询接口MD5签名异常");
         }

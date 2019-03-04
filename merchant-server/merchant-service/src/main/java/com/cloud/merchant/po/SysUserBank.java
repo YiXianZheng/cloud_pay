@@ -17,6 +17,8 @@ public class SysUserBank extends BasePo {
 
     private String bankName;
 
+    private String bankCode;
+
     private String bankBranchName;
 
     private String bankCardHolder;

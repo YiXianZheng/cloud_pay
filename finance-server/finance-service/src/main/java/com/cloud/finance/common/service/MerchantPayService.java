@@ -42,7 +42,7 @@ public class MerchantPayService {
 	
 
 	@Transactional(readOnly = false)
-	public boolean notifyAssWithMd5Key(ShopPay shopPay) throws Exception{
+	public boolean notifyAssWithMd5Key(ShopPay shopPay) {
 		if(shopPay == null) return false;
 		logger.info("[notify merchant by orderid]:"+shopPay.getMerchantOrderNo());
 		Map<String, String> merchant = redisClient.Gethgetall(RedisConstants.MERCHANT_INFO_DB, shopPay.getMerchantCode());
@@ -58,10 +58,10 @@ public class MerchantPayService {
 		String assCode = shopPay.getMerchantCode();
 		String assPayOrderNo = shopPay.getMerchantOrderNo();
 		String sysPayOrderNo = shopPay.getSysPayOrderNo();
-		Double returnDouble=SafeComputeUtils.multiply(shopPay.getMerchantPayMoney(), 100D);
-		String assPayMoney = returnDouble.intValue()+"";
+		Double returnDouble = SafeComputeUtils.multiply(shopPay.getMerchantPayMoney(), 100D);
+		String assPayMoney = returnDouble.intValue() + "";
 		SimpleDateFormat formatter;
-	    formatter = new SimpleDateFormat ("yyyyMMddHHmmss");
+	    formatter = new SimpleDateFormat(DateUtil.DATE_PATTERN_18);
 		String succTime;
 		if(null==shopPay.getPayCompleteTime()){
 			succTime =formatter.format(new Date());
@@ -71,7 +71,7 @@ public class MerchantPayService {
 
 		//商户添加默认回调地址
 		//返回地址
-		String respCode = shopPay.getPayStatus()+"";
+		String respCode = shopPay.getPayStatus() + "";
 		String respMsg = PayStatusEnum.getByStatus(shopPay.getPayStatus());
 		String md5Key = merchant.get("md5Key");
 		String notifyUrl = shopPay.getMerchantNotifyUrl();
@@ -81,21 +81,30 @@ public class MerchantPayService {
 			assPayMessage = sysPayOrderNo;
 		}
 		String notifyResponseResult;
-		if (StringUtils.isNotEmpty(notifyUrl)) {
-            MesPayNotifyData res = new MesPayNotifyData(assCode, assPayOrderNo,sysPayOrderNo, assPayMoney, assPayMessage, succTime,respCode, respMsg, md5Key);
-            Map<String, String>  notifyMap = res.getReturnParamMap();
-            logger.info("notify response sign result : " +res.getSign() + "; notify url : " + notifyUrl);
-            notifyResponseResult = HttpClientUtil.post(notifyUrl, notifyMap);
-			if (StringUtils.isEmpty(notifyResponseResult) && "success".equalsIgnoreCase(notifyResponseResult)) {
-				logger.error("notify response error result,sysPayOrderNo:"+ sysPayOrderNo+",notifyResult:"+notifyResponseResult);
-			} else {
-				notifyMap.put("notifyUrl", notifyUrl);
-                notifyMap.put("notifyTime", new Date().getTime()+"");
-				redisClient.lpush(RedisConfig.UN_RESPONSE_NOTIFY, DateUtil.DateToString(new Date(), sysPayOrderNo+"-"+DateUtil.DATE_PATTERN_18),
-						JSONObject.toJSONString(notifyMap));
-				logger.info("notify response success result 【进入通知队列】");
+		try {
+			if (StringUtils.isNotEmpty(notifyUrl)) {
+			logger.info("回调之前参数assCode：" + assCode + " assPayOrderNo: " + assPayOrderNo + " assPayMoney: " + assPayMoney + " assPayMessage: " + assPayMessage + " succTime: " + succTime
+			+ respCode + " respCode: " + respCode + " respMsg: " + respMsg + " md5Key: " + md5Key);
+				MesPayNotifyData res = new MesPayNotifyData(assCode, assPayOrderNo, sysPayOrderNo, assPayMoney, assPayMessage, succTime, respCode, respMsg, md5Key);
+				Map<String, String> notifyMap = res.getReturnParamMap();
+				logger.info("回调商户参数：" + notifyMap);
+				logger.info("notify response sign result: " + res.getSign() + " ; notify url: " + notifyUrl);
+				notifyResponseResult = HttpClientUtil.post(notifyUrl, notifyMap);
+				logger.info("回调返回：" + notifyResponseResult);
+				if (StringUtils.isNotEmpty(notifyResponseResult) && "success".equalsIgnoreCase(notifyResponseResult)) {
+					logger.error("notify response success result,sysPayOrderNo: " + sysPayOrderNo);
+					logger.error("notify response success");
+				} else {
+					notifyMap.put("notifyUrl", notifyUrl);
+					notifyMap.put("notifyTime", new Date().getTime() + "");
+					redisClient.lpush(RedisConfig.UN_RESPONSE_NOTIFY, DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18),
+							JSONObject.toJSONString(notifyMap));
+					logger.info("notify response success result 【进入通知队列】");
+				}
+				logger.info("notify response success result,sysPayOrderNo:" + sysPayOrderNo + ",notifyResult: success~~~~");
 			}
-            logger.info("notify response success result,sysPayOrderNo:"+ sysPayOrderNo + ",notifyResult: success~~~~" );
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return true;
 	}
@@ -116,8 +125,8 @@ public class MerchantPayService {
 		String assCode = shopPay.getMerchantCode();
 		String assPayOrderNo = shopPay.getMerchantOrderNo();
 		String sysPayOrderNo = shopPay.getSysPayOrderNo();
-		Double returnDouble=SafeComputeUtils.multiply(shopPay.getMerchantCostMoney(), 100D);
-		String assPayMoney = returnDouble.intValue()+"";
+		Double returnDouble = SafeComputeUtils.multiply(shopPay.getMerchantCostMoney(), 100D);
+		String assPayMoney = returnDouble.intValue() + "";
 		SimpleDateFormat formatter;
 	    formatter = new SimpleDateFormat ("yyyyMMddHHmmss");
 		String succTime;
@@ -143,8 +152,8 @@ public class MerchantPayService {
 			
 			MesPayNotifyData res = new MesPayNotifyData(assCode,assPayOrderNo,sysPayOrderNo,assPayMoney,assPayMessage,succTime,respCode,respMsg,md5Key);
 			String returnParamValue = res.getReturnParamUrlValueEncode();
-			String retFinalParamValue = returnParamValue.substring(0, returnParamValue.length()-1);
-			resultFinalUrl = returnUrl+"?"+retFinalParamValue;
+			String retFinalParamValue = returnParamValue.substring(0, returnParamValue.length() - 1);
+			resultFinalUrl = returnUrl + "?" + retFinalParamValue;
 		}else{
 			resultFinalUrl = "http://www.baidu.com";
 		}

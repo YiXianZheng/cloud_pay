@@ -10,7 +10,6 @@ import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.common.vo.ReturnVo;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
@@ -63,10 +62,10 @@ public class SysUserBankController extends BaseController {
             if (HeaderInfoDto.AUTH_MERCHANT_SYSTEM.equals(headerInfoDto.getAuth())) {
                 // 商户端查询的是自己的银行卡列表
                 params.put("sysUserId", headerInfoDto.getCurUserId());
-                pageQuery.setParams(params);
                 // 先处理下发数据
                 sysUserBankService.summaryPaid(headerInfoDto.getCurUserId());
             }
+            pageQuery.setParams(params);
             // 银行卡号
             return this.toApiResponse(sysUserBankService.listForTablePage(pageQuery, headerInfoDto));
         } catch (Exception e){
@@ -144,10 +143,16 @@ public class SysUserBankController extends BaseController {
 
         try {
             HeaderInfoDto headerInfoDto = this.getHeaderInfo(headers);
-            SysUserBank sysUserBank = new SysUserBank();
-            BeanUtils.copyProperties(sysUserBankDto, sysUserBank);
+            SysUserBank sysUserBank = sysUserBankDao.getById(sysUserBankDto.getId());
+            if (sysUserBank == null) {
+                return toApiResponse(ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "银行卡不存在")));
+            }
             // UpdateBankCard
-
+            sysUserBank.setBankBranchName(sysUserBankDto.getBankBranchName());
+            sysUserBank.setBankCardNo(sysUserBankDto.getBankCardNo());
+            sysUserBank.setBankCardHolder(sysUserBankDto.getBankCardHolder());
+            sysUserBank.setBankProvince(sysUserBankDto.getBankProvince());
+            sysUserBank.setBankCity(sysUserBankDto.getBankCity());
             sysUserBank.setUpdateBy(headerInfoDto.getCurUserId());
             sysUserBankDao.updateInfo(sysUserBank);
             // 通过审核

@@ -112,7 +112,7 @@ public class XunjiefuCashService implements BaseCashService {
 
             return cashRespData;
         }
-        String signStr = XJFSignUtil.doSign(stringSignTemp);
+        String signStr = XJFSignUtil.doSign(stringSignTemp, thirdChannelDto.getAppKey());
         logger.info("[xunjiefu sign msg]:"+signStr);
 
         params.put("signature", signStr);
@@ -230,7 +230,7 @@ public class XunjiefuCashService implements BaseCashService {
 
             return cashRespData;
         }
-        String signStr = XJFSignUtil.doSign(stringSignTemp);
+        String signStr = XJFSignUtil.doSign(stringSignTemp, thirdChannelDto.getAppKey());
         logger.info("[xunjiefu sign msg]:"+signStr);
 
         params.put("signature", signStr);

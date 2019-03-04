@@ -38,27 +38,27 @@ public class HcNotifyController extends BaseController {
     @RequestMapping(value = "")
     public void hcNotify(HttpServletRequest request, HttpServletResponse response) {
         try {
-            this.logger.info("[hc pay Notify]...");
+            logger.info("[hc pay Notify]...");
             this.printAcceptValue(request);
             response.setContentType("text/html;charset=UTF-8");
-            this.logger.info("[hc pay Notify params]...");
+            logger.info("[hc pay Notify params]...");
             Enumeration<String> paraNames = request.getParameterNames();
             JSONObject jsonObject = new JSONObject();
-            for(Enumeration<String> e=paraNames;e.hasMoreElements();){
-                String thisName=e.nextElement().toString();
-                String thisValue=request.getParameter(thisName);
-                this.logger.info("----------------key:"+thisName+"  ----  val:"+thisValue);
+            for(; paraNames.hasMoreElements();){
+                String thisName = paraNames.nextElement();
+                String thisValue = request.getParameter(thisName);
+                logger.info("----------------key: " + thisName + "  ----  val: " + thisValue);
                 jsonObject.put(thisName, thisValue);
             }
-            String assCode = request.getParameter("assCode");
-            String assPayOrderNo = request.getParameter("assPayOrderNo");
-            String sysPayOrderNo = request.getParameter("sysPayOrderNo");
-            String assPayMoney = request.getParameter("assPayMoney");
-            String assPayMessage = request.getParameter("assPayMessage");
-            String succTime = request.getParameter("succTime");
-            String respCode = request.getParameter("respCode");
-            String respMsg = request.getParameter("respMsg");
-            String sign = request.getParameter("sign");
+            String assCode = request.getParameter("assCode");                   // 商户号
+            String assPayOrderNo = request.getParameter("assPayOrderNo");       // 商户订单号
+            String sysPayOrderNo = request.getParameter("sysPayOrderNo");       // 平台订单号
+            String assPayMoney = request.getParameter("assPayMoney");           // 商户支付金额
+            String assPayMessage = request.getParameter("assPayMessage");       // 商户支付信息
+            String succTime = request.getParameter("succTime");                 // 成功时间
+            String respCode = request.getParameter("respCode");                 // 返回状态码
+            String respMsg = request.getParameter("respMsg");                   // 返回信息
+            String sign = request.getParameter("sign");                         // 签名结果
 
             if(StringUtils.isBlank(sign)){
                 response.getWriter().write("签名不能为空");

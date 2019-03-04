@@ -113,7 +113,7 @@ public class AES {
 	}
 	
 	@Deprecated
-	private static byte [] AESEncrypt(String plainText, String keyText) {
+	public static byte [] AESEncrypt(String plainText, String keyText) {
 		byte[] bytes = AESEncrypt(getUTF8Bytes(plainText), getUTF8Bytes(keyText), keyAlgorithm, cipherAlgorithm,
 				keyText);
 		return bytes;

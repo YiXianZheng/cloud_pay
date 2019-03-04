@@ -58,5 +58,5 @@ public interface FinanceProvider {
     ApiResponse dailySummary();
 
     @RequestMapping(value = "/recharge/summaryPaid", method = RequestMethod.POST)
-    ApiResponse summaryPaid(@RequestParam String userId, @RequestParam String bankNo, @RequestParam Date today);
+    ApiResponse summaryPaid(@RequestParam String userId, @RequestParam String bankNo, @RequestParam String today);
 }

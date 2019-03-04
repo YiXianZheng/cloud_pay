@@ -62,7 +62,6 @@ public  class JwtUtil
             String subJson = jwt.getSubject();
             JSONObject json=JSONObject.fromObject(subJson);
 
-            System.out.println(json.get("t"));
             return (String) json.get("t");
         } catch (Exception exception){
             return "";

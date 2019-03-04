@@ -12,6 +12,8 @@ import com.cloud.finance.common.vo.pay.mid.MidPayCheckResult;
 import com.cloud.finance.common.vo.pay.mid.MidPayCreateResult;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
+import com.cloud.finance.third.anyinfu.utils.AYFUtil;
+import com.cloud.finance.third.anyinfu.utils.QrCodeUtils;
 import com.cloud.finance.third.hangzhou.utils.XmlUtil;
 import com.cloud.finance.third.hankou.utils.HKUtil;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
@@ -42,15 +44,24 @@ public class AnyinfuPayService implements BasePayService {
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
     }
 
+    private String getBasePayUrl(){
+        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
+    }
+
     @Override
     public MidPayCreateResult createQrCode(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
 
         logger.info("[anyinfu wx_qrcode pay create params] channel: " + thirdChannelDto.getId() + ", sysPayNo: " + shopPayDto.getSysPayOrderNo());
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
-        payCreateResult.setStatus("false");
+        payCreateResult.setStatus("true");
         payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
 
-        try {
+        String actionRespUrl = getBasePayUrl() + "/d8/ayfQrcode_" + shopPayDto.getSysPayOrderNo() + ".html";
+        payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+        payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
+        payCreateResult.setPayUrl(actionRespUrl);
+        payCreateResult.setResultMessage("生成跳转地址成功");
+        /*try {
             // 鉴权
             // 应用ID
             String appid = thirdChannelDto.getAppId();
@@ -62,11 +73,6 @@ public class AnyinfuPayService implements BasePayService {
             params.put("appid", appid);
             params.put("random", random);
 
-            String token = getToken(params, key, thirdChannelDto.getAdminUrl());
-
-            // 交易请求地址
-            String payURL = thirdChannelDto.getPayUrl() + "?token=" + token;
-
             // 商户号
             String mch_id = thirdChannelDto.getMerchantId();
             // 商户订单号
@@ -75,12 +81,6 @@ public class AnyinfuPayService implements BasePayService {
             String body = "test";
             // 总金额
             Integer total_fee = (int) (shopPayDto.getMerchantPayMoney() * 100);
-            if (!PayAmountEnum.checkAmount(total_fee)) {
-                payCreateResult.setStatus("false");
-                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_AMOUNT_PARAM + "");
-                payCreateResult.setResultMessage("暂不支持此金额，支付金额只支持10，20，30，50，100");
-                return payCreateResult;
-            }
             // 终端IP
             String mch_create_ip = "127.0.0.1";
             // 通知地址
@@ -104,29 +104,44 @@ public class AnyinfuPayService implements BasePayService {
             reqParams.put("sign", sign);
             String xmlStr = ASCIISortUtil.buildXmlSign(reqParams);
 
+            String token = AYFUtil.getToken(params, key, thirdChannelDto.getAdminUrl());
+
+            // 交易请求地址
+            String payURL = thirdChannelDto.getPayUrl() + "?token=" + token;
             String contentType = "application/xml; charset=utf-8";
             String jsonStr = xmlPost(payURL, xmlStr, contentType);
             logger.info("[anyinfu wx_qrcode post result]: " + jsonStr);
 
             Map<String, String> respMap = XmlUtil.xmlToMap(jsonStr);
             logger.info("[anyinfu wx_qrcode success result]: " + respMap);
-            if (respMap != null && "0".equals(respMap.get("status")) && "0".equals(respMap.get("result_code"))) {
+            if (respMap == null) {
+                payCreateResult.setResultMessage("支付请求结果为空");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+                return payCreateResult;
+            }
+            if ("0".equals(respMap.get("status")) && "0".equals(respMap.get("result_code"))) {
+
                 payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
                 payCreateResult.setStatus("true");
                 payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
                 payCreateResult.setResultMessage("成功生成支付链接");
+                payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 payCreateResult.setPayUrl(respMap.get("pay_info"));
                 logger.info("【通道支付请求成功】-------成功生成支付链接");
+
+//                QrCodeUtils.createQrCode(respMap.get("pay_info"), response);
             } else {
                 payCreateResult.setStatus("false");
                 payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
-                payCreateResult.setResultMessage("生成跳转地址失败，" + respMap.get("message"));
+                payCreateResult.setResultMessage("生成跳转地址失败 ===>" + respMap.get("message"));
+                payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
                 logger.error("【通道支付请求失败】-------" + respMap.get("message"));
             }
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("【通道支付请求异常】-------");
-        }
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
+        }*/
         return payCreateResult;
     }
 
@@ -155,7 +170,7 @@ public class AnyinfuPayService implements BasePayService {
             params.put("appid", appid);
             params.put("random", random);
 
-            String token = getToken(params, key, thirdChannelDto.getAdminUrl());
+            String token = AYFUtil.getToken(params, key, thirdChannelDto.getAdminUrl());
 
             // 交易请求地址
             String payURL = thirdChannelDto.getPayUrl() + "?token=" + token;
@@ -252,32 +267,6 @@ public class AnyinfuPayService implements BasePayService {
     @Override
     public ChannelAccountData queryAccount(ThirdChannelDto thirdChannelDto) {
         return null;
-    }
-
-    private static String getToken(Map<String, String> data, String key, String loginURL) {
-
-        // 登录签名
-        String loginSign = "";
-        try {
-            loginSign = MD5.MD5Encode(data.get("appid") + key + data.get("random"));
-            logger.info("[anyinfu login sign]: " + loginSign);
-            data.put("sign", loginSign);
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("[anyinfu login sign exception]");
-        }
-
-        try {
-            String loginResult = GetUtils.sendGetMethod(loginURL, data);
-            logger.info("[anyinfu login result]: " + loginResult);
-
-            Map<String, String> respMap = XmlUtil.xmlToMap(loginResult);
-            return respMap != null ? respMap.get("token") : null;
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("[anyinfu send POST request exception]");
-            return "";
-        }
     }
 
     private MidPayCreateResult createPayUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {

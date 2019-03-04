@@ -18,7 +18,7 @@ public class PayForReq extends BaseHeadReqData {
     /**
      * 支行联行号
      */
-    private String bankChannelNo;        //ans	255L	M	前端跳转地址
+//    private String bankChannelNo;        //ans	255L	M	前端跳转地址
 
     /**
      * 银行名称
@@ -39,4 +39,8 @@ public class PayForReq extends BaseHeadReqData {
      * 银行卡户名
      */
     private String bankAccountName;        //ans	32L	O
+
+    private String province;
+
+    private String city;
 }

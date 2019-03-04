@@ -3,21 +3,25 @@ package com.cloud.finance.controller.api;
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.enums.SysPaymentTypeEnum;
 import com.cloud.finance.common.utils.ASCIISortUtil;
-import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.po.ShopPay;
 import com.cloud.finance.service.ShopPayService;
 import com.cloud.finance.third.ainong.utils.AES;
+import com.cloud.finance.third.ainong.utils.Base64;
 import com.cloud.finance.third.ainong.utils.Base64Util;
 import com.cloud.finance.third.ainong.utils.MD5Util;
 import com.cloud.finance.third.ainong.vo.GatewayPayReq;
 import com.cloud.finance.third.ainong.vo.H5ReqData;
 import com.cloud.finance.third.ainong.vo.HeadReqData;
+import com.cloud.finance.third.anyinfu.utils.AYFUtil;
+import com.cloud.finance.third.anyinfu.utils.QrCodeUtils;
 import com.cloud.finance.third.hangzhou.utils.SignUtil;
+import com.cloud.finance.third.hangzhou.utils.XmlUtil;
 import com.cloud.finance.third.hankou.utils.HKUtil;
 import com.cloud.finance.third.kubaoxiang.utils.Md5SignUtil;
 import com.cloud.finance.third.shtd1.util.MD5Utils;
+import com.cloud.finance.third.smzf.utils.SMUtil;
 import com.cloud.finance.third.wuliu.utils.WuliuMD5;
 import com.cloud.finance.third.xunjiefu.utils.XJFSignUtil;
 import com.cloud.finance.third.yirongtong.vo.H5RequestData;
@@ -44,7 +48,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.PublicKey;
 import java.util.*;
+
+import static com.cloud.finance.common.utils.PostUtils.xmlPost;
 
 /**
  * 请求跳转页
@@ -153,12 +160,12 @@ public class DirectPayController extends BaseController {
 
 		//签名
 		String stringSignTemp = ASCIISortUtil.buildSign(params, "=", "");
-		logger.info("[xunjiefu before sign msg]:"+ stringSignTemp );
+		logger.info("[xunjiefu before sign msg]:"+ stringSignTemp);
 		if(StringUtils.isBlank(stringSignTemp)){
             logger.error("【支付请求失败】签名为空");
             return;
         }
-		String signStr = XJFSignUtil.doSign(stringSignTemp);
+		String signStr = XJFSignUtil.doSign(stringSignTemp, "1005248");
 		logger.info("[xunjiefu sign msg]:"+signStr);
 
 		params.put("signature", signStr);
@@ -333,7 +340,7 @@ public class DirectPayController extends BaseController {
 
 		//加密
 		String plainText = JSONObject.toJSONString(payReq);
-		String encryptData = com.cloud.finance.third.ainong.utils.Base64.encode(AES.encode(plainText, thirdChannelDto.getPayMd5Key()));
+		String encryptData = Base64.encode(AES.encode(plainText, thirdChannelDto.getPayMd5Key()));
 		logger.info("加密结果：" + plainText);
 		// 签名
 		String signData = DigestUtils.sha1Hex(plainText + thirdChannelDto.getCashMd5Key());
@@ -827,21 +834,39 @@ public class DirectPayController extends BaseController {
 	 * @param response
 	 */
 	@RequestMapping("/hk_{sysPayOrderNo}.html")
-	public void hankou(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
+	public void hankou(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) throws Exception {
 
+		response.setHeader("Content-type", "text/html;charset=UTF-8");
+		response.setCharacterEncoding("UTF-8");
 		logger.info("...[hankou pay] pay order action...");
 		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
+		String payType = shopPayDto.getChannelTypeCode();
+		logger.info("支付类型：" + payType);
 		Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopPayDto.getThirdChannelId());
 		ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
 
 		Map<String, String> params = new HashMap<>();
 		params.put("pay_memberid", thirdChannelDto.getMerchantId());
 		params.put("pay_applydate", DateUtil.getSystemTime(DateUtil.DATE_PATTERN_01));
-		params.put("pay_amount", String.valueOf(shopPayDto.getMerchantPayMoney()));
 		params.put("pay_notifyurl", getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl());
 		params.put("pay_orderid", shopPayDto.getSysPayOrderNo());
 		params.put("pay_callbackurl", "http://www.baidu.com");
-		params.put("pay_bankcode", "903");
+		String payBankCode = null;
+		Double amount = shopPayDto.getMerchantPayMoney();
+		logger.info("支付金额：" + amount);
+		if (payType.equals(SysPaymentTypeEnum.ALI_QR_CODE.getValue())) {
+			payBankCode = "903";
+		} else if (payType.equals(SysPaymentTypeEnum.ALI_H5_JUMP.getValue())){
+			payBankCode = "904";
+		} else if (payType.equals(SysPaymentTypeEnum.WX_H5_JUMP.getValue())) {
+			payBankCode = "917";
+		} else if (payType.equals(SysPaymentTypeEnum.WX_QR_CODE.getValue())) {
+			payBankCode = "902";
+		} else if (payType.equals(SysPaymentTypeEnum.GATE_WEB_SYT.getValue())) {
+			payBankCode = "920";
+		}
+		params.put("pay_amount", String.valueOf(amount));
+		params.put("pay_bankcode", payBankCode);
 
 		logger.info("[hankou before sign msg]: " + params);
 		// 签名   key不参与排序
@@ -869,6 +894,102 @@ public class DirectPayController extends BaseController {
 			out.flush();
 		} finally {
 			out.close();
+		}
+	}
+
+	/**
+	 * sm H5
+	 * @param sysPayOrderNo
+	 * @param response
+	 */
+	@RequestMapping("/sm_{sysPayOrderNo}.html")
+	public void sm(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
+
+		logger.info("...[sm pay] pay order action...");
+		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
+
+		Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopPayDto.getThirdChannelId());
+		ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+		Map<String, String> params = new HashMap<>();
+
+		String payType = shopPayDto.getChannelTypeCode();
+		String tradeType;
+		if (payType.equals(SysPaymentTypeEnum.ALI_H5_JUMP.getValue())) {
+			tradeType = "alipay_mweb";
+		} else if (payType.equals(SysPaymentTypeEnum.WX_H5_JUMP.getValue())) {
+			tradeType = "wechat_mweb";
+		} else if (payType.equals(SysPaymentTypeEnum.ALI_QR_CODE.getValue())) {
+			tradeType = "alipay_native";
+		} else {
+			tradeType = "wechat_native";
+		}
+		String tranCode = thirdChannelDto.getAppKey();
+		String sceneInfo = "{\"h5_info\": {\"type\":\"Android\",\"app_name\": \"王者荣耀\",\"package_name\": \"com.tencent.tmgp.sgame\"}}";
+		String plainXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+				"<merchant>" +
+				"<head>" +
+				"<version>1.0.0</version>" +
+				"<msgType>01</msgType>" +
+				"<reqDate>"
+				+ DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18)
+				+ "</reqDate>" +
+				"</head>" +
+				"<body>" +
+				"<merchantCode>" + thirdChannelDto.getMerchantId() + "</merchantCode>" +
+				"<tradeType>" + tradeType + "</tradeType>" +
+				"<totalAmount>" + shopPayDto.getMerchantPayMoney() + "</totalAmount>" +
+				"<subject>电子产品</subject>" +
+				"<limitPay>1</limitPay>" +
+				"<clientIp>127.0.0.1</clientIp>" +
+				"<storeId>030000</storeId>" +
+				"<sceneInfo>" + sceneInfo + "</sceneInfo>" +
+				"<bdms>0</bdms>" +
+				"<returnUrl>http://www.baidu.com</returnUrl>" +
+				"</body>" +
+				"</merchant>";
+		try {
+
+			PublicKey yhPubKey = SMUtil.getRSAPublicKeyByFileSuffix();
+			logger.info("sm xml str: " + plainXML);
+			//1.动态产生16位密码串
+			String charset = "utf-8";
+			byte[] plainBytes = plainXML.getBytes(charset);
+			String keyStr = HKUtil.getRandomString(16);
+			byte[] keyBytes = keyStr.getBytes(charset);
+			//2.使用密码串将xml明文进行aes加密形成密文
+			String encryptData = Base64.encode(SMUtil.AESEncrypt(plainBytes, keyBytes, "AES",
+					"AES/ECB/PKCS5Padding", null));
+			//3.使用合作方私钥对xml明文生成签名
+			String signData = SMUtil.signByPri(plainXML, "cert/sm/pay_prv_key.pem");
+			//4.将密码串明文使用平台公钥rsa加密为密文
+			String encryptKey = Base64.encode(SMUtil
+					.RSAEncrypt(keyBytes, yhPubKey, 2048, 11,
+							"RSA/ECB/PKCS1Padding"));
+			params.put("encryptData", encryptData);
+			params.put("encryptKey", encryptKey);
+			params.put("cooperator", thirdChannelDto.getAppId());
+			params.put("signData", signData);
+			params.put("tranCode", tranCode);
+			params.put("callBack", thirdChannelDto.getNotifyUrl());
+			params.put("reqMsgId", shopPayDto.getSysPayOrderNo());
+
+			String html = createAutoFormHtml(thirdChannelDto.getPayUrl(), params, "UTF-8", "POST");
+
+			response.setCharacterEncoding("utf-8");
+			response.setContentType("text/html;charset=utf-8");
+			PrintWriter out = response.getWriter();
+
+			if (out == null) {
+				return;
+			}
+			try {
+				out.print(html);
+				out.flush();
+			} finally {
+				out.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -926,6 +1047,183 @@ public class DirectPayController extends BaseController {
 			out.flush();
 		} finally {
 			out.close();
+		}
+	}
+
+	@RequestMapping("/ayf_{sysPayOrderNo}.html")
+	public void reCode(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
+
+		logger.info("...[shkb pay] pay order action...");
+		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
+		Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopPayDto.getThirdChannelId());
+		ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+
+		try {
+			// 鉴权
+			// 应用ID
+			String appid = thirdChannelDto.getAppId();
+			// 商户秘钥
+			String key = thirdChannelDto.getPayMd5Key();
+			// 随机字符串
+			String random = HKUtil.getRandomString(20);
+			Map<String, String> params = new HashMap<>();
+			params.put("appid", appid);
+			params.put("random", random);
+
+			// 商户号
+			String mch_id = thirdChannelDto.getMerchantId();
+			// 商户订单号
+			String out_trade_no = shopPayDto.getSysPayOrderNo();
+			// 商品描述
+			String body = "test";
+			// 总金额
+			Integer total_fee = (int) (shopPayDto.getMerchantPayMoney() * 100);
+            /*if (!PayAmountEnum.checkAmount(total_fee)) {
+                payCreateResult.setStatus("false");
+                payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_AMOUNT_PARAM + "");
+                payCreateResult.setResultMessage("暂不支持此金额，支付金额只支持10，20，30，50，100");
+                return payCreateResult;
+            }*/
+			// 终端IP
+			String mch_create_ip = "127.0.0.1";
+			// 通知地址
+			String notify_url = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
+			// 随机字符串
+			String nonce_str = HKUtil.getRandomString(32);
+			// 签名
+
+			Map<String, String> reqParams = new HashMap<>();
+			reqParams.put("mch_id", mch_id);
+			reqParams.put("nonce_str", nonce_str);
+			reqParams.put("body", body);
+			reqParams.put("total_fee", String.valueOf(total_fee));
+			reqParams.put("mch_create_ip", mch_create_ip);
+			reqParams.put("notify_url", notify_url);
+			reqParams.put("out_trade_no", out_trade_no);
+
+			logger.info("[anyinfu before sign msg]: " + reqParams);
+			String sign = HKUtil.generateMd5Sign(reqParams, key);
+
+			reqParams.put("sign", sign);
+			String xmlStr = ASCIISortUtil.buildXmlSign(reqParams);
+
+			String token = AYFUtil.getToken(params, key, thirdChannelDto.getAdminUrl());
+
+			// 交易请求地址
+			String payURL = thirdChannelDto.getPayUrl() + "?token=" + token;
+			String contentType = "application/xml; charset=utf-8";
+			String jsonStr = xmlPost(payURL, xmlStr, contentType);
+			logger.info("[anyinfu wx_qrcode post result]: " + jsonStr);
+
+			Map<String, String> respMap = XmlUtil.xmlToMap(jsonStr);
+			logger.info("[anyinfu wx_qrcode success result]: " + respMap);
+			if (respMap == null) {
+
+				return ;
+			}
+			if ("0".equals(respMap.get("status")) && "0".equals(respMap.get("result_code"))) {
+
+				logger.info("通道生成支付成功");
+				QrCodeUtils.createQrCode(respMap.get("pay_info"), response);
+			} else {
+
+				logger.error("【通道支付请求失败】-------" + respMap.get("message"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("【通道支付请求异常】-------");
+		}
+	}
+
+	@RequestMapping("/ayfQrcode_{sysPayOrderNo}.html")
+	public void ayfQrcode(@PathVariable("sysPayOrderNo") String sysPayOrderNo, HttpServletResponse response) {
+
+		logger.info("...[shkb pay] pay order action...");
+		response.setCharacterEncoding("UTF-8");
+		ShopPay shopPayDto = shopPayService.getBySysOrderNo(sysPayOrderNo);
+		Map<String, String> map = redisClient.Gethgetall(RedisConfig.THIRD_PAY_CHANNEL, shopPayDto.getThirdChannelId());
+		ThirdChannelDto thirdChannelDto = ThirdChannelDto.map2Object(map);
+		try {
+			// 鉴权
+			// 应用ID
+			String appid = thirdChannelDto.getAppId();
+			// 商户秘钥
+			String key = thirdChannelDto.getPayMd5Key();
+			// 随机字符串
+			String random = HKUtil.getRandomString(20);
+			Map<String, String> params = new HashMap<>();
+			params.put("appid", appid);
+			params.put("random", random);
+
+			// 商户号
+			String mch_id = thirdChannelDto.getMerchantId();
+			// 商户订单号
+			String out_trade_no = shopPayDto.getSysPayOrderNo();
+			// 商品描述
+			String body = "test";
+			// 总金额
+			Integer total_fee = (int) (shopPayDto.getMerchantPayMoney() * 100);
+			// 终端IP
+			String mch_create_ip = "127.0.0.1";
+			// 通知地址
+			String notify_url = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
+			// 随机字符串
+			String nonce_str = HKUtil.getRandomString(32);
+			// 签名
+
+			Map<String, String> reqParams = new HashMap<>();
+			reqParams.put("mch_id", mch_id);
+			reqParams.put("nonce_str", nonce_str);
+			reqParams.put("body", body);
+			reqParams.put("total_fee", String.valueOf(total_fee));
+			reqParams.put("mch_create_ip", mch_create_ip);
+			reqParams.put("notify_url", notify_url);
+			reqParams.put("out_trade_no", out_trade_no);
+
+			logger.info("[anyinfu before sign msg]: " + reqParams);
+			String sign = HKUtil.generateMd5Sign(reqParams, key);
+
+			reqParams.put("sign", sign);
+			String xmlStr = ASCIISortUtil.buildXmlSign(reqParams);
+
+			String token = AYFUtil.getToken(params, key, thirdChannelDto.getAdminUrl());
+
+			// 交易请求地址
+			String payURL = thirdChannelDto.getPayUrl() + "?token=" + token;
+			String contentType = "application/xml; charset=utf-8";
+			String jsonStr = xmlPost(payURL, xmlStr, contentType);
+			logger.info("[anyinfu wx_qrcode post result]: " + jsonStr);
+
+			Map<String, String> respMap = XmlUtil.xmlToMap(jsonStr);
+			logger.info("[anyinfu wx_qrcode success result]: " + respMap);
+			if (respMap == null) {
+				response.getWriter().write("通道请求结果为空");
+				return;
+			}
+			if ("0".equals(respMap.get("status")) && "0".equals(respMap.get("result_code"))) {
+
+				/*payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+				payCreateResult.setStatus("true");
+				payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
+				payCreateResult.setResultMessage("成功生成支付链接");
+				payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+				payCreateResult.setPayUrl(respMap.get("pay_info"));*/
+
+				logger.info("【通道支付请求成功】-------成功生成支付链接");
+				logger.info("【通道支付请求成功】-------支付链接：" + respMap.get("pay_info"));
+				QrCodeUtils.createQrCode(respMap.get("pay_info"), response);
+			} else {
+//				payCreateResult.setStatus("false");
+//				payCreateResult.setResultCode(SysPayResultConstants.ERROR_PAY_CHANNEL_UNUSABLE + "");
+//				payCreateResult.setResultMessage("生成跳转地址失败 ===>" + respMap.get("message"));
+//				payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+				response.getWriter().write(respMap.get("message"));
+				logger.error("【通道支付请求失败】-------" + respMap.get("message"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("【通道支付请求异常】-------");
+//			payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
 		}
 	}
 

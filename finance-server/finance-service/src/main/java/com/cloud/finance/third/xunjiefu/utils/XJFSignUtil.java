@@ -20,8 +20,9 @@ import java.util.Base64;
 
 public class XJFSignUtil {
 
-    public static String doSign(String context){
-        ClassPathResource resource = new ClassPathResource("cert/xunjiefu/1005248_prv.pem");
+    public static String doSign(String context, String fileName){
+        String filePath = "cert/xunjiefu/" + fileName + "_prv.pem";
+        ClassPathResource resource = new ClassPathResource(filePath);
         try {
             InputStream certStream = resource.getInputStream();
             byte[]privateKeyContent = IOUtils.toByteArray(certStream);
@@ -56,8 +57,7 @@ public class XJFSignUtil {
             signature.initSign(privateKey);
             signature.update(context.getBytes(Charset.forName("UTF8")));
 
-            String sign = Base64.getEncoder().encodeToString(signature.sign());
-            return sign;
+            return Base64.getEncoder().encodeToString(signature.sign());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (Exception e){
@@ -67,9 +67,10 @@ public class XJFSignUtil {
 
     }
 
-    public static boolean checkSign(String context, String signatureStr){
+    public static boolean checkSign(String context, String signatureStr, String fileName){
 
-        ClassPathResource resource = new ClassPathResource("cert/xunjiefu/1005248_pub.pem");
+        String filePath = "cert/xunjiefu/" + fileName + "_pub.pem";
+        ClassPathResource resource = new ClassPathResource(filePath);
         try {
             InputStream certStream = resource.getInputStream();
             byte[]publicKeyContent = IOUtils.toByteArray(certStream);

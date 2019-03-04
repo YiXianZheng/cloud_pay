@@ -79,5 +79,5 @@ public interface ShopRechargeDao extends BaseMybatisDao<ShopRecharge, String> {
      * @param today
      */
     Map<String, Object> summaryPaid(@Param("userId") String userId, @Param("bankNo") String bankNo,
-                                    @Param("today") Date today);
+                                    @Param("today") String today);
 }

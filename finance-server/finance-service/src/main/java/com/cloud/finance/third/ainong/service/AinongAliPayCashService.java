@@ -56,6 +56,7 @@ public class AinongAliPayCashService implements BaseCashService {
         CashRespData cashRespData = new CashRespData();
         cashRespData.setStatus(CashRespData.STATUS_ERROR);
         cashRespData.setMsg("代付异常");
+        shopRecharge.setThirdChannelId(thirdChannelDto.getId());
 
         Date time = new Date();
         /**** 请求参数 ****/
@@ -146,7 +147,7 @@ public class AinongAliPayCashService implements BaseCashService {
             }
 
             //获取返回报文
-            Map<Object, Object> respMap = MapUtils.jsonToMap(jsonStr);
+            Map<Object, Object> respMap = MapUtils.json2Map(jsonStr);
             AilongDfRespData respData = JSONObject.parseObject(respMap.get("encryptData").toString(), AilongDfRespData.class);
 
             if("000000".equals(respData.getHead().getRespCode()) || "000001".equals(respData.getHead().getRespCode())){

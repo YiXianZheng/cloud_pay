@@ -53,8 +53,6 @@ public class AinongPayService implements BasePayService {
     private RedisClient redisClient;
     @Autowired
     private ShopPayService payService;
-    @Autowired
-    private SysBankProvider sysBankProvider;
 
     private String getBasePayUrl(){
         return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "PAY_BASE_URL");
@@ -182,7 +180,7 @@ public class AinongPayService implements BasePayService {
             String respStr = HttpClientUtil.post(thirdChannelDto.getPayUrl(), method);
             logger.info("【爱农h5】请求结果字符串：" + respStr);
 
-            Map<Object, Object> respMap = MapUtils.jsonToMap(respStr);
+            Map<Object, Object> respMap = MapUtils.json2Map(respStr);
             PayRespData respData = JSONObject.parseObject(respMap.get("encryptData").toString(), PayRespData.class);
             logger.info("【爱农h5】请求结果respCode：" + respData.getHead().getRespCode() + " , respMsg: " + respData.getHead().getRespMsg());
 

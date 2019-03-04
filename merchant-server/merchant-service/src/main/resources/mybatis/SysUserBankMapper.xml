@@ -7,6 +7,7 @@
         <id column="id" property="id"/>
         <id column="sys_user_id" property="sysUserId"/>
         <result column="bank_name" property="bankName"/>
+        <result column="bank_code" property="bankCode"/>
         <result column="bank_branch_name" property="bankBranchName"/>
         <result column="bank_card_holder" property="bankCardHolder"/>
         <result column="bank_card_no" property="bankCardNo"/>
@@ -33,6 +34,7 @@
 			id,
 			sys_user_id,
 			bank_name,
+			bank_code,
 			bank_branch_name,
 			bank_card_holder,
 			bank_card_no,
@@ -55,6 +57,7 @@
 				#{id},
 				#{sysUserId},
 				#{bankName},
+				(select bank_code from sys_bank where bank_name = #{bankName}),
 				#{bankBranchName},
 				#{bankCardHolder},
 				#{bankCardNo},
@@ -87,7 +90,8 @@
 	</select>
 
 	<select id="listPage" parameterType="java.util.Map" resultType="java.util.Map">
-		SELECT (SELECT aa.merchant_name from merchant_user aa where
+		SELECT t.id AS id,
+		(SELECT aa.merchant_name from merchant_user aa where
 		aa.sys_user_id = t.sys_user_id) AS merchantName,
 		t.bank_card_no AS bankCardNo,
 		t.bank_card_holder AS bankCardHolder,
@@ -106,6 +110,12 @@
 		</if>
 		<if test="bankCardNo != null and bankCardNo !=''">
 			AND t.bank_card_no = #{bankCardNo}
+		</if>
+		<if test="bankCardHolder != null and bankCardHolder !=''">
+			AND t.bank_card_holder = #{bankCardHolder}
+		</if>
+		<if test="bankCardHolder != null and bankCardHolder !=''">
+			AND t.card_status = #{cardStatus}
 		</if>
 
 		ORDER BY create_date DESC

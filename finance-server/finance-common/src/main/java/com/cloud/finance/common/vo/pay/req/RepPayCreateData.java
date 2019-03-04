@@ -59,8 +59,8 @@ public class RepPayCreateData {
 		this.sign = MD5Util.getSign(toSignParamsMap(), md5Key);
 	}
 
-	public Map<String, Object> toSignParamsMap() {
-		Map<String, Object> map = new HashMap<String, Object>();
+	private Map<String, Object> toSignParamsMap() {
+		Map<String, Object> map = new HashMap<>();
 		Field[] fields = this.getClass().getDeclaredFields();
 		for (Field field : fields) {
 			Object obj;
@@ -69,12 +69,10 @@ public class RepPayCreateData {
 				obj = field.get(this);
 				if (obj != null) {
 					if(!fieldName.equals("sign")&&Arrays.asList(SIGN_PARAMS).contains(fieldName)){
-						map.put(field.getName(), (String) obj);
+						map.put(field.getName(), obj);
 					}
 				}
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
+			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
 		}

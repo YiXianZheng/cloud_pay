@@ -1055,6 +1055,25 @@ public class RedisClient {
     }
 
     /**
+     * 删除某个key
+     * @param db
+     * @param key
+     */
+    public void delByKey(int db, String key) {
+
+        Jedis jedis = getJedis();
+        jedis.select(db);
+        boolean isBroken = false;
+        try {
+            jedis.del(key);
+        } catch (Exception e) {
+            isBroken = true;
+        } finally {
+            release(jedis, isBroken);
+        }
+    }
+
+    /**
      * 分页获取redis中的数据
      * @param db
      * @param patternKey

@@ -55,7 +55,7 @@ public class FinanceProviderFallback implements FinanceProvider {
     }
 
     @Override
-    public ApiResponse summaryPaid(String userId, String bankNo, Date today) {
+    public ApiResponse summaryPaid(String userId, String bankNo, String today) {
         log.error("========= >> /recharge/summaryPaid 接口调用异常");
 
         return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);

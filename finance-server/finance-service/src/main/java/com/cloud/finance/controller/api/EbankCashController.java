@@ -57,20 +57,18 @@ public class EbankCashController extends BaseController {
     public String apply(HttpServletRequest request, HttpServletResponse response){
 
         long startTime = System.currentTimeMillis();   //获取开始时间
-        String bankAccount = this.getStringParameter("bankAccount"); //开户人
-        String bankCode = this.getStringParameter("bankCode");    //银行编码
-        String bankNo = this.getStringParameter("bankNo");    //银行卡卡号
-        String amount = this.getStringParameter("amount");        //代付金额  分为单位
+        String bankAccount = this.getStringParameter("bankAccount");    //开户人
+        String bankCode = this.getStringParameter("bankCode");          //银行编码
+        String bankNo = this.getStringParameter("bankNo");              //银行卡卡号
+        String amount = this.getStringParameter("amount");              //代付金额  分为单位
         Double amountYuan = SafeComputeUtils.div(this.getDoubleParameter("amount"), 100D);    //以元为单位
-        String merCode = this.getStringParameter("merCode"); //商户号
-        String key = this.getStringParameter("key"); //安全码
+        String merCode = this.getStringParameter("merCode");            //商户号
+        String key = this.getStringParameter("key");                    //安全码
         //非必填
         String bankSubbranch = this.getStringParameter("bankSubbranch");    //支行
-        String bin = this.getStringParameter("bin");    //支行
-        String province = this.getStringParameter("province");    //银行卡卡号
-        String city = this.getStringParameter("city");    //银行卡卡号
-
-        Integer source = Util.isMobileDevice(request)?1:2;
+        String bin = this.getStringParameter("bin");                        //银行卡联行号
+        String province = this.getStringParameter("province");              //银行卡省份
+        String city = this.getStringParameter("city");                      //银行卡城市
 
         if(StringUtils.isBlank(bankAccount)){
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_PARAMS_ERR, "开户人为空");
@@ -91,6 +89,10 @@ public class EbankCashController extends BaseController {
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_PARAMS_ERR, "秘钥为空");
         }
 
+        // 判断银行卡是否已审核
+        // merCode  商户号获取用户id
+        // bankNo   根据卡号与商户id查询银行卡信息
+
         String cashMin = redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "CASH_MIN");
         Double minCash = StringUtils.isNotBlank(cashMin)?Double.parseDouble(cashMin):0D;
         if(amountYuan < minCash){
@@ -101,7 +103,7 @@ public class EbankCashController extends BaseController {
         if(amountYuan > maxCash){
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_AMOUNT_ERR, "单笔代付最高"+cashMax+"元");
         }
-        logger.info("[ecash apply] -- mercahnt code:"+merCode);
+        logger.info("[ecash apply] -- mercahnt code:" + merCode);
         ResultVo resultVo = shopRechargeService.checkAccountForAPI(merCode, amountYuan, key, bankAccount, bankCode, bankNo, bankSubbranch, bin, province, city);
         if("1".equals(resultVo.getCode())){
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_CHECK_ERR, resultVo.getMsg());
@@ -122,13 +124,13 @@ public class EbankCashController extends BaseController {
         //通道代付限额
         Double channelPayMin = thirdChannelDto.getPayPerMin();
         if (amountYuan < channelPayMin) {
-            logger.info("[代付失败]["+thirdChannelDto.getId()+"] 单笔支付最低 :"+ channelPayMin);
-            return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_CHANNEL_ERR,  "支付金额小于"+channelPayMin+"元");
+            logger.info("[代付失败]["+thirdChannelDto.getId()+"] 单笔代付最低 :"+ channelPayMin);
+            return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_CHANNEL_ERR, "单笔代付金额最低"+channelPayMin+"元");
         }
         Double channelPayMax = thirdChannelDto.getPayPerMax();
         if (amountYuan > channelPayMax) {
-            logger.info("[代付失败]["+thirdChannelDto.getId()+"] 单笔支付最高 :"+ channelPayMax);
-            return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_CHANNEL_ERR,  "单笔支付金额大于"+channelPayMax+"元");
+            logger.info("[代付失败]["+thirdChannelDto.getId()+"] 单笔代付最高 :"+ channelPayMax);
+            return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_CHANNEL_ERR, "单笔代付金额最高"+channelPayMax+"元");
         }
 
         shopRecharge.setThirdChannelId(thirdChannelDto.getId());
@@ -149,13 +151,12 @@ public class EbankCashController extends BaseController {
             map.put("msg", cashRespData.getMsg());
 
             long endTime = System.currentTimeMillis(); //获取结束时间
-            logger.info("[create qrcode order success]:cost-" + (endTime - startTime) + "ms,assCode:" + merCode );
+            logger.info("[create cash request success]:cost- " + (endTime - startTime) + "ms,assCode:" + merCode );
 
             return renderString(response, map);
         }else{
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_APPLY_ERR, cashRespData.getMsg());
         }
-
     }
 
 }

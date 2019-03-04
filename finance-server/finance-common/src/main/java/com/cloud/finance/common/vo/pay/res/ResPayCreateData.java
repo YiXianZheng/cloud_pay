@@ -42,23 +42,19 @@ public class ResPayCreateData {
 		this.sign = MD5Util.getSign(toMap(), md5Key);
 	}
 
-	public Map<String, Object> toMap() {
-		Map<String, Object> map = new HashMap<String, Object>();
+	private Map<String, Object> toMap() {
+		Map<String, Object> map = new HashMap<>();
 		Field[] fields = this.getClass().getDeclaredFields();
-		String mapValue = "";
 		for (Field field : fields) {
 			Object obj;
 			try {
 				obj = field.get(this);
 				if (obj != null) {
 					if(!field.getName().equals("sign")){
-						mapValue = mapValue+(field.getName()+"-"+(String) obj);
-						map.put(field.getName(), (String) obj);
+						map.put(field.getName(), obj);
 					}
 				}
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
+			} catch (IllegalArgumentException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
 		}
@@ -66,7 +62,7 @@ public class ResPayCreateData {
 	}
 	@Override
 	public String toString() {
-		return "GjQueryOrderReqData [merId=" + merId + ", merOrderId=" + merOrderId + ", sign=" + sign + "]";
+		return "QueryOrderReqData [merId=" + merId + ", merOrderId=" + merOrderId + ", sign=" + sign + "]";
 	}
 
 }

@@ -353,6 +353,7 @@ public class FinanceController extends BaseController {
                         "找不到订单")));
             }
         } catch (Exception e){
+            e.printStackTrace();
             logger.info("【手动补通知】 系统异常");
             return toApiResponse(ReturnVo.returnError(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(),
                     "通知补发异常")));

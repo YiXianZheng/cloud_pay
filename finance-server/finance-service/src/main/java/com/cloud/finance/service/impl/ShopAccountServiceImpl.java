@@ -205,6 +205,13 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
             returnVo.responseCode = ResponseCode.SecurityCode.OLD_CODE_ERR;
             return returnVo;
         }
+        for (int i = 0; i < securityCode.getNewCode().length(); i++) {
+            if (!Character.isDigit(securityCode.getNewCode().charAt(i))) {
+                returnVo.code = ReturnVo.FAIL;
+                returnVo.responseCode = ResponseCode.SecurityCode.CODE_FORMAT_ERR;
+                return returnVo;
+            }
+        }
         if (!securityCode.getNewCode().equals(securityCode.getReNewCode())) {
             returnVo.code = ReturnVo.FAIL;
             returnVo.responseCode = ResponseCode.SecurityCode.NEW_CODE_ERR;

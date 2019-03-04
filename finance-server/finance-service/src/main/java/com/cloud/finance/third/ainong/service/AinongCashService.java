@@ -2,24 +2,18 @@ package com.cloud.finance.third.ainong.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.service.base.BaseCashService;
-import com.cloud.finance.common.utils.*;
+import com.cloud.finance.common.utils.HttpClientUtil;
+import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.common.vo.cash.CashRespData;
-import com.cloud.finance.common.vo.cash.ChannelAccountData;
 import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.ShopRechargeService;
-import com.cloud.finance.third.ainong.enums.RespCodeEnum;
 import com.cloud.finance.third.ainong.utils.AES;
 import com.cloud.finance.third.ainong.utils.Base64;
-import com.cloud.finance.third.ainong.utils.MD5Util;
-import com.cloud.finance.third.ainong.vo.AccountQueryData;
-import com.cloud.finance.third.ainong.vo.AinongCashRespData;
 import com.cloud.finance.third.ainong.vo.HeadReqData;
 import com.cloud.finance.third.ainong.vo.PayForReq;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
-import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.utils.DateUtil;
-import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -38,8 +32,6 @@ public class AinongCashService implements BaseCashService {
     private static Logger logger = LoggerFactory.getLogger(AinongCashService.class);
 
     @Autowired
-    private RedisClient redisClient;
-    @Autowired
     private ShopRechargeService shopRechargeService;
     @Autowired
     private SysBankProvider sysBankProvider;
@@ -51,6 +43,7 @@ public class AinongCashService implements BaseCashService {
         CashRespData cashRespData = new CashRespData();
         cashRespData.setStatus(CashRespData.STATUS_ERROR);
         cashRespData.setMsg("代付异常");
+        shopRecharge.setThirdChannelId(thirdChannelDto.getId());
 
         Date time = new Date();
         //请求参数
@@ -95,7 +88,9 @@ public class AinongCashService implements BaseCashService {
         req.setBankAccountNo(shopRecharge.getBankNo());
         req.setBankAccountType("PRIVATE");
         req.setBankName(bank_name);
-        req.setBankChannelNo("03080000");
+//        req.setBankChannelNo("03080000");
+        req.setProvince(shopRecharge.getProvince());
+        req.setCity(shopRecharge.getCity());
         req.setPayForType(thirdChannelDto.getAppKey()); //T0 代付
         req.setHead(headReqDTO);
 
@@ -122,17 +117,17 @@ public class AinongCashService implements BaseCashService {
                 return cashRespData;
             }
 
-            Map<Object, Object> encryptMap = MapUtils.jsonToMap(jsonStr);
+            Map<Object, Object> encryptMap = MapUtils.json2Map(jsonStr);
             logger.info("转换结果：" + encryptData);
             String plainStr = AES.decode(Base64.decode(encryptMap.get("encryptData").toString()), thirdChannelDto.getPayMd5Key());
             logger.info("解密结果：" + plainStr);
 
-            Map<Object, Object> respMap = MapUtils.jsonToMap(plainStr);
+            Map<Object, Object> respMap = MapUtils.json2Map(plainStr);
             logger.info("参数map：" + respMap);
 
             if (!respMap.containsKey("orderStatus")) {
                 logger.info("【通道代付失败】----> 查询结果状态错误：" + respMap.get("orderStatus"));
-                Map<Object, Object> failRes = MapUtils.jsonToMap(respMap.get("head"));
+                Map<Object, Object> failRes = MapUtils.json2Map(respMap.get("head"));
                 logger.info("继续转换：" + failRes);
                 cashRespData.setMsg(failRes.get("respMsg").toString());
                 shopRecharge.setRechargeStatus(4);
@@ -141,27 +136,28 @@ public class AinongCashService implements BaseCashService {
                 shopRechargeService.rechargeFail(shopRecharge);
                 return cashRespData;
             }
-            switch (respMap.get("orderStatus").toString()) {
-                case "01":
-                    logger.info("【通道代付成功】");
-                    cashRespData.setStatus(CashRespData.STATUS_SUCCESS);
-                    shopRecharge.setRechargeStatus(1);
-                    shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
-                    shopRecharge.setThirdChannelRespMsg(jsonStr);
-                    shopRecharge.setCompleteTime(new Date());
-                    cashRespData.setMsg("代付成功");
-                    shopRechargeService.rechargeSuccess(shopRecharge);
-                    break;
-                case "04":
-                    cashRespData.setStatus(CashRespData.STATUS_DOING);
-                    shopRecharge.setRechargeStatus(2);
-                    shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
-                    shopRecharge.setThirdChannelRespMsg(jsonStr);
-                    cashRespData.setMsg("代付处理中");
-                    shopRechargeService.rechargeSuccess(shopRecharge);
-                    break;
-                default:
-                    break;
+            String status = respMap.get("orderStatus").toString();
+            logger.info("代付返回状态码：" + status);
+            if (status.equals("01") || status.equals("04")) {
+                logger.info("【通道代付成功】");
+                cashRespData.setStatus(CashRespData.STATUS_SUCCESS);
+                shopRecharge.setRechargeStatus(1);
+                shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
+                shopRecharge.setThirdChannelRespMsg(plainStr);
+                shopRecharge.setCompleteTime(new Date());
+                cashRespData.setMsg("代付成功");
+                shopRechargeService.rechargeSuccess(shopRecharge);
+            } else if (status.equals("02")){
+                shopRecharge.setRechargeStatus(4);
+                Map<Object, Object> failRes = MapUtils.json2Map(respMap.get("head"));
+                logger.info("继续转换：" + failRes);
+                shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
+                shopRecharge.setThirdChannelRespMsg(failRes.toString());
+                shopRechargeService.rechargeFail(shopRecharge);
+                logger.error("【通道代付失败】----> 代付结果状态错误：" + status + "--->" + failRes.get("respMsg"));
+
+                cashRespData.setStatus(CashRespData.STATUS_ERROR);
+                cashRespData.setMsg(failRes.get("respMsg").toString());
             }
         } catch (Exception e) {
             e.printStackTrace();

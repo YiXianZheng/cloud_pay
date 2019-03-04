@@ -1,5 +1,6 @@
 package com.cloud.finance.third.hankou.utils;
 
+import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.utils.finance.MD5;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,8 @@ public class HKUtil {
         StringBuilder sb = new StringBuilder();
 
         for (String aKeyArray : keyArray) {
-            sb.append(aKeyArray).append("=").append(data.get(aKeyArray).trim()).append("&");
+            if (StringUtil.isNotEmpty(aKeyArray))
+                sb.append(aKeyArray).append("=").append(data.get(aKeyArray).trim()).append("&");
         }
         sb.append("key=").append(key);
         logger.info("sign str: " + String.valueOf(sb));

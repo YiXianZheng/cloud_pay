@@ -37,9 +37,8 @@ public class MapUtils {
         return map;
     }
 
-    public static Map<Object, Object> jsonToMap(Object jsonObj) {
+    public static Map<Object, Object> json2Map(Object jsonObj) {
         JSONObject jsonObject = JSONObject.fromObject(jsonObj);
-        Map<Object, Object> map = (Map)jsonObject;
-        return map;
+        return (Map)jsonObject;
     }
 }

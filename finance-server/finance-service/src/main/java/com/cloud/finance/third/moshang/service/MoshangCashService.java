@@ -52,6 +52,7 @@ public class MoshangCashService implements BaseCashService {
         CashRespData cashRespData = new CashRespData();
         cashRespData.setStatus(CashRespData.STATUS_ERROR);
         cashRespData.setMsg("代付异常");
+        shopRecharge.setThirdChannelId(thirdChannelDto.getId());
 
         //请求参数
         String merchantid = thirdChannelDto.getMerchantId();//商户id

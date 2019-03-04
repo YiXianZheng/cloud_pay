@@ -18,7 +18,7 @@ public class AccountQueryData {
     private RespData data;
 
     @Data
-    private static class RespData{
+    public static class RespData{
         private String appid;       //appid
 
         private String mch_id;      //商户号

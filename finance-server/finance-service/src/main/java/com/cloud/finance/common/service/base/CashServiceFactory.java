@@ -68,6 +68,15 @@ public class CashServiceFactory {
     @Autowired
     @Qualifier("ShkbCashService")
     BaseCashService shkbCashService;
+    @Autowired
+    @Qualifier("HankouCashService")
+    BaseCashService hankouCashService;
+    @Autowired
+    @Qualifier("CbdCashService")
+    BaseCashService cbdCashService;
+    @Autowired
+    @Qualifier("SmCashService")
+    BaseCashService smCashService;
 
     public BaseCashService getPayment(String channelCode){
         if("ainong_cash".equals(channelCode)) {
@@ -103,6 +112,15 @@ public class CashServiceFactory {
         }else if("shkb_cash".equals(channelCode)){
             logger.info("cash chose channel ShkbCashService ");
             return shkbCashService;
+        }else if("hk_cash".equals(channelCode)){
+            logger.info("cash chose channel HankouCashService ");
+            return hankouCashService;
+        }else if("cbd_cash".equals(channelCode)){
+            logger.info("cash chose channel CbdCashService ");
+            return cbdCashService;
+        }else if("sm_cash".equals(channelCode)){
+            logger.info("cash chose channel SmCashService ");
+            return smCashService;
         }else{
             return null;
         }

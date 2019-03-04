@@ -230,7 +230,12 @@ public interface ResponseCode {
         /**
          * 安全码长度错误
          */
-        CODE_LENGTH_ERR(203, "安全码长度错误", "code required length is 6");
+        CODE_LENGTH_ERR(203, "安全码长度错误", "code required length is 6"),
+        /**
+         * 安全码格式错误
+         */
+        CODE_FORMAT_ERR(204, "安全码只能6个数字", "code required 6 numbers")
+        ;
 
         private final Integer code;
         private String zhExplain;

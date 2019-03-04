@@ -10,7 +10,9 @@ import com.cloud.merchant.po.SysUserBank;
 import com.cloud.merchant.service.SysUserBankService;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisServiceImpl;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
+import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.ResponseCode;
+import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.utils.page.PageResult;
 import com.cloud.sysconf.common.vo.ApiResponse;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +42,12 @@ public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String,
         ReturnVo returnVo = new ReturnVo();
         try {
             SysUserBank sysUserBank = new SysUserBank();
+            // 检查卡号是否为空
+            if (StringUtil.isEmpty(sysUserBankDto.getBankCardNo())) {
+                returnVo.code = ReturnVo.FAIL;
+                returnVo.responseCode = ResponseCode.bankcard.BANKCARD_NOT_EXIST;
+                return returnVo;
+            }
             // 检查银行卡是否已绑定
             if (sysUserBankDao.getByCardNo(headerInfoDto.getCurUserId(), sysUserBankDto.getBankCardNo()) != null) {
                 returnVo.code = ReturnVo.FAIL;
@@ -69,11 +78,16 @@ public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String,
     public ReturnVo listForTablePage(PageQuery pageQuery, HeaderInfoDto headerInfoDto) {
         try {
             Map<String, Object> params = pageQuery.getParams();
-            if (params.containsKey("merchantName")) {
-                logger.info("根据商户编号查询");
-                MerchantUser merchantUser = merchantUserDao.getByName(params.get("merchantName").toString());
-                params.put("sysUserId", merchantUser.getSysUserId());
-                pageQuery.setParams(params);
+            Iterator keys = params.keySet().iterator();
+            String key;
+            while (keys.hasNext()) {
+                key = (String) keys.next();
+                if (key.equals("merchantName")) {
+                    logger.info("根据商户编号查询");
+                    MerchantUser merchantUser = merchantUserDao.getByName(params.get("merchantName").toString());
+                    params.put("sysUserId", merchantUser.getSysUserId());
+                    pageQuery.setParams(params);
+                }
             }
             PageResult pageResult = this.queryForTablePage(pageQuery.getPageIndex(), pageQuery.getPageSize(), pageQuery.getParams());
             return ReturnVo.returnSuccess(ResponseCode.Base.SUCCESS, JSONObject.toJSON(pageResult));
@@ -103,9 +117,13 @@ public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String,
         // 查询所有银行卡
         List<SysUserBank> list = sysUserBankDao.getByUserId(userId);
         // 遍历银行卡列表
-        Date today = new Date();
+        String today = DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_02);
+        logger.info("统计时间：" + today);
         for (SysUserBank sysUserBank : list) {
             // 统计银行卡号的下发数据（查shop_recharge表）
+            if (StringUtil.isEmpty(sysUserBank.getBankCardNo())) {
+                continue;
+            }
             ApiResponse response = financeProvider.summaryPaid(sysUserBank.getSysUserId(), sysUserBank.getBankCardNo(), today);
             if (response.getCode().equals(ResponseCode.Base.SUCCESS.getCode() + "")) {
                 Map<String, Object> map = (Map<String, Object>) response.getData();
