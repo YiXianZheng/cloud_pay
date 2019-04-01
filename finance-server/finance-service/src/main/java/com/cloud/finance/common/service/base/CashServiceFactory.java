@@ -77,6 +77,9 @@ public class CashServiceFactory {
     @Autowired
     @Qualifier("SmCashService")
     BaseCashService smCashService;
+    @Autowired
+    @Qualifier("YsCashService")
+    BaseCashService ysCashService;
 
     public BaseCashService getPayment(String channelCode){
         if("ainong_cash".equals(channelCode)) {
@@ -121,6 +124,9 @@ public class CashServiceFactory {
         }else if("sm_cash".equals(channelCode)){
             logger.info("cash chose channel SmCashService ");
             return smCashService;
+        }else if("ys_cash".equals(channelCode)){
+            logger.info("cash chose channel YsCashService ");
+            return ysCashService;
         }else{
             return null;
         }

@@ -70,4 +70,11 @@ public interface ShopAccountService extends BaseMybatisService<ShopAccount, Stri
      * @return
      */
     ReturnVo updateSecurityCode(UpdateSecurityCode securityCode, String curUserId);
+
+    /**
+     * 同步商户余额到数据库
+     * @param userId
+     * @param merchantUser
+     */
+    void loadAccount(String userId, String merchantUser);
 }

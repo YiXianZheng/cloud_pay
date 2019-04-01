@@ -344,7 +344,7 @@ public class DirectPayController extends BaseController {
 		logger.info("加密结果：" + plainText);
 		// 签名
 		String signData = DigestUtils.sha1Hex(plainText + thirdChannelDto.getCashMd5Key());
-		logger.info("[ailong sign msg]:" + signData);
+		logger.info("[ainong sign msg]:" + signData);
 
 		Map<String, String> params = new HashMap<>();
 		params.put("encryptData", encryptData);

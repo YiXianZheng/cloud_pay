@@ -92,16 +92,14 @@ public class MerchantPayService {
 				notifyResponseResult = HttpClientUtil.post(notifyUrl, notifyMap);
 				logger.info("回调返回：" + notifyResponseResult);
 				if (StringUtils.isNotEmpty(notifyResponseResult) && "success".equalsIgnoreCase(notifyResponseResult)) {
-					logger.error("notify response success result,sysPayOrderNo: " + sysPayOrderNo);
-					logger.error("notify response success");
+					logger.info("notify response success result,sysPayOrderNo: " + sysPayOrderNo);
 				} else {
 					notifyMap.put("notifyUrl", notifyUrl);
 					notifyMap.put("notifyTime", new Date().getTime() + "");
 					redisClient.lpush(RedisConfig.UN_RESPONSE_NOTIFY, DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18),
 							JSONObject.toJSONString(notifyMap));
-					logger.info("notify response success result 【进入通知队列】");
+					logger.info("回调没有返回success ...【进入通知队列】");
 				}
-				logger.info("notify response success result,sysPayOrderNo:" + sysPayOrderNo + ",notifyResult: success~~~~");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

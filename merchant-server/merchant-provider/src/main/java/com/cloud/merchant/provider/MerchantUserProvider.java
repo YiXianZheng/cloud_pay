@@ -2,9 +2,11 @@ package com.cloud.merchant.provider;
 
 import com.cloud.merchant.provider.config.MerchantFeignConfigure;
 import com.cloud.merchant.provider.fallback.MerchantUserProviderFallback;
+import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -53,4 +55,12 @@ public interface MerchantUserProvider {
      */
     @RequestMapping(value = "/merchant/user/detailByUserId")
     ApiResponse detailByUserId(@RequestParam("sysUserId") String sysUserId);
+
+    /**
+     * 获取商户列表
+     * @param pageQuery
+     * @return
+     */
+    @RequestMapping(value = "/merchant/user/tablePage")
+    ApiResponse tablePage(@RequestBody PageQuery pageQuery);
 }

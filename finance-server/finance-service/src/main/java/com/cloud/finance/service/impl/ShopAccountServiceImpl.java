@@ -64,9 +64,9 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
     @Override
     public ShopAccount initAccount(HeaderInfoDto headerInfoDto) {
         Double frozenMoney = 0D;
-        String userCode=null;
+        String userCode = null;
         Integer type = null;
-        if(StringUtils.isNotBlank(headerInfoDto.getAgentUser())){
+        if (StringUtils.isNotBlank(headerInfoDto.getAgentUser())) {
             frozenMoney = shopPayFrozenDao.countFrozen(null, headerInfoDto.getAgentUser());
             ApiResponse apiResponse = agentUserProvider.detailById(headerInfoDto.getAgentUser());
             if (apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())) {
@@ -76,13 +76,13 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
                 return null;
             }
             type = 2;
-        }else if(StringUtils.isNotBlank(headerInfoDto.getMerchantUser())){
+        } else if (StringUtils.isNotBlank(headerInfoDto.getMerchantUser())) {
             frozenMoney = shopPayFrozenDao.countFrozen(headerInfoDto.getMerchantUser(), null);
             ApiResponse apiResponse = merchantUserProvider.detailById(headerInfoDto.getMerchantUser());
-            if(apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())){
+            if (apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())) {
                 Map merchantInfo = Util.toHashMap((LinkedHashMap) apiResponse.getData());
                 userCode = merchantInfo.get("merchantCode").toString();
-            }else{
+            } else {
                 return null;
             }
             type = 3;
@@ -92,18 +92,18 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
         Map<String, String> map = redisClient.Gethgetall(RedisConfig.ORDER_COUNT_DB, userCode);
         RedisFinanceDto redisFinanceDto = RedisFinanceDto.map2Object(map);
         Double totalCharge = SafeComputeUtils.add(redisFinanceDto.getHistoryTotalCharge(),
-                SafeComputeUtils.add(redisFinanceDto.getTotalCharge(),redisFinanceDto.getDailyTotalCharge()));
+                SafeComputeUtils.add(redisFinanceDto.getTotalCharge(), redisFinanceDto.getDailyTotalCharge()));
 
         ShopAccount shopAccount = new ShopAccount();
         shopAccount.setSysUserId(headerInfoDto.getCurUserId());
         shopAccount.setTotalMoney(totalCharge);
-        shopAccount.setSecurityCode(StringUtil.getRandom(6));
+        shopAccount.setSecurityCode("123456");
         shopAccount.setStatus(ShopAccount.STATUS_COMMON);
 
         AccountDto accountDto = shopRechargeService.countTotalRecharge(headerInfoDto.getCurUserId());
 
         shopAccount.setUsableMoney(SafeComputeUtils.sub(SafeComputeUtils.sub(
-                SafeComputeUtils.sub(totalCharge, accountDto.getAmount()), accountDto.getFrozenAmount()),frozenMoney));
+                SafeComputeUtils.sub(totalCharge, accountDto.getAmount()), accountDto.getFrozenAmount()), frozenMoney));
         shopAccount.setFrozenMoney(SafeComputeUtils.add(accountDto.getFrozenAmount(), frozenMoney));
         shopAccount.setRechargeMoney(accountDto.getAmount());
 
@@ -127,59 +127,16 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
     @Override
     public ReturnVo getAccount(HeaderInfoDto headerInfoDto) {
         try {
-            AccountInfoDto accountInfoDto = shopAccountDao.getAccount(headerInfoDto.getCurUserId());
-            if(accountInfoDto==null){
+            String userId = headerInfoDto.getCurUserId();
+            AccountInfoDto accountInfoDto = shopAccountDao.getAccount(userId);
+            if (accountInfoDto == null) {
                 this.initAccount(headerInfoDto);
-            }else{
-                Double frozenMoney = 0D;
-
-                String userCode=null;
-                Integer type = null;
-                if(StringUtils.isNotBlank(headerInfoDto.getAgentUser())){
-                    frozenMoney = shopPayFrozenDao.countFrozen(null, headerInfoDto.getAgentUser());
-                    ApiResponse apiResponse = agentUserProvider.detailById(headerInfoDto.getAgentUser());
-                    if (apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())) {
-                        Map agentInfo = Util.toHashMap((LinkedHashMap) apiResponse.getData());
-                        userCode = agentInfo.get("agentCode").toString();
-                    } else {
-                        return null;
-                    }
-                    type = 2;
-                }else if(StringUtils.isNotBlank(headerInfoDto.getMerchantUser())){
-                    frozenMoney = shopPayFrozenDao.countFrozen(headerInfoDto.getMerchantUser(), null);
-                    ApiResponse apiResponse = merchantUserProvider.detailById(headerInfoDto.getMerchantUser());
-                    if(apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())){
-                        Map merchantInfo = Util.toHashMap((LinkedHashMap) apiResponse.getData());
-                        userCode = merchantInfo.get("merchantCode").toString();
-                    }else{
-                        return null;
-                    }
-                    type = 3;
-                }
-
-                financeService.initOverview(type, userCode);
-
-                Map<String, String> map = redisClient.Gethgetall(RedisConfig.ORDER_COUNT_DB, userCode);
-                RedisFinanceDto redisFinanceDto = RedisFinanceDto.map2Object(map);
-                Double totalCharge = SafeComputeUtils.add(redisFinanceDto.getHistoryTotalCharge(),
-                        SafeComputeUtils.add(redisFinanceDto.getTotalCharge(),redisFinanceDto.getDailyTotalCharge()));
-
-                ShopAccount shopAccount = shopAccountDao.getByUserId(headerInfoDto.getCurUserId());
-
-                AccountDto accountDto = shopRechargeService.countTotalRecharge(headerInfoDto.getCurUserId());
-
-                shopAccount.setUsableMoney(SafeComputeUtils.sub(SafeComputeUtils.sub(
-                        SafeComputeUtils.sub(totalCharge, accountDto.getAmount()), accountDto.getFrozenAmount()),frozenMoney));
-
-                shopAccount.setFrozenMoney(SafeComputeUtils.add(accountDto.getFrozenAmount(), frozenMoney));
-                shopAccount.setRechargeMoney(accountDto.getAmount());
-                shopAccount.setTotalMoney(SafeComputeUtils.sub(totalCharge, accountDto.getAmount()));
-                shopAccountDao.updateAccountInfo(shopAccount);
-
-                accountInfoDto = shopAccountDao.getAccount(headerInfoDto.getCurUserId());
+            } else {
+                loadAccount(userId, headerInfoDto.getMerchantUser());
+                accountInfoDto = shopAccountDao.getAccount(userId);
             }
             return ReturnVo.returnSuccess(JSONObject.toJSON(accountInfoDto));
-        }catch (Exception e){
+        } catch (Exception e) {
             return ReturnVo.returnError(ResponseCode.Base.ERROR);
         }
     }
@@ -227,5 +184,39 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
 
         returnVo.code = ReturnVo.SUCCESS;
         return returnVo;
+    }
+
+    @Override
+    public void loadAccount(String userId, String merchantUser) {
+        Double frozenMoney = shopPayFrozenDao.countFrozen(merchantUser, null);
+
+        String userCode;
+        Integer type = 3;
+        ApiResponse apiResponse = merchantUserProvider.detailById(merchantUser);
+        if (apiResponse != null && (ResponseCode.Base.SUCCESS + "").equals(apiResponse.getCode())) {
+            Map merchantInfo = Util.toHashMap((LinkedHashMap) apiResponse.getData());
+            userCode = merchantInfo.get("merchantCode").toString();
+        } else {
+            return;
+        }
+
+        financeService.initOverview(type, userCode);
+
+        Map<String, String> map = redisClient.Gethgetall(RedisConfig.ORDER_COUNT_DB, userCode);
+        RedisFinanceDto redisFinanceDto = RedisFinanceDto.map2Object(map);
+        Double totalCharge = SafeComputeUtils.add(redisFinanceDto.getHistoryTotalCharge(),
+                SafeComputeUtils.add(redisFinanceDto.getTotalCharge(), redisFinanceDto.getDailyTotalCharge()));
+
+        ShopAccount shopAccount = shopAccountDao.getByUserId(userId);
+
+        AccountDto accountDto = shopRechargeService.countTotalRecharge(userId);
+
+        shopAccount.setUsableMoney(SafeComputeUtils.sub(SafeComputeUtils.sub(
+                SafeComputeUtils.sub(totalCharge, accountDto.getAmount()), accountDto.getFrozenAmount()), frozenMoney));
+
+        shopAccount.setFrozenMoney(SafeComputeUtils.add(accountDto.getFrozenAmount(), frozenMoney));
+        shopAccount.setRechargeMoney(accountDto.getAmount());
+        shopAccount.setTotalMoney(SafeComputeUtils.sub(totalCharge, accountDto.getAmount()));
+        shopAccountDao.updateAccountInfo(shopAccount);
     }
 }

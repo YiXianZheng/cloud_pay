@@ -55,7 +55,7 @@ public class YunjifuCashService implements BaseCashService {
 
         String order_id = shopRecharge.getRechargeNo();
         String machno = thirdChannelDto.getMerchantId();
-        String money = String.valueOf(shopRecharge.getRechargeMoney());
+        String money = String.valueOf(shopRecharge.getRechargeMoney() - shopRecharge.getRechargeRateMoney());
         String province = shopRecharge.getProvince();
         String bank_city = shopRecharge.getCity();
         ApiResponse response = sysBankProvider.getBankNameByCode(shopRecharge.getBankCode());

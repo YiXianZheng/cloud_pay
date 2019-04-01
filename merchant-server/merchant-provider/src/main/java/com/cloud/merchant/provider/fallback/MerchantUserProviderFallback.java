@@ -2,6 +2,7 @@ package com.cloud.merchant.provider.fallback;
 
 import com.cloud.merchant.provider.MerchantUserProvider;
 import com.cloud.sysconf.common.utils.ResponseCode;
+import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,13 @@ public class MerchantUserProviderFallback implements MerchantUserProvider {
     @Override
     public ApiResponse detailByUserId(String sysUserId) {
         log.error("========= >> merchant/user/detailByUserId 接口调用异常");
+
+        return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+    }
+
+    @Override
+    public ApiResponse tablePage(PageQuery pageQuery) {
+        log.error("========= >> merchant/user/tablePage 接口调用异常");
 
         return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
     }

@@ -6,7 +6,13 @@ import java.text.DecimalFormat;
 public class SafeComputeUtils {
 	
 	//ROUND_HALF_UP:如果被舍弃部分 >= 0.5，则舍入行为同 ROUND_UP；否则舍入行为同ROUND_DOWN。注意，此舍入模式就是通常学校里讲的四舍五入
-	
+
+	/**
+	 * 求两个数的和
+	 * @param d1
+	 * @param d2
+	 * @return
+	 */
 	public static Double add(Double d1, Double d2) {
 		d1 = (d1==null)?new Double(0):d1;
 		d2 = (d2==null)?new Double(0):d2;
@@ -15,6 +21,15 @@ public class SafeComputeUtils {
 		
 		return Double.valueOf(db1.add(db2).toString());
 	}
+
+	/**
+	 * 除法运算
+	 * @param d1
+	 * 			被除数
+	 * @param d2
+	 * 			除数
+	 * @return
+	 */
 	public static Double div(Double d1, Double d2){
 		return div(d1, d2, BigDecimal.ROUND_HALF_UP);
 	}
@@ -28,6 +43,13 @@ public class SafeComputeUtils {
 		BigDecimal db2 = new BigDecimal(Double.toString(d2));
 		return Double.valueOf(db1.divide(db2,8,roundingMode).toString());
 	}
+
+	/**
+	 * 乘法运算
+	 * @param d1
+	 * @param d2
+	 * @return
+	 */
 	public static Double multiply(Double d1, Double d2) {
 		return multiply(d1, d2, BigDecimal.ROUND_HALF_UP);
 	}
@@ -39,6 +61,13 @@ public class SafeComputeUtils {
 		
 		return Double.valueOf(db1.multiply(db2).setScale(8,roundingMode).toString());
 	}
+
+	/**
+	 * 减法运算
+	 * @param d1
+	 * @param d2
+	 * @return
+	 */
 	public static Double sub(Double d1, Double d2){
 		d1 = (d1==null)?new Double(0):d1;
 		d2 = (d2==null)?new Double(0):d2;

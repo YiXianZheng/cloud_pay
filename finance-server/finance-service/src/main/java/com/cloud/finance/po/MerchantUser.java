@@ -1,15 +1,15 @@
-package com.cloud.merchant.common.dto;
+package com.cloud.finance.po;
 
-import com.cloud.sysconf.common.basePDSC.BaseDto;
 import lombok.Data;
 
 /**
+ * 商户用户的 po
  * @Auther Toney
- * @Date 2018/8/4 11:27
+ * @Date 2018/7/29 15:48
  * @Description:
  */
 @Data
-public class MerchantUserListDto extends BaseDto {
+public class MerchantUser {
 
     private String id;
 

@@ -1,7 +1,10 @@
 package com.cloud.merchant.controller;
 
 import com.cloud.merchant.common.dto.MerchantFormDto;
+import com.cloud.merchant.common.dto.MerchantInfoDto;
 import com.cloud.merchant.common.dto.MerchantUpdateFormDto;
+import com.cloud.merchant.dao.MerchantUserDao;
+import com.cloud.merchant.po.MerchantUser;
 import com.cloud.merchant.service.MerchantUserService;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
@@ -25,6 +28,8 @@ public class MerchantUserController extends BaseController {
 
     @Autowired
     private MerchantUserService merchantUserService;
+    @Autowired
+    private MerchantUserDao merchantUserDao;
 
     /**
      * 添加商户用户
@@ -330,6 +335,29 @@ public class MerchantUserController extends BaseController {
             ReturnVo returnVo = merchantUserService.updateChannelRate(id, channelCode, agentRate, usable, headerInfoDto);
             return this.toApiResponse(returnVo);
         } catch (Exception e) {
+            return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+        }
+    }
+
+    /**
+     * 获取商户秘钥   商户端操作
+     * @param headers
+     * @return
+     */
+    @PostMapping(value = "/getMd5Key")
+    public ApiResponse getMd5Key(@RequestHeader HttpHeaders headers) {
+
+        HeaderInfoDto headerInfoDto = getHeaderInfo(headers);
+        if (!headerInfoDto.getAuth().equals(HeaderInfoDto.AUTH_MERCHANT_SYSTEM)) {
+            logger.info("【获取商户秘钥】 没有操作权限");
+            return toApiResponse(ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(),
+                    "没有操作权限")));
+        }
+        try {
+            MerchantUser merchantUser = merchantUserDao.getByUserId(headerInfoDto.getCurUserId());
+            return this.toApiResponse(ReturnVo.returnSuccess(merchantUser.getMd5Key()));
+        } catch (Exception e) {
+            e.printStackTrace();
             return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
         }
     }

@@ -82,7 +82,7 @@ public class SmCashService implements BaseCashService {
         sBuilder.append("<bankName>").append(apiResponse.getData()).append("</bankName>");
         sBuilder.append("<bsBankType>123123</bsBankType>");
         sBuilder.append("<bsBankName>").append(shopRecharge.getBankSubbranch()).append("</bsBankName>");
-        sBuilder.append("<drawAmount>").append(shopRecharge.getRechargeMoney()).append("</drawAmount>");
+        sBuilder.append("<drawAmount>").append(shopRecharge.getRechargeMoney() - shopRecharge.getRechargeRateMoney()).append("</drawAmount>");
         sBuilder.append("</body>");
         sBuilder.append("</merchant>");
         try {

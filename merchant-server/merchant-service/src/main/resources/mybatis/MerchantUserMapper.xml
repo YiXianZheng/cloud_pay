@@ -199,7 +199,7 @@
 				#{dailyLimit},
                 #{commissionType},
                 #{commissionCharge},
-                #{bankCode},
+				(select bank_code from sys_bank where bank_name = #{bankName}),
 				#{bankName},
 				#{bankBranchName},
 				#{bankCardHolder},

@@ -85,6 +85,12 @@ public class PayServiceFactory {
     @Autowired
     @Qualifier("SmPayService")
     BasePayService smPayService;
+    @Autowired
+    @Qualifier("DfwPayService")
+    BasePayService dfwPayService;
+    /*@Autowired
+    @Qualifier("YsPayService")
+    BasePayService ysPayService;*/
 
 
     public BasePayService getPayment(String channelCode){
@@ -157,6 +163,13 @@ public class PayServiceFactory {
         }else if("sm_pay".equals(channelCode)){
             logger.info("pay chose channel SmPayService");
             return smPayService;
+        }else if("dfw_pay".equals(channelCode)){
+            logger.info("pay chose channel DfwPayService");
+            return dfwPayService;
+        }else if("ys_pay".equals(channelCode)){
+            logger.info("pay chose channel ysPayService");
+            return null;
+//            return ysPayService;
         }else{
             return null;
         }

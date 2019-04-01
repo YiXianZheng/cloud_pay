@@ -66,7 +66,7 @@ public class AnyinfuCashService implements BaseCashService {
         // 商户订单号
         String out_trade_out = shopRecharge.getRechargeNo();
         // 总金额
-        String total_fee = String.valueOf((int) (shopRecharge.getRechargeMoney() * 100));
+        String total_fee = String.valueOf((int) ((shopRecharge.getRechargeMoney() - shopRecharge.getRechargeRateMoney()) * 100));
         // 提现类别
         String withdraw_type = thirdChannelDto.getCashMd5Key();
         // 卡号

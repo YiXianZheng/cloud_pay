@@ -160,8 +160,7 @@ public class SysRoleServiceImpl extends BaseMybatisServiceImpl<SysRole, String, 
 
             //获取所有叶子节点的ID
             List<String> checkedKeys = new ArrayList<>();
-            ReturnVo returnVo = sysMenuService.getByRole(id);
-            if(ReturnVo.SUCCESS == returnVo.code){
+            ReturnVo returnVo = sysMenuService.getByRole(id);if(ReturnVo.SUCCESS == returnVo.code){
                 List<SysMenuDto> menus = (List<SysMenuDto>) returnVo.object;
                 for (SysMenuDto sysMenuDto: menus
                      ) {

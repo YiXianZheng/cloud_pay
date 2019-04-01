@@ -78,4 +78,13 @@
 	<update id="updateSecurityCode">
 		UPDATE shop_account SET security_code = #{securityCode} WHERE sys_user_id = #{sysUserId}
 	</update>
+
+	<select id="listPage" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT (SELECT merchant_name FROM merchant_user WHERE sys_user_id=tt.sys_user_id) AS merchantName,
+			tt.total_money AS totalMoney,
+			tt.usable_money AS usableMoney,
+			tt.frozen_money AS frozenMoney
+			FROM shop_account tt
+			ORDER BY tt.usable_money DESC
+	</select>
 </mapper>

@@ -540,7 +540,6 @@ public class ShopRechargeController extends BaseController {
     public ApiResponse summaryPaid(@RequestParam String userId, @RequestParam String bankNo, @RequestParam String today) {
 
         try {
-            logger.info("统计时间：" + today);
             Map<String, Object> map = shopRechargeDao.summaryPaid(userId, bankNo, today);
             return toApiResponse(ReturnVo.returnSuccess(map));
         } catch (Exception e) {

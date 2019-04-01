@@ -54,14 +54,13 @@ public class ShkbCashService implements BaseCashService {
 
         String order_id = shopRecharge.getRechargeNo();
         String machno = thirdChannelDto.getMerchantId();
-        String money = String.valueOf(shopRecharge.getRechargeMoney());
+        String money = String.valueOf(shopRecharge.getRechargeMoney() - shopRecharge.getRechargeRateMoney());
         String province = shopRecharge.getProvince();
         String bank_city = shopRecharge.getCity();
         ApiResponse response = sysBankProvider.getBankNameByCode(shopRecharge.getBankCode());
         String bank_name = response.getData().toString();
         String account_name = shopRecharge.getBankAccount();
         String account_number = shopRecharge.getBankNo();
-        String notifyUrl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
 
         params.put("out_trade_no", order_id);
         params.put("mchid", machno);

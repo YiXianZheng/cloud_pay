@@ -263,6 +263,7 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
         returnVo.code = ReturnVo.FAIL;
 
         MerchantUser merchantUser = merchantUserDao.getById(id);
+        logger.info("商户信息" + merchantUser);
         if(merchantUser != null && MerchantUser.DEL_FLAG_COMMON.equals(merchantUser.getDelFlag())){
             MerchantInfoDto merchantInfoDto = new MerchantInfoDto();
             BeanUtils.copyProperties(merchantUser, merchantInfoDto);
@@ -532,10 +533,13 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
     @Override
     public ReturnVo updateChannelRate(String merchantUser, String channelCode, Double agentRate, Integer usable, HeaderInfoDto headerInfoDto) {
         try {
+            logger.info("修改接口费率");
             merchantPayChannelDao.updateChannelRate(merchantUser, channelCode, agentRate, usable, headerInfoDto.getCurUserId(), new Date());
             return ReturnVo.returnSuccess();
         }catch (Exception e){
-            return ReturnVo.returnSuccess();
+            e.printStackTrace();
+            return ReturnVo.returnError();
         }
     }
+
 }

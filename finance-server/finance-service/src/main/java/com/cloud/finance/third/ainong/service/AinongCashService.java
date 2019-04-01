@@ -67,7 +67,7 @@ public class AinongCashService implements BaseCashService {
 
         //交易请求参数
         //交易金额  单位分
-        String amount = String.valueOf((int)(shopRecharge.getRechargeMoney() * 100));
+        String amount = String.valueOf((int)((shopRecharge.getRechargeMoney() - shopRecharge.getRechargeRateMoney()) * 100));
 
         ApiResponse response = sysBankProvider.getBankNameByCode(shopRecharge.getBankCode());
         String bank_name = response.getData().toString();

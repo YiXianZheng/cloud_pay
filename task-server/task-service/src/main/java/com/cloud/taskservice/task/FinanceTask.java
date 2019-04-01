@@ -69,9 +69,9 @@ public class FinanceTask {
 
 
     /**
-     * 每个月1号凌晨十二点一分 迁移一个月之前的订单数据，并清算
+     * 每个月1号凌晨十二点零分十秒 迁移一个月之前的订单数据，并清算
      */
-    @Scheduled(cron = "0 1 0 1 * ?")
+    @Scheduled(cron = "10 0 0 1 * ?")
     public void monthMove() {
         logger.info("==============  begin month move  ===============");
         ApiResponse response = financeProvider.monthMove();
@@ -83,9 +83,9 @@ public class FinanceTask {
     }
 
     /**
-     * 每天凌晨十二点二分更新昨天的订单的step 并核算
+     * 每天凌晨十二点一分更新昨天的订单的step 并核算
      */
-    @Scheduled(cron = "0 3 0 * * ?")
+    @Scheduled(cron = "0 1 0 * * ?")
     public void dailyUpdate() {
         logger.info("==============  begin daily update  ===============");
         ApiResponse response = financeProvider.dailyUpdate();
@@ -97,9 +97,9 @@ public class FinanceTask {
     }
 
     /**
-     * 每天十二点五分统计各个商户昨日数据，并放入redis
+     * 每天十二点两分五十秒统计各个商户昨日数据，并放入redis
      */
-    @Scheduled(cron = "0 5 0 * * ?")
+    @Scheduled(cron = "30 2 0 * * ?")
     public void dailyAccounting() {
         logger.info("==============  begin daily accounting  ===============");
         ApiResponse response = financeProvider.dailySummary();
@@ -167,8 +167,8 @@ public class FinanceTask {
                             } else {
                                 if(i == notifyTimes.size()-1)
                                     redisDb = RedisConfig.UN_RESPONSE_NOTIFY_FINAL - 1;
-                                redisClient.lpush(redisDb + 1, DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18),jsonStr);
-                                logger.info("==============  retryNotify result: >>> fail in redis db ["+ (redisDb + 1) +"], result string ["+ notifyResponseResult +"] <<<  =============== ");
+                                redisClient.lpush(redisDb + 2, DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18),jsonStr);
+                                logger.info("==============  retryNotify result: >>> fail in redis db ["+ (redisDb + 2) +"], result string ["+ notifyResponseResult +"] <<<  =============== ");
                             }
                         }
                     }

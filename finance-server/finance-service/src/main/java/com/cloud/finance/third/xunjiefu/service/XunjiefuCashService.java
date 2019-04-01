@@ -10,16 +10,12 @@ import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.common.vo.cash.CashRespData;
 import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.ShopRechargeService;
-import com.cloud.finance.third.jinxin.utils.MD5Util;
-import com.cloud.finance.third.jinxin.utils.PayUtil;
 import com.cloud.finance.third.xunjiefu.utils.XJFSignUtil;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.DateUtil;
-import com.cloud.sysconf.common.utils.ResponseCode;
-import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -179,7 +175,7 @@ public class XunjiefuCashService implements BaseCashService {
         String productId = "8001";  //产品类型
         String merNo = thirdChannelDto.getMerchantId();//商户号
         String orderDate = DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_11);//订单日期
-        String orderNo = "S" + DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_13) +"0";
+        String orderNo = "S" + DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_13) + "0";
         String notifyUrl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();//通知地址
         String transAmt = SafeComputeUtils.numberFormate2(SafeComputeUtils.multiply(cashReqData.getAmount(), 100D));
         String commodityName = "";//产品名称

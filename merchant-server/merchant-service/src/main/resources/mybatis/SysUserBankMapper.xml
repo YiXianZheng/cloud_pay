@@ -114,7 +114,7 @@
 		<if test="bankCardHolder != null and bankCardHolder !=''">
 			AND t.bank_card_holder = #{bankCardHolder}
 		</if>
-		<if test="bankCardHolder != null and bankCardHolder !=''">
+		<if test="cardStatus != null and cardStatus !=''">
 			AND t.card_status = #{cardStatus}
 		</if>
 

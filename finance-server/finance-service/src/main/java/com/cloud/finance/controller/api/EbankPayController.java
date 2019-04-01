@@ -83,7 +83,7 @@ public class EbankPayController extends BaseController {
         String merchantGoodsTitle = this.getStringParameter("assGoodsTitle");       //支付产品标题
         String merchantGoodsDesc = this.getStringParameter("assGoodsDesc");         //支付产品描述
         String sign = request.getParameter("sign");                                         //商户签名结果
-
+        logger.info("[请求的签名]：" + sign);
         Integer source = Util.isMobileDevice(request)?1:2;
 
         //快捷支付添加字段
@@ -286,7 +286,7 @@ public class EbankPayController extends BaseController {
             map.put("message", "生成" + SysPaymentTypeEnum.getLabelMap().get(paymentType) + "支付链接失败");
             map.put("code", SysPayResultConstants.ERROR_PAY_CHANNEL_NULL + "");
             map.put("assPayOrderNo", merchantPayOrderNo);
-            logger.info("[create pay url failed]:cost-" + (System.currentTimeMillis() - startTime) + "ms,assCode:" + merchantCode + ",assPayOrderNo:" + merchantPayOrderNo + ",paymentType:" + paymentType + ",assPayMoneyYuan:" + merchantPayMoneyYuan);
+            logger.error("[create pay url failed]:cost-" + (System.currentTimeMillis() - startTime) + "ms,assCode:" + merchantCode + ",assPayOrderNo:" + merchantPayOrderNo + ",paymentType:" + paymentType + ",assPayMoneyYuan:" + merchantPayMoneyYuan);
 
             return renderString(response, map);
         }

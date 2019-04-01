@@ -60,10 +60,11 @@ public class SysUserServiceImpl extends BaseMybatisServiceImpl<SysUser, String, 
         SysUser sysUser = new SysUser();
         sysUser.setLoginName(sysUserFormDto.getLoginName());
         sysUser.setName(sysUserFormDto.getName());
+        String initPwd = "123456";
         if (StringUtils.isNotBlank(sysUserFormDto.getPassword())){
             sysUser.setPassword(PassWordUtil.entryptPassword(sysUserFormDto.getPassword()));
         }else{
-            sysUser.setPassword(PassWordUtil.entryptPassword("123456"));
+            sysUser.setPassword(PassWordUtil.entryptPassword(initPwd));
         }
         if(StringUtils.isBlank(sysUser.getLoginName())){
             returnVo.code = ReturnVo.FAIL;
@@ -472,13 +473,13 @@ public class SysUserServiceImpl extends BaseMybatisServiceImpl<SysUser, String, 
      * @return
      */
     private List<SysUserListDto> initSysUserInfo(List<SysUser> userList){
-        List<SysUserListDto> agentList = new ArrayList<>();
+        List<SysUserListDto> userDtoList = new ArrayList<>();
         for (SysUser sysUser : userList) {
             SysUserListDto sysUserListDto = new SysUserListDto();
             BeanUtils.copyProperties(sysUser, sysUserListDto);
 
-            agentList.add(sysUserListDto);
+            userDtoList.add(sysUserListDto);
         }
-        return agentList;
+        return userDtoList;
     }
 }
