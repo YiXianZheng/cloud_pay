@@ -13,6 +13,7 @@
         <result column="bank_card_no" property="bankCardNo"/>
         <result column="bank_province" property="bankProvince"/>
         <result column="bank_city" property="bankCity"/>
+        <result column="bank_bin" property="bankBin"/>
         <result column="card_status" property="cardStatus"/>
         <result column="daily_money" property="dailyMoney"/>
         <result column="total_money" property="totalMoney"/>
@@ -40,6 +41,7 @@
 			bank_card_no,
 			bank_province,
 			bank_city,
+			bank_bin,
 			card_status,
 			daily_money,
 			total_money,
@@ -63,6 +65,7 @@
 				#{bankCardNo},
 				#{bankProvince},
 				#{bankCity},
+				#{bankBin},
 				#{cardStatus},
 				#{dailyMoney},
 				#{totalMoney},
@@ -99,6 +102,7 @@
 		t.bank_branch_name AS bankBranchName,
 		t.bank_province AS bankProvince,
 		t.bank_city AS bankCity,
+		IFNULL(t.bank_bin, "") AS bankBin,
 		t.card_status AS cardStatus,
 		t.daily_money AS dailyMoney,
 		t.total_money AS totalMoney,
@@ -138,6 +142,7 @@
 		bank_branch_name = #{bankBranchName},
 		bank_province = #{bankProvince},
 		bank_city = #{bankCity},
+		bank_bin = #{bankBin},
 		card_status = #{cardStatus},
 		daily_money = #{dailyMoney},
 		total_money = #{totalMoney},
@@ -149,4 +154,7 @@
 		WHERE id = #{id}
 	</update>
 
+	<select id="getBankBin" resultMap="sysUserBankMap">
+		SELECT * FROM sys_user_bank WHERE bank_card_no = #{bankCardNo} AND del_flag = 0 LIMIT 0, 1
+	</select>
 </mapper>

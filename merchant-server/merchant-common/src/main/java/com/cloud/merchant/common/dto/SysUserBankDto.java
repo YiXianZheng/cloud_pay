@@ -21,4 +21,6 @@ public class SysUserBankDto extends BasePo {
     private String bankProvince;
 
     private String bankCity;
+
+    private String bankBin;
 }

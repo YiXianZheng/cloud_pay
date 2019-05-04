@@ -97,7 +97,7 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
         ShopAccount shopAccount = new ShopAccount();
         shopAccount.setSysUserId(headerInfoDto.getCurUserId());
         shopAccount.setTotalMoney(totalCharge);
-        shopAccount.setSecurityCode("123456");
+        shopAccount.setSecurityCode("571862");
         shopAccount.setStatus(ShopAccount.STATUS_COMMON);
 
         AccountDto accountDto = shopRechargeService.countTotalRecharge(headerInfoDto.getCurUserId());
@@ -204,6 +204,7 @@ public class ShopAccountServiceImpl extends BaseMybatisServiceImpl<ShopAccount, 
 
         Map<String, String> map = redisClient.Gethgetall(RedisConfig.ORDER_COUNT_DB, userCode);
         RedisFinanceDto redisFinanceDto = RedisFinanceDto.map2Object(map);
+        logger.info("redis数据：" + redisFinanceDto);
         Double totalCharge = SafeComputeUtils.add(redisFinanceDto.getHistoryTotalCharge(),
                 SafeComputeUtils.add(redisFinanceDto.getTotalCharge(), redisFinanceDto.getDailyTotalCharge()));
 

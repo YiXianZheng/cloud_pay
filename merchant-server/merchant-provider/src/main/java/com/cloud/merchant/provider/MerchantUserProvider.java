@@ -6,10 +6,7 @@ import com.cloud.sysconf.common.utils.page.PageQuery;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 
 /**
@@ -63,4 +60,12 @@ public interface MerchantUserProvider {
      */
     @RequestMapping(value = "/merchant/user/tablePage")
     ApiResponse tablePage(@RequestBody PageQuery pageQuery);
+
+    /**
+     * 通过银行卡号获取信息
+     * @param bankCardNo
+     * @return
+     */
+    @RequestMapping(value = "/merchant/bank/getBankBin", method = RequestMethod.POST)
+    ApiResponse getBankBin(@RequestParam("bankCardNo") String bankCardNo);
 }

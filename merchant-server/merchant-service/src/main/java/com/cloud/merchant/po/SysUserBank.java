@@ -19,7 +19,7 @@ public class SysUserBank extends BasePo {
 
     private String bankCode;
 
-    private String bankBranchName;
+    private String bankBranchName;  // 支行名称
 
     private String bankCardHolder;
 
@@ -28,6 +28,8 @@ public class SysUserBank extends BasePo {
     private String bankProvince;
 
     private String bankCity;
+
+    private String bankBin;         // 联行号
 
     private Integer cardStatus;
 

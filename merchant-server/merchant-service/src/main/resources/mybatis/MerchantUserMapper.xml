@@ -19,6 +19,7 @@
 		<result column="pay_status" property="payStatus"/>
 		<result column="cash_status" property="cashStatus"/>
 		<result column="daily_limit" property="dailyLimit"/>
+		<result column="recharge_limit" property="rechargeLimit"/>
         <result column="commission_type" property="commissionType"/>
         <result column="commission_charge" property="commissionCharge"/>
 		<result column="bank_code" property="bankCode"/>
@@ -164,6 +165,7 @@
 			opt_status,
 			cash_status,
 			daily_limit,
+			recharge_limit,
             commission_type,
             commission_charge,
 			bank_code,
@@ -197,6 +199,7 @@
 				#{optStatus},
 				#{cashStatus},
 				#{dailyLimit},
+				#{rechargeLimit},
                 #{commissionType},
                 #{commissionCharge},
 				(select bank_code from sys_bank where bank_name = #{bankName}),

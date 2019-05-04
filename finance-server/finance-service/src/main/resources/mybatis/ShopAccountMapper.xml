@@ -86,5 +86,15 @@
 			tt.frozen_money AS frozenMoney
 			FROM shop_account tt
 			ORDER BY tt.usable_money DESC
+
+-- 		SELECT (SELECT merchant_name FROM merchant_user WHERE merchant_code=tt.merchant_code) AS merchantName,
+-- 			tt.third_channel_id AS channelId,
+-- 			sum(IF(tt.pay_status=1, tt.merchant_pay_money, 0)) AS channelSuccessMoney,
+-- 			tt.merchant_cost_rate AS merchantCostRate,
+-- 			(SELECT usable_money FROM shop_account WHERE sys_user_id=(SELECT sys_user_id FROM merchant_user WHERE merchant_code=tt.merchant_code)) AS usableMoney,
+-- 			(SELECT frozen_money FROM shop_account WHERE sys_user_id=(SELECT sys_user_id FROM merchant_user WHERE merchant_code=tt.merchant_code)) AS frozenMoney
+-- 		 FROM
+-- 		(SELECT t.merchant_code, t.third_channel_id, t.merchant_pay_money, t.merchant_cost_rate, t.pay_status, DATE(t.create_date) time FROM shop_pay t
+-- 			WHERE DATE(t.create_date) = DATE(now())) tt GROUP BY tt.merchant_code, tt.third_channel_id
 	</select>
 </mapper>

@@ -124,6 +124,12 @@ public interface ShopPayDao extends BaseMybatisDao<ShopPay, String> {
     void updateThirdInfo(ShopPay shopPay);
 
     /**
+     * 更新通道信息
+     * @param shopPay
+     */
+    void updateThirdReturn(ShopPay shopPay);
+
+    /**
      * 通过商户号和商户订单号获取订单信息
      * @param merchantCode
      * @param merchantOrderNo

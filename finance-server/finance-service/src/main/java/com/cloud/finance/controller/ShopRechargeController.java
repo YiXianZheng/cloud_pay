@@ -101,7 +101,7 @@ public class ShopRechargeController extends BaseController {
         if("0".equals(resultVo.getCode())) {
             ShopRecharge shopRecharge = (ShopRecharge) resultVo.getObj();
 
-            String channelCodes = redisClient.Gethget(RedisConfig.MERCHANT_INFO_DB, merchantCode, "thirdChannels");
+            /*String channelCodes = redisClient.Gethget(RedisConfig.MERCHANT_INFO_DB, merchantCode, "thirdChannels");
             logger.info("[通道分配] " + channelCodes);
             Set<String> channels = new HashSet<>();
             if (channelCodes != null && channelCodes.contains(",")) {
@@ -137,7 +137,7 @@ public class ShopRechargeController extends BaseController {
                 }else{
                     return toApiResponse(ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), cashRespData.getMsg())));
                 }
-            }
+            }*/
             logger.info("[代付申请成功] ShopRechargeNo:" + shopRecharge.getRechargeNo());
             return toApiResponse(ReturnVo.returnSuccess(new ResponseCode.COMMON(ResponseCode.Base.SUCCESS.getCode(), "代付申请成功【"+ shopRecharge.getRechargeNo() +"】")));
         }else{
@@ -374,7 +374,7 @@ public class ShopRechargeController extends BaseController {
      * @param headers
      * @return
      */
-    @PostMapping("/admin/apply")
+    @PostMapping("/admin/cash/apply")
     public ApiResponse adminApply(@RequestBody CashReqData cashReqData, @RequestHeader HttpHeaders headers,
                                   @RequestParam String channelId){
         HeaderInfoDto headerInfoDto = this.getHeaderInfo(headers);

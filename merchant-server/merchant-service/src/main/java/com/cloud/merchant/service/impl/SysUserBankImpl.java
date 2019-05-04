@@ -7,9 +7,12 @@ import com.cloud.merchant.dao.MerchantUserDao;
 import com.cloud.merchant.dao.SysUserBankDao;
 import com.cloud.merchant.po.MerchantUser;
 import com.cloud.merchant.po.SysUserBank;
+import com.cloud.merchant.service.CardBlackListService;
 import com.cloud.merchant.service.SysUserBankService;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisServiceImpl;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
+import com.cloud.sysconf.common.redis.RedisClient;
+import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.ResponseCode;
 import com.cloud.sysconf.common.utils.StringUtil;
@@ -21,10 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String, SysUserBankDao> implements SysUserBankService {
@@ -35,6 +35,10 @@ public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String,
     private FinanceProvider financeProvider;
     @Autowired
     private MerchantUserDao merchantUserDao;
+    @Autowired
+    private CardBlackListService cardBlackListService;
+    @Autowired
+    private RedisClient redisClient;
 
     @Override
     public ReturnVo addBankCard(SysUserBankDto sysUserBankDto, HeaderInfoDto headerInfoDto) {
@@ -42,10 +46,18 @@ public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String,
         ReturnVo returnVo = new ReturnVo();
         try {
             SysUserBank sysUserBank = new SysUserBank();
+            logger.info("开户人：" + sysUserBankDto.getBankCardHolder());
             // 检查卡号是否为空
             if (StringUtil.isEmpty(sysUserBankDto.getBankCardNo())) {
                 returnVo.code = ReturnVo.FAIL;
                 returnVo.responseCode = ResponseCode.bankcard.BANKCARD_NOT_EXIST;
+                return returnVo;
+            }
+            // 检查持卡人是否在黑名单
+            // false表示黑名单
+            if (cardBlackListService.checkCardSafe(sysUserBankDto.getBankCardHolder())) {
+                returnVo.code = ReturnVo.FAIL;
+                returnVo.responseCode = ResponseCode.bankcard.BANKCARD_IN_BLACKLIST;
                 return returnVo;
             }
             // 检查银行卡是否已绑定
@@ -55,10 +67,17 @@ public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String,
                 return returnVo;
             }
             BeanUtils.copyProperties(sysUserBankDto, sysUserBank);
+
             // 商户系统绑定
             if (HeaderInfoDto.AUTH_MERCHANT_SYSTEM.equals(headerInfoDto.getAuth())) {
                 sysUserBank.setSysUserId(headerInfoDto.getCurUserId());
                 sysUserBank.preInsert(sysUserBank.getSysUserId(), headerInfoDto.getPanId());
+            }
+            // 每个商户限制绑定银行卡数量
+            if (checkCardNum(sysUserBank.getSysUserId())) {
+                returnVo.code = ReturnVo.FAIL;
+                returnVo.responseCode = ResponseCode.bankcard.BANKCARD_NUM_PASS;
+                return returnVo;
             }
             sysUserBank.setCardStatus(0);
             sysUserBank.initData();
@@ -136,6 +155,28 @@ public class SysUserBankImpl extends BaseMybatisServiceImpl<SysUserBank, String,
 
                 sysUserBankDao.updateInfo(sysUserBank);
             }
+        }
+    }
+
+    private boolean checkCardNum(String sysUserId) {
+
+        boolean isPass = false;
+        try {
+            PageQuery pageQuery = new PageQuery();
+            Map<String, Object> params = new HashMap<>();
+            params.put("sysUserId", sysUserId);
+            pageQuery.setParams(params);
+            PageResult pageResult = this.queryForTablePage(pageQuery.getPageIndex(), pageQuery.getPageSize(), pageQuery.getParams());
+            int cardNum = pageResult.getData().size();
+            String sysConf = redisClient.Gethget(RedisConfig.THIRD_PAY_CHANNEL, "sys_dict", "CARD_NUM");
+            logger.info("redis银行卡数量限制：" + sysConf);
+            if (cardNum > Integer.parseInt(sysConf)) {
+                isPass = true;
+            }
+            return isPass;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true;
         }
     }
 }

@@ -53,4 +53,10 @@ public class MerchantUserProviderFallback implements MerchantUserProvider {
         return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
     }
 
+    @Override
+    public ApiResponse getBankBin(String bankCardNo) {
+        log.error("========= >> merchant/bank/getBankBin 接口调用异常");
+
+        return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+    }
 }

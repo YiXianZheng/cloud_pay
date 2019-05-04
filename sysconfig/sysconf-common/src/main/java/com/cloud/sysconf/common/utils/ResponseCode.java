@@ -449,7 +449,17 @@ public interface ResponseCode {
         /**
          * 返回码--银行卡默认绑定--银行卡默认绑定修改成功
          */
-        BANKCARD_NO_BINDING(903, "暂无绑定银行卡", "No binding bank card");
+        BANKCARD_NO_BINDING(903, "暂无绑定银行卡", "No binding bank card"),
+
+        /**
+         * 返回码--持卡人被拉黑
+         */
+        BANKCARD_IN_BLACKLIST(904, "持卡人已被拉黑", "No binding bank card"),
+
+        /**
+         * 返回码--商户绑定数量超过限制
+         */
+        BANKCARD_NUM_PASS(904, "商户绑定银行卡数量超过限制", "No binding bank card");
 
         public String getZhExplain() {
             return zhExplain;

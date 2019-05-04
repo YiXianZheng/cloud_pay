@@ -83,7 +83,6 @@ public class EbankPayController extends BaseController {
         String merchantGoodsTitle = this.getStringParameter("assGoodsTitle");       //支付产品标题
         String merchantGoodsDesc = this.getStringParameter("assGoodsDesc");         //支付产品描述
         String sign = request.getParameter("sign");                                         //商户签名结果
-        logger.info("[请求的签名]：" + sign);
         Integer source = Util.isMobileDevice(request)?1:2;
 
         //快捷支付添加字段
@@ -91,9 +90,6 @@ public class EbankPayController extends BaseController {
         //持卡人姓名 payeename
         //身份证号   idnumber
         //预留手机号 telephone
-        if (StringUtils.isEmpty(merchantCode)) {
-            return renderFailString(response, false, SysPayResultConstants.ERROR_PAY_MERCHANT_ID_NULL, "[assCode]商户编号不能为空");
-        }
         if (StringUtils.isEmpty(merchantPayOrderNo)) {
             return renderFailString(response, false, SysPayResultConstants.ERROR_MERCHANT_ORDER_ID_NULL, "[assPayOrderNo]商户订单号不能为空");
         }
@@ -111,9 +107,6 @@ public class EbankPayController extends BaseController {
         if (StringUtils.isEmpty(paymentType)) {
             return renderFailString(response, false, SysPayResultConstants.ERROR_PAY_MENT_TYPE_NULL, "[paymentType]支付类型参数为空");
         }
-        if (StringUtils.isEmpty(SysPaymentTypeEnum.getLabelMap().get(paymentType))) {
-            return renderFailString(response, false, SysPayResultConstants.ERROR_PAY_MENT_TYPE_NOT_RIGHT, "[paymentType]支付类型参数不正确");
-        }
         if (StringUtils.isEmpty(subPayCode)) {
             return renderFailString(response, false, SysPayResultConstants.ERROR_PAY_MENT_TYPE_NULL, "[subPayCode]支付类型参数为空");
         }
@@ -129,6 +122,7 @@ public class EbankPayController extends BaseController {
         if (StringUtils.isEmpty(sign)) {
             return renderFailString(response, false, SysPayResultConstants.ERROR_SIGN_RESULT_NULL, "[sign]MD5签名结果不能为空");
         }
+        logger.info("[请求的签名]：" + sign);
 
         Map<String, String> merchantInfoDto = redisClient.Gethgetall(RedisConfig.MERCHANT_INFO_DB, merchantCode);
         String merchantMd5Key = merchantInfoDto.get("md5Key");
@@ -149,7 +143,7 @@ public class EbankPayController extends BaseController {
         ShopPayDto shopPayDto = null;
         try {
             if(!sign.equals(req.getSign())){
-                logger.error("[create pay url failed sign error exception],assCode:"+merchantCode+",assPayOrderNo:"+merchantPayOrderNo);
+                logger.error("[create pay url failed MD5签名错误],assCode:"+merchantCode+",assPayOrderNo:"+merchantPayOrderNo);
                 return renderFailString(response, false, SysPayResultConstants.ERROR_SIGN_RESULT_ERROR,"[sign]MD5签名错误");
             }
 

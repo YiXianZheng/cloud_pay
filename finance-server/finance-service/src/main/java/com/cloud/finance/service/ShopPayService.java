@@ -80,6 +80,14 @@ public interface ShopPayService extends BaseMybatisService<ShopPay, String> {
     void updateThirdInfo(String sysPayOrderNo, String channelId);
 
     /**
+     * 更新订单通道信息
+     * @param sysPayOrderNo
+     * @param channelId
+     * @param thirdChannelRespMsg
+     */
+    void updateThirdReturn(String sysPayOrderNo, String channelId, String thirdChannelRespMsg);
+
+    /**
      * 通过商户号和商户订单号获取订单信息
      * @param merchantCode
      * @param merchantOrderNo

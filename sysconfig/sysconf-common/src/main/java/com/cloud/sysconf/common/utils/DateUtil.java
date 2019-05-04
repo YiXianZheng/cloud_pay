@@ -34,6 +34,7 @@ public class DateUtil {
 	public static String DATE_PATTERN_17 = "yyMMddHHmmss";
 	public static String DATE_PATTERN_18 = "yyyyMMddHHmmss";
 	public static String DATE_PATTERN_19 = "yyMMddHHmmssSS";
+	public static String DATE_PATTERN_20 = "HHmmss";
 
 	/**
 	 * 两个时间点的间隔小时数

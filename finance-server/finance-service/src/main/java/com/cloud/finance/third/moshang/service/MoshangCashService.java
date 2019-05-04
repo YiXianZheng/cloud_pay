@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.service.base.BaseCashService;
 import com.cloud.finance.common.utils.ASCIISortUtil;
 import com.cloud.finance.common.utils.GetUtils;
+import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.common.vo.cash.CashRespData;
@@ -12,12 +13,12 @@ import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.ShopRechargeService;
 import com.cloud.finance.third.jinxin.utils.PayUtil;
 import com.cloud.finance.third.moshang.utils.MD5;
+import com.cloud.finance.third.moshang.utils.MSUtils;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
-import com.cloud.sysconf.common.redis.RedisConfig;
-import com.cloud.sysconf.common.utils.Constant;
 import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.ResponseCode;
+import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.provider.SysBankProvider;
 import org.apache.commons.lang.StringUtils;
@@ -35,15 +36,9 @@ public class MoshangCashService implements BaseCashService {
     private static Logger logger = LoggerFactory.getLogger(MoshangCashService.class);
 
     @Autowired
-    private RedisClient redisClient;
-    @Autowired
     private ShopRechargeService shopRechargeService;
     @Autowired
     private SysBankProvider sysBankProvider;
-
-    private String getBaseNotifyUrl(){
-        return redisClient.Gethget(RedisConfig.VARIABLE_CONSTANT, Constant.REDIS_SYS_DICT, "NOTIFY_BASE_URL");
-    }
 
     @Override
     public CashRespData applyCash(ShopRecharge shopRecharge, ThirdChannelDto thirdChannelDto) {
@@ -58,15 +53,13 @@ public class MoshangCashService implements BaseCashService {
         String merchantid = thirdChannelDto.getMerchantId();//商户id
         String out_trade_no = shopRecharge.getRechargeNo();
         String bank_amount = SafeComputeUtils.numberFormate(SafeComputeUtils.sub(shopRecharge.getRechargeMoney(), shopRecharge.getRechargeRateMoney()));
-        String bank_name = "";
         logger.info("【代付请求】 bank code :" + shopRecharge.getBankCode());
         ApiResponse apiResponse = sysBankProvider.toChannelCode(shopRecharge.getBankCode(), thirdChannelDto.getId());
         logger.info("【代付请求】 bank response :" + apiResponse);
-        if((ResponseCode.Base.SUCCESS.getCode()+"").equals(apiResponse.getCode())){
-            bank_name = apiResponse.getData().toString();
-        }else{
-            logger.error("【代付请求失败】不支持的银行");
+        if(!(ResponseCode.Base.SUCCESS.getCode()+"").equals(apiResponse.getCode())){
+
             cashRespData.setMsg("【代付请求失败】不支持的银行");
+            logger.error("【代付请求失败】不支持的银行");
             return cashRespData;
         }
         String bank_site_name = shopRecharge.getBankSubbranch();
@@ -74,32 +67,13 @@ public class MoshangCashService implements BaseCashService {
         String bank_account_no = shopRecharge.getBankNo();
 
         Map<String, String> params = new HashMap<>();
-        if(StringUtils.isNotBlank(merchantid)) {
-            params.put("merchantid", merchantid);
-        }
-        if(StringUtils.isNotBlank(out_trade_no)) {
-            params.put("out_trade_no", out_trade_no);
-        }
-        if(StringUtils.isNotBlank(bank_amount)) {
-            params.put("bank_amount", bank_amount);
-        }
-        if(StringUtils.isNotBlank(bank_name)) {
-            params.put("bank_name", bank_name);
-        }
-        if(StringUtils.isNotBlank(bank_site_name)) {
-            params.put("bank_site_name", bank_site_name);
-        }else{
-            logger.error("【moshang cash failed】开户银行支行不能为空");
-            cashRespData.setStatus("开户银行支行不能为空");
-
-            return cashRespData;
-        }
-        if(StringUtils.isNotBlank(bank_account_name)) {
-            params.put("bank_account_name", bank_account_name);
-        }
-        if(StringUtils.isNotBlank(bank_account_no)) {
-            params.put("bank_account_no", bank_account_no);
-        }
+        params.put("merchantid", merchantid);
+        params.put("out_trade_no", out_trade_no);
+        params.put("bank_amount", bank_amount);
+        params.put("bank_name", apiResponse.getData().toString());
+        params.put("bank_site_name", bank_site_name);
+        params.put("bank_account_name", bank_account_name);
+        params.put("bank_account_no", bank_account_no);
 
         //签名
         String stringSignTemp = ASCIISortUtil.buildSign(params, "=", thirdChannelDto.getPayMd5Key());
@@ -112,24 +86,35 @@ public class MoshangCashService implements BaseCashService {
 
         try {
             String jsonStr = GetUtils.sendGetMethodForCharset(thirdChannelDto.getPayUrl(), params,"GB2312");
-            JSONObject jsonObject = JSON.parseObject(jsonStr);
-            if(jsonObject.size()==0){
-                logger.error("【通道代付请求请求结果为空】");
-                cashRespData.setMsg("通道代付请求请求结果为空");
+            boolean isJson = MSUtils.isJson(jsonStr);
+            if (!isJson) {
+                shopRecharge.setRechargeStatus(4);
+                shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
+                shopRecharge.setThirdChannelRespMsg(jsonStr);
+                shopRechargeService.rechargeFail(shopRecharge);
+                logger.error("【代付失败】----> 代付失败原因：" + jsonStr);
+
+                cashRespData.setStatus(CashRespData.STATUS_ERROR);
+                cashRespData.setMsg(jsonStr);
                 return cashRespData;
             }
-            logger.info("cash post result == > "+ jsonObject.toJSONString());
+            logger.info("代付请求结果：" + jsonStr);
+            if(StringUtil.isEmpty(jsonStr)){
+                logger.error("【代付请求请求结果为空】");
+                cashRespData.setMsg("代付请求请求结果为空");
+                return cashRespData;
+            }
 
             //获取返回报文
-            Map<String, String> respMap = JSONObject.parseObject(jsonStr, HashMap.class);
+            Map<Object, Object> respMap = MapUtils.json2Map(jsonStr);
 
-            if("SUCCESS".equalsIgnoreCase(respMap.get("returncode"))){
+            if("SUCCESS".equalsIgnoreCase(respMap.get("returncode").toString())){
                 logger.info("【通道代付受理成功】----");
 
                 shopRecharge.setRechargeStatus(1);
                 shopRecharge.setCompleteTime(new Date());
                 shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
-                shopRecharge.setThirdChannelOrderNo(respMap.get("ordernum"));
+                shopRecharge.setThirdChannelOrderNo(respMap.get("ordernum").toString());
                 shopRecharge.setThirdChannelRespMsg(jsonStr);
                 shopRechargeService.rechargeSuccess(shopRecharge);
 
@@ -142,15 +127,15 @@ public class MoshangCashService implements BaseCashService {
                 shopRecharge.setThirdChannelNotifyFlag(ShopRecharge.NOTIFY_FLAG_YES);
                 shopRecharge.setThirdChannelRespMsg(jsonStr);
                 shopRechargeService.rechargeFail(shopRecharge);
-                logger.info("【通道代付失败】----> 代付结果状态错误：" + respMap.get("returncode") + "--->" + respMap.get("returnmsg"));
+                logger.info("【代付失败】----> 代付结果状态错误：" + respMap.get("returncode") + "--->" + respMap.get("returnmsg"));
 
                 cashRespData.setStatus(CashRespData.STATUS_ERROR);
-                cashRespData.setMsg(respMap.get("returnmsg"));
+                cashRespData.setMsg(respMap.get("returnmsg").toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
-            logger.error("【通道代付请求异常】-------");
-            cashRespData.setMsg("通道代付请求异常");
+            logger.error("【代付请求异常】-------");
+            cashRespData.setMsg("代付请求异常");
         }
         return cashRespData;
     }
@@ -336,5 +321,6 @@ public class MoshangCashService implements BaseCashService {
         }
         return cashRespData;
     }
+
 
 }

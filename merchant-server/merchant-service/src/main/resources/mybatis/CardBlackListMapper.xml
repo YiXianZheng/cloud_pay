@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cloud.merchant.dao.CardBlackListDao">
+
+    <resultMap type="CardBlackList" id="cardBlackListMap">
+        <id column="id" property="id"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="bank_card_holder" property="bankCardHolder"/>
+        <result column="bank_card_no" property="bankCardNo"/>
+    </resultMap>
+
+    <insert id="add" parameterType="CardBlackList">
+        <selectKey keyProperty="id" resultType="String" order="BEFORE">
+            SELECT UUID()
+        </selectKey>
+		INSERT INTO card_black_list (
+			id,
+			bank_name,
+			bank_card_holder,
+			bank_card_no
+		)
+		VALUES
+			(
+				#{id},
+				#{bankName},
+				#{bankCardHolder},
+				#{bankCardNo}
+			);
+	</insert>
+
+	<select id="getById" resultMap="cardBlackListMap">
+		SELECT * FROM card_black_list WHERE id = #{id}
+	</select>
+
+	<select id="getByHolder" resultMap="cardBlackListMap">
+		SELECT * FROM card_black_list WHERE bank_card_holder = #{bankCardHolder}
+	</select>
+
+	<select id="listPage" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT t.id AS id,
+		t.bank_card_no AS bankCardNo,
+		t.bank_card_holder AS bankCardHolder,
+		t.bank_name AS bankName,
+	  	FROM card_black_list t WHERE 1=1
+		<if test="bankCardNo != null and bankCardNo !=''">
+			AND t.bank_card_no = #{bankCardNo}
+		</if>
+		<if test="bankCardHolder != null and bankCardHolder !=''">
+			AND t.bank_card_holder = #{bankCardHolder}
+		</if>
+	</select>
+
+	<select id="count" parameterType="java.util.Map" resultType="int">
+		SELECT COUNT(1) FROM card_black_list t WHERE 1=1
+		<if test="bankCardNo != null and bankCardNo !=''">
+			AND t.bank_card_no = #{bankCardNo}
+		</if>
+	</select>
+
+	<delete id="deleteCard" parameterType="CardBlackList">
+		delete from card_black_list where id = #{id}
+	</delete>
+</mapper>

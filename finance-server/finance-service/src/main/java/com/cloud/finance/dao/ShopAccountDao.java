@@ -5,6 +5,7 @@ import com.cloud.finance.po.ShopAccount;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisDao;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -70,5 +71,5 @@ public interface ShopAccountDao extends BaseMybatisDao<ShopAccount, String> {
      * 获取商户余额列表
      * @return
      */
-    List<Map<String, String>> listPage();
+    List<Map<String, String>> listPage(Date date);
 }

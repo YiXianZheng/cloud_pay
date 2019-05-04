@@ -3,6 +3,7 @@ package com.cloud.finance.third.guanjun.service;
 import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.dto.ShopPayDto;
 import com.cloud.finance.common.service.base.BasePayService;
+import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.utils.PostUtils;
 import com.cloud.finance.common.utils.SysPayResultConstants;
 import com.cloud.finance.common.vo.cash.ChannelAccountData;
@@ -47,7 +48,7 @@ public class GuanjunPayService implements BasePayService {
     @Override
     public MidPayCreateResult createQrCode(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
 
-        return null;
+        return createPayUrl(thirdChannelDto, shopPayDto);
     }
 
     @Override
@@ -57,7 +58,6 @@ public class GuanjunPayService implements BasePayService {
 
     @Override
     public MidPayCreateResult createH5JumpUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
-        logger.info("[guanjun create quick jump params]:channelId:" + thirdChannelDto.getId() + ", sysOrderNo:" + shopPayDto.getSysPayOrderNo());
 
         return createPayUrl(thirdChannelDto, shopPayDto);
     }
@@ -69,7 +69,77 @@ public class GuanjunPayService implements BasePayService {
 
     @Override
     public MidPayCreateResult createGateSytJump(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
-        return null;
+
+        logger.info("【冠军" + shopPayDto.getChannelTypeCode() + "通道支付请求】sysOrderNo=" + shopPayDto.getSysPayOrderNo() + " thirdChannelId: " + thirdChannelDto.getId());
+        MidPayCreateResult payCreateResult = new MidPayCreateResult();
+        payCreateResult.setStatus("error");
+
+        Map<String, String> params = new HashMap<>();
+
+        // 商户号
+        String merId = thirdChannelDto.getMerchantId();
+        // 商户订单号
+        String merOrderId = shopPayDto.getSysPayOrderNo();
+        // 交易金额 单位为分
+        String txnAmt = String.valueOf((int) (shopPayDto.getMerchantPayMoney() * 100));
+        // 后台通知地址
+        String notifyUrl = getBaseNotifyUrl() + thirdChannelDto.getNotifyUrl();
+        // 订单发送时间  yyyyMMddHHmmss
+        String txnTime = DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_18);
+
+        params.put("merId", merId);
+        params.put("merOrderId", merOrderId);
+        params.put("subject", "subject");
+        params.put("body", "body");
+        params.put("idCardNo", "342423593829142847");
+        params.put("activeTime", "10");  // 订单有效时间，单位为分
+        params.put("acctId", "3424235938291428472");
+        params.put("bankCode", "CCB");
+        params.put("txnAmt", txnAmt);
+        params.put("currency", "CNY");
+        params.put("acctName", "张大宝");
+        params.put("notifyUrl", notifyUrl);
+        params.put("sendIp", "103.230.242.216");
+        params.put("txnTime", txnTime);
+        params.put("mobile", "15160599123");
+        params.put("attach", "attach");
+
+        // 签名方法
+        String signMethod = "MD5";
+        // 签名信息
+        String signature = GJSignUtil.signData(params, thirdChannelDto.getPayMd5Key()).toUpperCase();
+
+        logger.info("【guanjun channel sign msg:】 " + signature);
+
+        params.put("signMethod", signMethod);
+        params.put("signature", signature);
+        String jsonStr = PostUtils.jsonPost(thirdChannelDto.getPayUrl(), params);
+
+        logger.info("请求结果：" + jsonStr);
+        if(StringUtils.isEmpty(jsonStr)){
+            logger.error("【通道支付请求请求结果为空】");
+            payCreateResult.setResultCode(SysPayResultConstants.ERROR_SYS_PARAMS + "");
+
+            return payCreateResult;
+        }
+
+        Map<Object, Object> respMap = MapUtils.json2Map(jsonStr);
+
+        logger.info("[guanjun channel pay result map]: " + respMap);
+        if("true".equals(respMap.get("success").toString())){
+            payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
+            payCreateResult.setStatus("true");
+            payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+            payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
+            payCreateResult.setPayUrl((String) respMap.get("imgUrl"));
+            logger.info("【通道支付请求成功】-------成功生成支付链接");
+        }else{
+            payCreateResult.setResultCode(respMap.get("code").toString());
+            payCreateResult.setResultMessage("生成跳转地址失败");
+            payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
+            logger.error("【通道支付请求失败】------- " + respMap.get("code"));
+        }
+        return payCreateResult;
     }
 
     @Override
@@ -98,6 +168,8 @@ public class GuanjunPayService implements BasePayService {
     }
 
     private MidPayCreateResult createPayUrl(ThirdChannelDto thirdChannelDto, ShopPayDto shopPayDto) {
+
+        logger.info("【冠军" + shopPayDto.getChannelTypeCode() + "通道支付请求】sysOrderNo=" + shopPayDto.getSysPayOrderNo() + " thirdChannelId: " + thirdChannelDto.getId());
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
         payCreateResult.setStatus("false");
         // 支付方式，默认为微信唤醒
@@ -154,7 +226,7 @@ public class GuanjunPayService implements BasePayService {
             return payCreateResult;
         }
 
-        Map<String, Object> respMap = JSONObject.parseObject(jsonStr, HashedMap.class);
+        Map<Object, Object> respMap = MapUtils.json2Map(jsonStr);
 
         logger.info("[guanjun channel pay result map]: " + respMap);
         if("true".equals(respMap.get("success") + "")){

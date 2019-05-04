@@ -13,6 +13,7 @@ import com.cloud.merchant.dao.SysUserBankDao;
 import com.cloud.merchant.po.MerchantPayChannel;
 import com.cloud.merchant.po.MerchantUser;
 import com.cloud.merchant.po.SysUserBank;
+import com.cloud.merchant.service.CardBlackListService;
 import com.cloud.merchant.service.MerchantUserService;
 import com.cloud.sysconf.common.basePDSC.BaseMybatisServiceImpl;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
@@ -64,6 +65,8 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
     private AgentUserProvider agentUserProvider;
     @Autowired
     private SysUserBankDao sysUserBankDao;
+    @Autowired
+    private CardBlackListService cardBlackListService;
 
     @Override
     @Transactional(rollbackFor=Exception.class)
@@ -109,6 +112,7 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
                 merchantUser.setMd5Key(md5Key);
                 merchantUser.setMd5Source(md5Source);
                 merchantUser.setDailyLimit((double) 1000000);
+                merchantUser.setRechargeLimit(2);
                 merchantUser.setThirdChannels("999");
 
                 merchantUser.initStatus();
@@ -141,6 +145,11 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
                 MerchantUser merchantUser1 = merchantUserDao.getByName(merchantFormDto.getMerchantName());
 
                 // 添加银行卡
+                // 验证黑名单
+                if (cardBlackListService.checkCardSafe(merchantUser1.getBankCardHolder())) {
+                    returnVo.code = ReturnVo.FAIL;
+                    returnVo.responseCode = ResponseCode.bankcard.BANKCARD_IN_BLACKLIST;
+                }
                 SysUserBank sysUserBank = new SysUserBank();
                 sysUserBank.setSysUserId(merchantUser1.getSysUserId());
                 sysUserBank.setBankName(merchantUser1.getBankName());
@@ -281,6 +290,7 @@ public class MerchantUserServiceImpl extends BaseMybatisServiceImpl<MerchantUser
                 }
                 merchantInfoDto.setChannels(payChannels);
             }
+            logger.info("返回商户信息：" + merchantInfoDto);
             returnVo.code = ReturnVo.SUCCESS;
             returnVo.object = JSONObject.toJSON(merchantInfoDto);
         }else{

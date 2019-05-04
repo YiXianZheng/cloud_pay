@@ -35,4 +35,11 @@ public interface SysUserBankDao extends BaseMybatisDao<SysUserBank, String> {
      * @param sysUserBank
      */
     void updateInfo(SysUserBank sysUserBank);
+
+    /**
+     * 获取联行号
+     * @param bankCardNo
+     * @return
+     */
+    SysUserBank getBankBin(@Param("bankCardNo") String bankCardNo);
 }

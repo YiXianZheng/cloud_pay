@@ -286,7 +286,7 @@ public class HcPayController extends BaseController {
      * @param headers
      * @return
      */
-    @PostMapping("/createPay")
+    @PostMapping("/createOrder")
     public ApiResponse createPay(HttpServletRequest request, HttpServletResponse response, @RequestHeader HttpHeaders headers){
         HeaderInfoDto headerInfoDto = this.getHeaderInfo(headers);
         if(!HeaderInfoDto.AUTH_PLATFORM_SYSTEM.equals(headerInfoDto.getAuth())){

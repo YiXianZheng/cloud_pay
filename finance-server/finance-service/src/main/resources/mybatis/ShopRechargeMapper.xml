@@ -62,6 +62,7 @@
 
     <select id="listPage" parameterType="java.util.Map" resultType="java.util.Map">
         SELECT
+			(SELECT a.merchant_name FROM merchant_user a WHERE sys_user_id=t.user_id) AS merchantName,
             t.recharge_no AS rechargeNo,		#代付单号
             t.recharge_money AS rechargeMoney,	#代付金额
             t.recharge_rate_money AS rechargeRateMoney,	#代付手续费
@@ -282,5 +283,9 @@
 		count(*) AS totalRecharge,
 		(count(IF(TO_DAYS(complete_time) = TO_DAYS(#{today}), TRUE, NULL))) AS dailyRecharge
 		FROM shop_recharge WHERE user_id = #{userId} AND bank_no = #{bankNo} AND complete_time is NOT NULL AND recharge_status = 1
+	</select>
+
+	<select id="getByMerId" resultType="java.lang.Integer">
+		select count(*) from shop_recharge where merchant_user = #{merId} and recharge_status=0
 	</select>
 </mapper>

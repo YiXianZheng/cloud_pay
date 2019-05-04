@@ -1,8 +1,11 @@
 package com.cloud.merchant.controller;
 
 import com.cloud.merchant.common.dto.SysUserBankDto;
+import com.cloud.merchant.dao.CardBlackListDao;
 import com.cloud.merchant.dao.SysUserBankDao;
+import com.cloud.merchant.po.CardBlackList;
 import com.cloud.merchant.po.SysUserBank;
+import com.cloud.merchant.service.CardBlackListService;
 import com.cloud.merchant.service.SysUserBankService;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.HeaderInfoDto;
@@ -25,6 +28,10 @@ public class SysUserBankController extends BaseController {
     private SysUserBankService sysUserBankService;
     @Autowired
     private SysUserBankDao sysUserBankDao;
+    @Autowired
+    private CardBlackListDao cardBlackListDao;
+    @Autowired
+    private CardBlackListService cardBlackListService;
 
     /**
      * 添加银行卡
@@ -143,6 +150,9 @@ public class SysUserBankController extends BaseController {
 
         try {
             HeaderInfoDto headerInfoDto = this.getHeaderInfo(headers);
+            if (!cardBlackListService.checkCardSafe(sysUserBankDto.getBankCardHolder())) {
+                return ApiResponse.creatFail(ResponseCode.bankcard.BANKCARD_IN_BLACKLIST);
+            }
             SysUserBank sysUserBank = sysUserBankDao.getById(sysUserBankDto.getId());
             if (sysUserBank == null) {
                 return toApiResponse(ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "银行卡不存在")));
@@ -153,6 +163,7 @@ public class SysUserBankController extends BaseController {
             sysUserBank.setBankCardHolder(sysUserBankDto.getBankCardHolder());
             sysUserBank.setBankProvince(sysUserBankDto.getBankProvince());
             sysUserBank.setBankCity(sysUserBankDto.getBankCity());
+            sysUserBank.setBankBin(sysUserBankDto.getBankBin());
             sysUserBank.setUpdateBy(headerInfoDto.getCurUserId());
             sysUserBankDao.updateInfo(sysUserBank);
             // 通过审核
@@ -189,6 +200,42 @@ public class SysUserBankController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
             return toApiResponse(ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(), "删除失败")));
+        }
+    }
+
+    @PostMapping("/getBankBin")
+    public ApiResponse getBankBin(@RequestParam("bankCardNo") String bankCardNo) {
+
+        try {
+            SysUserBank sysUserBank = sysUserBankDao.getBankBin(bankCardNo);
+            logger.info("获取结果：" + sysUserBank);
+            return ApiResponse.creatSuccess(sysUserBank);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
+        }
+    }
+
+    @PostMapping("/pullBlack")
+    public ApiResponse pullBlack(@RequestParam("id") String id, @RequestHeader HttpHeaders headers) {
+
+        try {
+            // 删除银行卡
+            SysUserBank sysUserBank = sysUserBankDao.getById(id);
+            sysUserBank.setDelFlag("1");
+            sysUserBankDao.updateInfo(sysUserBank);
+            // 加入黑名单列表
+            CardBlackList cardBlackList = new CardBlackList();
+            cardBlackList.setBankCardHolder(sysUserBank.getBankCardHolder());
+            cardBlackList.setBankCardNo(sysUserBank.getBankCardNo());
+            cardBlackList.setBankName(sysUserBank.getBankName());
+            logger.info("黑名单：" + cardBlackList);
+            cardBlackListDao.add(cardBlackList);
+
+            return toApiResponse(ReturnVo.returnSuccess(new ResponseCode.COMMON(ResponseCode.Base.SUCCESS.getCode(), "操作成功")));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
         }
     }
 }

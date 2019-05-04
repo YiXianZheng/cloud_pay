@@ -468,6 +468,19 @@
         WHERE id = #{id}
     </update>
 
+	<update id="updateThirdReturn" parameterType="ShopPay">
+		UPDATE shop_pay
+		SET
+			third_channel_id = #{thirdChannelId},
+			third_channel_type = #{thirdChannelType},
+			third_channel_cost_rate = #{thirdChannelCostRate},
+			third_channel_cost_money = #{thirdChannelCostMoney},
+			third_channel_resp_msg = #{thirdChannelRespMsg},
+			update_by = #{updateBy},
+			update_date = NOW()
+        WHERE id = #{id}
+    </update>
+
 
 	<update id="updateStatus" parameterType="ShopPay">
 		UPDATE shop_pay

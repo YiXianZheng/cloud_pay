@@ -254,6 +254,29 @@ public class ShopPayServiceImpl extends BaseMybatisServiceImpl<ShopPay, String, 
     }
 
     @Override
+    public void updateThirdReturn(String sysPayOrderNo, String channelId, String thirdChannelRespMsg) {
+        //将第三方通道的信息更新到平台订单中
+
+        ShopPay shopPay = shopPayDao.getBySysOrderNo(sysPayOrderNo);
+        shopPay.setThirdChannelId(channelId);
+        String channelTypeStr = redisClient.Gethget(RedisConfig.THIRD_PAY_CHANNEL, channelId, "channelType");
+        shopPay.setThirdChannelType(channelTypeStr!=null?Integer.parseInt(channelTypeStr.toString()):ThirdChannelDto.CHANNEL_TYPE_RECHARGE);
+
+        String costRateStr = redisClient.Gethget(RedisConfig.THIRD_PAY_CHANNEL, channelId, shopPay.getChannelTypeCode());
+        double costRate = 0D;
+        if(costRateStr!=null){
+            costRate = Double.parseDouble(costRateStr.toString());
+        }
+        shopPay.setThirdChannelCostRate(costRate);
+
+        Double thirdChannelMoney = SafeComputeUtils.multiply(shopPay.getMerchantPayMoney(), costRate);
+        shopPay.setThirdChannelCostMoney(thirdChannelMoney);
+        shopPay.setThirdChannelRespMsg(thirdChannelRespMsg);
+        shopPay.preUpdate(shopPay.getUpdateBy());
+        shopPayDao.updateThirdReturn(shopPay);
+    }
+
+    @Override
     public ShopPay getByMerchantCodeAndOrderNo(String merchantCode, String merchantOrderNo) {
         ShopPay shopPay = shopPayDao.getByMerchantCodeAndOrderNo(merchantCode, merchantOrderNo);
         if(shopPay != null){

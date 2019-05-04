@@ -311,9 +311,9 @@ public class SysUserController extends BaseController {
      * @param password
      * @return
      */
-    @PostMapping("/rootPower")
+    @PostMapping("/rootPwd")
     public ApiResponse checkRootPower(@RequestParam String password) {
-        String rootPwd = "6795531ea1e1e140a348a1aadbabede22f29ab73a37c1f690bb9b3af";
+        String rootPwd = "d4d6273acbd4f215929db9e06c415c8ef6ccd8228cda89e486fc784f";
         try {
             if (PassWordUtil.validatePassword(password, rootPwd)) {
                 return ApiResponse.creatSuccess("密码正确");

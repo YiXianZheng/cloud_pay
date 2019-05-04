@@ -80,6 +80,24 @@ public class CashServiceFactory {
     @Autowired
     @Qualifier("YsCashService")
     BaseCashService ysCashService;
+    @Autowired
+    @Qualifier("ZhaocaiCashService")
+    BaseCashService zhaocaiCashService;
+    @Autowired
+    @Qualifier("TkCashService")
+    BaseCashService tkCashService;
+    @Autowired
+    @Qualifier("FoxiCashService")
+    BaseCashService foxiCashService;
+    @Autowired
+    @Qualifier("GuanjunCashService")
+    BaseCashService guanjunCashService;
+    @Autowired
+    @Qualifier("MiaofuCashService")
+    BaseCashService miaofuCashService;
+    @Autowired
+    @Qualifier("HuidianCashService")
+    BaseCashService huidianCashService;
 
     public BaseCashService getPayment(String channelCode){
         if("ainong_cash".equals(channelCode)) {
@@ -127,6 +145,24 @@ public class CashServiceFactory {
         }else if("ys_cash".equals(channelCode)){
             logger.info("cash chose channel YsCashService ");
             return ysCashService;
+        }else if("zc_cash".equals(channelCode)){
+            logger.info("cash chose channel ZhaocaiCashService ");
+            return zhaocaiCashService;
+        }else if("tk_cash".equals(channelCode)){
+            logger.info("cash chose channel TkCashService ");
+            return tkCashService;
+        }else if("foxi_cash".equals(channelCode)){
+            logger.info("cash chose channel FoxiCashService ");
+            return foxiCashService;
+        }else if("guanjun_cash".equals(channelCode)){
+            logger.info("cash chose channel GuanjunCashService ");
+            return guanjunCashService;
+        }else if("miaofu_cash".equals(channelCode)){
+            logger.info("cash chose channel MiaofuCashService ");
+            return miaofuCashService;
+        }else if("huidian_cash".equals(channelCode)){
+            logger.info("cash chose channel HuidianCashService ");
+            return huidianCashService;
         }else{
             return null;
         }

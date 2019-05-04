@@ -57,13 +57,6 @@ public class CbdPayService implements BasePayService {
         logger.info("[cdb h5 pay create params] channel: " + thirdChannelDto.getId() + ", sysPayNo: " + shopPayDto.getSysPayOrderNo());
         MidPayCreateResult payCreateResult = new MidPayCreateResult();
         payCreateResult.setStatus("true");
-        /*payCreateResult.setSysOrderNo(shopPayDto.getSysPayOrderNo());
-
-        String actionRespUrl = getBasePayUrl() + "/d8/cbd_" + shopPayDto.getSysPayOrderNo() + ".html";
-        payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
-        payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");
-        payCreateResult.setPayUrl(actionRespUrl);
-        payCreateResult.setResultMessage("生成跳转地址成功");*/
 
         Map<String, String> params = new HashMap<>();
         params.put("versionId", "1.0");
@@ -98,6 +91,7 @@ public class CbdPayService implements BasePayService {
 
         logger.info("结果转换：" + respMap);
         if ("1".equals(respMap.get("retCode"))) {
+//            String payUrl = getBasePayUrl() + "/d8/cbd_" + shopPayDto.getSysPayOrderNo() + ".html";
             payService.updateThirdInfo(shopPayDto.getSysPayOrderNo(), thirdChannelDto.getId());
             payCreateResult.setStatus("true");
             payCreateResult.setResultCode(SysPayResultConstants.SUCCESS_MAKE_ORDER + "");

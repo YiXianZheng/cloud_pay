@@ -8,6 +8,7 @@ import com.cloud.finance.common.dto.RedisFinanceDto;
 import com.cloud.finance.common.enums.AccountRecordStatusEnum;
 import com.cloud.finance.common.enums.AccountRecordTypeEnum;
 import com.cloud.finance.common.enums.RechargeStatusEnum;
+import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.vo.cash.CashReqData;
 import com.cloud.finance.dao.ShopRechargeDao;
@@ -87,6 +88,16 @@ public class ShopRechargeServiceImpl extends BaseMybatisServiceImpl<ShopRecharge
         if(!cashReqData.getKey().equals(shopAccount.getSecurityCode())){
             return new ResultVo("1", "安全码错误");
         }
+        String bankNo = cashReqData.getBankNo();
+        ApiResponse apiResponse = merchantUserProvider.getBankBin(bankNo);
+        if (!apiResponse.getCode().equals(ResponseCode.Base.SUCCESS + "")) {
+            return new ResultVo("1", "银行卡不存在");
+        }
+        String json = JSONObject.toJSONString(apiResponse.getData());
+        Map<Object, Object> params = MapUtils.json2Map(json);
+        if ("0".equals(params.get("cardStatus").toString())) {
+            return new ResultVo("1", "银行卡未审核");
+        }
 
         //判断是否可以申请代付
         if(StringUtils.isNotBlank(headerInfoDto.getAgentUser())){
@@ -108,8 +119,10 @@ public class ShopRechargeServiceImpl extends BaseMybatisServiceImpl<ShopRecharge
             }
         }else if(StringUtils.isNotBlank(headerInfoDto.getMerchantUser())){
             ApiResponse response = merchantUserProvider.detailById(headerInfoDto.getMerchantUser());
+
             if((ResponseCode.Base.SUCCESS.getCode()+"").equals(response.getCode())){
                 Map merchantInfoDto = (HashMap) response.getData();
+                logger.info("商户信息：" + merchantInfoDto);
                 if(!(MerchantInfoDto.CASH_STATUS_COMMON+"").equals(merchantInfoDto.get("cashStatus").toString())){
                     //不可代付
                     return new ResultVo("1", "商户代付权限被关闭");
@@ -120,6 +133,17 @@ public class ShopRechargeServiceImpl extends BaseMybatisServiceImpl<ShopRecharge
                     }else{
                         rechargeRate = Double.parseDouble(merchantInfoDto.get("commissionCharge").toString());
                         rechargeMoney = SafeComputeUtils.multiply(cashReqData.getAmount(), rechargeRate);
+                    }
+
+                    // 获取限制次数
+                    String rechargeLimit = StringUtil.isBlank(merchantInfoDto.get("rechargeLimit").toString()) ? "0" : merchantInfoDto.get("rechargeLimit").toString();
+                    logger.info("限制笔数：" + rechargeLimit);
+                    // 获取状态为未审核的代付笔数
+                    int rechargeNum = shopRechargeDao.getByMerId(headerInfoDto.getMerchantUser());
+                    logger.info("代付笔数：" + rechargeNum);
+                    if (rechargeNum >= Integer.parseInt(rechargeLimit)) {
+                        logger.error("商户代付未审核笔数为：" + rechargeNum + "，限制笔数为：" + rechargeLimit);
+                        return new ResultVo("1", "商户代付笔数已限制");
                     }
                 }
             }
@@ -223,13 +247,13 @@ public class ShopRechargeServiceImpl extends BaseMybatisServiceImpl<ShopRecharge
             isNew = true;
         }
         financeService.initOverview(3, merCode);
-
+        String merId = redisClient.Gethget(RedisConfig.MERCHANT_INFO_DB, merCode, "id");
         ApiResponse response = merchantUserProvider.detailByCode(merCode);
         if((ResponseCode.Base.SUCCESS.getCode()+"").equals(response.getCode())){
             Map merchantInfoDto = (HashMap) response.getData();
             if(!(MerchantInfoDto.CASH_STATUS_COMMON+"").equals(merchantInfoDto.get("cashStatus").toString())){
                 //不可代付
-                logger.info("商户代付权限被关闭");
+                logger.error("商户代付权限被关闭");
                 return new ResultVo("1", "商户代付权限被关闭");
             }else{
                 sysUserId = merchantInfoDto.get("sysUserId").toString();
@@ -240,6 +264,18 @@ public class ShopRechargeServiceImpl extends BaseMybatisServiceImpl<ShopRecharge
                     rechargeRate = Double.parseDouble(merchantInfoDto.get("commissionCharge").toString());
                     rechargeMoney = SafeComputeUtils.multiply(amount, rechargeRate);
                 }
+            }
+
+            // 获取限制次数
+            String rechargeLimit = merchantInfoDto.get("rechargeLimit").toString();
+            rechargeLimit = StringUtil.isEmpty(rechargeLimit) ? "0" : rechargeLimit;
+            logger.info("限制笔数：" + rechargeLimit);
+            // 获取状态为未审核的代付笔数
+            int rechargeNum = shopRechargeDao.getByMerId(merId);
+            logger.info("代付笔数：" + rechargeNum);
+            if (rechargeNum >= Integer.parseInt(rechargeLimit)) {
+                logger.error("商户代付未审核笔数为：" + rechargeNum + "，限制笔数为：" + rechargeLimit);
+                return new ResultVo("1", "商户代付笔数已限制");
             }
         }
 
@@ -287,7 +323,7 @@ public class ShopRechargeServiceImpl extends BaseMybatisServiceImpl<ShopRecharge
         ShopRecharge shopRecharge = new ShopRecharge();
         shopRecharge.setUserId(shopAccount.getSysUserId());
         shopRecharge.setAgentUser(null);
-        shopRecharge.setMerchantUser(redisClient.Gethget(RedisConfig.MERCHANT_INFO_DB, merCode, "id"));
+        shopRecharge.setMerchantUser(merId);
         shopRecharge.setRechargeNo("DF"+ DateUtil.DateToString(new Date(), DateUtil.DATE_PATTERN_13));
         shopRecharge.setRechargeMoney(amount);
 

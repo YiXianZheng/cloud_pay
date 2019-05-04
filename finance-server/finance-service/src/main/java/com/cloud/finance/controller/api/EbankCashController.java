@@ -1,7 +1,9 @@
 package com.cloud.finance.controller.api;
 
+import com.alibaba.fastjson.JSONObject;
 import com.cloud.finance.common.service.base.BaseCashService;
 import com.cloud.finance.common.service.base.CashServiceFactory;
+import com.cloud.finance.common.utils.MapUtils;
 import com.cloud.finance.common.utils.SafeComputeUtils;
 import com.cloud.finance.common.utils.SysCashResultConstants;
 import com.cloud.finance.common.vo.cash.CashRespData;
@@ -9,12 +11,14 @@ import com.cloud.finance.po.ShopAccount;
 import com.cloud.finance.po.ShopRecharge;
 import com.cloud.finance.service.ShopAccountService;
 import com.cloud.finance.service.ShopRechargeService;
+import com.cloud.merchant.provider.MerchantUserProvider;
 import com.cloud.sysconf.common.basePDSC.BaseController;
 import com.cloud.sysconf.common.dto.ThirdChannelDto;
 import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.Constant;
-import com.cloud.sysconf.common.utils.Util;
+import com.cloud.sysconf.common.utils.ResponseCode;
+import com.cloud.sysconf.common.vo.ApiResponse;
 import com.cloud.sysconf.common.vo.ResultVo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -45,6 +49,8 @@ public class EbankCashController extends BaseController {
     private CashServiceFactory cashServiceFactory;
     @Autowired
     private ShopAccountService shopAccountService;
+    @Autowired
+    private MerchantUserProvider merchantUserProvider;
 
 
     /**
@@ -89,6 +95,22 @@ public class EbankCashController extends BaseController {
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_PARAMS_ERR, "秘钥为空");
         }
 
+        // 检查银行卡是否审核，获取银行卡信息
+        logger.info("卡号：" + bankNo);
+        ApiResponse apiResponse = merchantUserProvider.getBankBin(bankNo);
+        logger.info("返回数据" + apiResponse);
+        if (!apiResponse.getCode().equals(ResponseCode.Base.SUCCESS + "")) {
+            logger.error("银行卡不存在");
+            return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_PARAMS_ERR, "银行卡不存在");
+        }
+        String json = JSONObject.toJSONString(apiResponse.getData());
+        Map<Object, Object> params = MapUtils.json2Map(json);
+        logger.info("转成map：" + params);
+        if ("0".equals(params.get("cardStatus").toString())) {
+            logger.error("银行卡未审核");
+            return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_PARAMS_ERR, "银行卡未审核");
+        }
+
         // 判断银行卡是否已审核
         // merCode  商户号获取用户id
         // bankNo   根据卡号与商户id查询银行卡信息
@@ -103,7 +125,7 @@ public class EbankCashController extends BaseController {
         if(amountYuan > maxCash){
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_AMOUNT_ERR, "单笔代付最高"+cashMax+"元");
         }
-        logger.info("[ecash apply] -- mercahnt code:" + merCode);
+        logger.info("[ecash apply] -- merchant code:" + merCode);
         ResultVo resultVo = shopRechargeService.checkAccountForAPI(merCode, amountYuan, key, bankAccount, bankCode, bankNo, bankSubbranch, bin, province, city);
         if("1".equals(resultVo.getCode())){
             return renderFailString(response, false, SysCashResultConstants.ERROR_CASH_CHECK_ERR, resultVo.getMsg());

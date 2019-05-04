@@ -88,9 +88,21 @@ public class PayServiceFactory {
     @Autowired
     @Qualifier("DfwPayService")
     BasePayService dfwPayService;
-    /*@Autowired
-    @Qualifier("YsPayService")
-    BasePayService ysPayService;*/
+    @Autowired
+    @Qualifier("ZhaocaiPayService")
+    BasePayService zhaocaiPayService;
+    @Autowired
+    @Qualifier("TkPayService")
+    BasePayService tkPayService;
+    @Autowired
+    @Qualifier("FoxiPayService")
+    BasePayService foxiPayService;
+    @Autowired
+    @Qualifier("MiaofuPayService")
+    BasePayService miaofuPayService;
+    @Autowired
+    @Qualifier("HuidianPayService")
+    BasePayService huidianPayService;
 
 
     public BasePayService getPayment(String channelCode){
@@ -166,6 +178,21 @@ public class PayServiceFactory {
         }else if("dfw_pay".equals(channelCode)){
             logger.info("pay chose channel DfwPayService");
             return dfwPayService;
+        }else if("zc_pay".equals(channelCode)){
+            logger.info("pay chose channel ZhaocaiPayService");
+            return zhaocaiPayService;
+        }else if("tk_pay".equals(channelCode)){
+            logger.info("pay chose channel TkPayService");
+            return tkPayService;
+        }else if("foxi_pay".equals(channelCode)){
+            logger.info("pay chose channel FoxiPayService");
+            return foxiPayService;
+        }else if("miaofu_pay".equals(channelCode)){
+            logger.info("pay chose channel MiaofuPayService");
+            return miaofuPayService;
+        }else if("huidian_pay".equals(channelCode)){
+            logger.info("pay chose channel HuidianPayService");
+            return huidianPayService;
         }else if("ys_pay".equals(channelCode)){
             logger.info("pay chose channel ysPayService");
             return null;

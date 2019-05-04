@@ -80,4 +80,11 @@ public interface ShopRechargeDao extends BaseMybatisDao<ShopRecharge, String> {
      */
     Map<String, Object> summaryPaid(@Param("userId") String userId, @Param("bankNo") String bankNo,
                                     @Param("today") String today);
+
+    /**
+     * 获取状态为0的代付笔数
+     * @param merId
+     * @return
+     */
+    int getByMerId(@Param("merId") String merId);
 }

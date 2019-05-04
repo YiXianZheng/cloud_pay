@@ -9,6 +9,7 @@ import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.ResponseCode;
+import com.cloud.sysconf.common.utils.StringUtil;
 import com.cloud.sysconf.common.vo.ApiResponse;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -44,20 +45,21 @@ public class MerchantApiFilterServiceImpl implements MerchantApiFilterService {
         String paymentType = request.getParameter("paymentType");      //支付方式
         String merchantMoneyStr = request.getParameter("assPayMoney");
 
-        logger.info("【merchant pay in api filter】 merchantCode:" + merchantCode + "; paymentType:"+ paymentType + "; money:"+merchantMoneyStr);
-
-        double merchantMoney = 0D;
-        if(merchantMoneyStr != null){
-            merchantMoney = Double.parseDouble(merchantMoneyStr);
+        if (StringUtils.isEmpty(merchantMoneyStr)) {
+            logger.error("【merchant pay in api filter】 Fail of 订单金额为空");
+            return ApiResponse.creatFail(new ResponseCode.COMMON(SysPayResultConstants.ERROR_PAY_AMOUNT_PARAM,"[assPayMoney]订单金额不能为空"));
         }
-        Double merchantPayMoneyYuan = SafeComputeUtils.div(merchantMoney, 100D);
+
+        logger.info("【merchant pay in api filter】 merchantCode:" + merchantCode + "; paymentType:"+ paymentType + "; money: " + merchantMoneyStr);
+
+        Double merchantPayMoneyYuan = SafeComputeUtils.div(Double.parseDouble(merchantMoneyStr), 100D);
 
         if(StringUtils.isEmpty(merchantCode)){
-            logger.info("【merchant pay in api filter】 Fail of merchantCode null ");
+            logger.error("【merchant pay in api filter】 Fail of merchantCode null ");
             return ApiResponse.creatFail(new ResponseCode.COMMON(SysPayResultConstants.ERROR_PAY_MERCHANT_ID_NULL,"[assCode]商户编号号不能为空"));
         }
         if(StringUtils.isBlank(paymentType)){
-            logger.info("【merchant pay in api filter】 Fail of paymentType null ");
+            logger.error("【merchant pay in api filter】 Fail of paymentType null ");
             return ApiResponse.creatFail(new ResponseCode.COMMON(SysPayResultConstants.ERROR_PAY_MENT_TYPE_NULL,"[paymentType]支付类型参数为空"));
         }
 

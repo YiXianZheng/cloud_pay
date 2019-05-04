@@ -5,6 +5,7 @@ import com.cloud.sysconf.common.redis.RedisClient;
 import com.cloud.sysconf.common.redis.RedisConfig;
 import com.cloud.sysconf.common.utils.DateUtil;
 import com.cloud.sysconf.common.utils.MyBeanUtil;
+import com.cloud.sysconf.common.utils.Util;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
@@ -66,7 +67,8 @@ public class WebLogHeadAspect {
         // 接收到请求，记录请求内容
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = attributes.getRequest();
-
+        String ip = Util.getIpAddr(request);
+        logger.info("请求ip：" + ip);
         // 记录下请求内容
 //        logger.info(PRE_TAG + "(doBefore) URL : " + request.getRequestURL().toString());
 //        logger.info(PRE_TAG + "(doBefore) HTTP_METHOD : " + request.getMethod());
@@ -82,7 +84,7 @@ public class WebLogHeadAspect {
         SysLogDto sysLogDto = new SysLogDto();
         sysLogDto.setRequestUrl(request.getRequestURL().toString());
         sysLogDto.setRequestMethod(request.getMethod());
-        sysLogDto.setRequestIp(request.getRemoteAddr());
+        sysLogDto.setRequestIp(ip);
         sysLogDto.setClassMethod(joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName());
         sysLogDto.setRequestArgs(Arrays.toString(joinPoint.getArgs()));
         sysLogDto.setRequest(request.toString());

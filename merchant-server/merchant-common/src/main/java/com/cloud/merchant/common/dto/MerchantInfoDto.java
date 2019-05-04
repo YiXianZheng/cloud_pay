@@ -49,6 +49,8 @@ public class MerchantInfoDto extends BaseDto {
 
     private Double dailyLimit;      //每日限额
 
+    private Integer rechargeLimit;   //下发次数
+
     private String bankCode;        //银行编码
 
     private String bankName;        //银行名称

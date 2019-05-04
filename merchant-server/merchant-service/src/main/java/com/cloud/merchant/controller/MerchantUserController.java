@@ -37,9 +37,16 @@ public class MerchantUserController extends BaseController {
      * @param headers
      * @return
      */
-    @PostMapping("/save")
+    @PostMapping("/addNew")
     public ApiResponse save(@RequestBody(required = true) MerchantFormDto merchantFormDto, @RequestHeader HttpHeaders headers){
         HeaderInfoDto headerInfoDto = this.getHeaderInfo(headers);
+        String roleId = headerInfoDto.getRoleId();
+        logger.info("权限id：" + roleId);
+        if (!roleId.equals("1")) {
+            logger.error("没有操作权限");
+            return toApiResponse(ReturnVo.returnFail(new ResponseCode.COMMON(ResponseCode.Base.ERROR.getCode(),
+                    "没有操作权限")));
+        }
         try{
             ReturnVo returnVo = merchantUserService.addMerchant(merchantFormDto, headerInfoDto);
             return this.toApiResponse(returnVo);
@@ -48,7 +55,6 @@ public class MerchantUserController extends BaseController {
             return ApiResponse.creatFail(ResponseCode.Base.SYSTEM_ERR);
         }
     }
-
 
     /**
      * 更新商户用户
